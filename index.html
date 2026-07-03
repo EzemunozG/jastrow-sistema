@@ -13,21 +13,62 @@ window.addEventListener('error', function(e){
   }
 }, true);
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="window._supaCdnFail=true"></script>
 <script>
-// ---- Almacenamiento persistente (Claude Artifacts storage API) ----
-// Reemplaza localStorage (no soportado en Artifacts) por una caché en memoria
-// respaldada por window.storage, que persiste por usuario entre dispositivos.
+// ---- Almacenamiento persistente (Supabase) ----
+// Reemplaza window.storage (API de Artifacts, inexistente en Vercel) por una
+// tabla clave-valor en Supabase (jw_storage), compartida entre TODOS los usuarios,
+// con caché en memoria para lecturas síncronas y Realtime para sincronizar cambios.
+window._JW_SUPA_URL = 'https://izeiiwdhitseqkkwbama.supabase.co';
+window._JW_SUPA_KEY = 'sb_publishable_aV3sk3PJo_U7klPYcuRsvA_wGgk5ZwZ';
 window._JWCACHE = {};
 window._JWKEYS = ['bajas_arca_v2','cps_campo_v2','facturas','lotes','recetas','stock','trabajos','users','precio_bolsa'];
+
+window._jwSupa = null;
+try{
+  if(window.supabase && window.supabase.createClient){
+    window._jwSupa = window.supabase.createClient(window._JW_SUPA_URL, window._JW_SUPA_KEY);
+  }
+}catch(e){ console.error('No se pudo inicializar Supabase:', e); }
+
+// Banner de estado de sincronización (no bloqueante)
+window._jwBanner = function(msg){
+  var el = document.getElementById('jw-sync-banner');
+  if(!msg){ if(el) el.style.display='none'; return; }
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'jw-sync-banner';
+    el.style.cssText = 'position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#A32D2D;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);font-family:sans-serif;max-width:90vw;text-align:center';
+    (document.body||document.documentElement).appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+};
+
+// Lectura síncrona desde caché (misma interfaz que antes: todo el código sigue igual)
 window._JWStorageGet = function(k){ return window._JWCACHE[k] !== undefined ? window._JWCACHE[k] : null; };
+
+// Escritura: caché inmediata + upsert asíncrono en Supabase
 window._JWStorageSet = function(k, v){
   window._JWCACHE[k] = v;
   try{
-    if(window.storage && window.storage.set){
-      window.storage.set('jw_'+k, JSON.stringify(v), false).catch(function(e){ console.error('storage set error', k, e); });
-    }
-  }catch(e){ console.error('storage set error', k, e); }
+    if(!window._jwSupa){ window._jwBanner('⚠ Sin conexión con la base — los cambios NO se están guardando'); return; }
+    window._jwSupa.from('jw_storage')
+      .upsert({key:k, value:v, updated_at:new Date().toISOString()}, {onConflict:'key'})
+      .then(function(res){
+        if(res && res.error){
+          console.error('supabase set error', k, res.error);
+          window._jwBanner('⚠ Error guardando "'+k+'" en la base: '+res.error.message);
+        } else {
+          window._jwBanner(null);
+        }
+      });
+  }catch(e){
+    console.error('storage set error', k, e);
+    window._jwBanner('⚠ Error guardando en la base');
+  }
 };
+
 window._JWShowLogin = function(){
   var loader = document.getElementById('jw-loader');
   var login = document.getElementById('login-screen');
@@ -51,19 +92,53 @@ function _jwWithTimeout(promise, ms){
                  function(e){ if(!done){ done=true; clearTimeout(t); reject(e); } });
   });
 }
+
+// Cambio recibido desde otro dispositivo/usuario (vía Realtime): refrescar la vista activa
+window._jwOnRemoteChange = function(key){
+  try{
+    if(typeof currentUser === 'undefined' || !currentUser) return; // aún en login
+    if(typeof renderAll === 'function') renderAll();
+    var p = document.querySelector('.pane.active');
+    if(p && typeof showTab === 'function') showTab(p.id.replace('pane-',''));
+  }catch(e){ console.error('remote change render error', e); }
+};
+
+window._jwSubscribeRealtime = function(){
+  try{
+    if(!window._jwSupa || window._jwRealtimeOn) return;
+    window._jwRealtimeOn = true;
+    window._jwSupa.channel('jw_storage_changes')
+      .on('postgres_changes', {event:'*', schema:'public', table:'jw_storage'}, function(payload){
+        var row = payload && payload.new;
+        if(!row || !row.key) return;
+        // Ignorar el eco de nuestras propias escrituras (valor idéntico al de la caché)
+        try{ if(JSON.stringify(window._JWCACHE[row.key]) === JSON.stringify(row.value)) return; }catch(e){}
+        window._JWCACHE[row.key] = row.value;
+        window._jwOnRemoteChange(row.key);
+      })
+      .subscribe();
+  }catch(e){ console.error('realtime subscribe error', e); }
+};
+
 window._jwPreload = async function(){
-  // Failsafe absoluto: pase lo que pase, a los 6s se muestra el login igual
-  // (si window.storage no responde, por ejemplo en un viewer anónimo del link público).
+  // Failsafe absoluto: pase lo que pase, a los 6s se muestra el login igual.
   var failsafe = setTimeout(function(){ window._JWReady(); }, 6000);
   try{
-    if(!(window.storage && window.storage.get)){ window._JWReady(); clearTimeout(failsafe); return; }
-    var loads = window._JWKEYS.map(function(k){
-      return _jwWithTimeout(window.storage.get('jw_'+k, false), 4000)
-        .then(function(res){ if(res && res.value){ window._JWCACHE[k] = JSON.parse(res.value); } })
-        .catch(function(e){ /* clave inexistente o sin respuesta — seguimos sin bloquear */ });
-    });
-    await Promise.all(loads);
-  }catch(e){ console.error('preload error', e); }
+    if(!window._jwSupa){
+      window._jwBanner('⚠ No se pudo conectar con la base de datos — modo solo lectura de datos hardcodeados');
+      window._JWReady(); clearTimeout(failsafe); return;
+    }
+    var res = await _jwWithTimeout(window._jwSupa.from('jw_storage').select('key,value'), 5000);
+    if(res && res.error){ throw res.error; }
+    if(res && res.data){
+      res.data.forEach(function(r){ if(r && r.key) window._JWCACHE[r.key] = r.value; });
+    }
+    window._jwSubscribeRealtime();
+    window._jwBanner(null);
+  }catch(e){
+    console.error('preload error', e);
+    window._jwBanner('⚠ No se pudieron cargar los datos guardados ('+(e && e.message ? e.message : 'error')+'). Recargá la página.');
+  }
   clearTimeout(failsafe);
   window._JWReady();
 };
