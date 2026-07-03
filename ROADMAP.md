@@ -86,6 +86,7 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
       Costos reflejando los números correctos).
 - [x] Milestone 4 completo: Infraruts + Resumen/Tendencia — ver detalle en el milestone 4
       más abajo.
+- [x] Milestone 5 completo: Viajes/Listado + detección de brechas — ver detalle abajo.
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -176,9 +177,26 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
   `npm run build`. **Pendiente**: probar la subida real de un Excel desde el navegador
   (o pedirle a un admin que lo haga) antes de confiar en el flujo end-to-end completo.
 
-### 5. Viajes / Listado + detección de brechas
-- [ ] `ViajesTable`, `GapPanel` (algoritmo global por número de CP, no por finca/fecha —
-      preservar tal cual `index_10.html:1882-1930`)
+### 5. Viajes / Listado + detección de brechas ✅ completo, probado en vivo (2026-07-03)
+- [x] `lib/business-rules.ts`: `detectGaps()` — algoritmo global por número de CP sobre
+      todo el dataset ordenado (no por finca/fecha), portado tal cual de
+      `index_10.html:1882-1930`.
+- [x] `components/viajes/viajes-table.tsx` (`ViajesTable`): filtros (fecha, finca, buscar
+      CP, orden cp asc/desc/fecha), tiles de resumen (remitos cargados, rango CP,
+      mostrando), panel de brechas colapsable (siempre global, independiente de los
+      filtros de la tabla — igual que el legacy), fila de "salto" insertada entre CPs no
+      consecutivos cuando el orden es CP ascendente, y estado de "Libreta" por fila
+      (✅ En libreta / ⚠ Baja ARCA / ❌ Sin manual) — **ojo**: matchea `cps_campo.cp`
+      contra `infraruts.remito`, no contra `infraruts.cp` (mismo detalle no obvio que en
+      milestone 7, ver `index_10.html:1765`); como Libreta del Campo (milestone 6)
+      todavía no está implementado, hoy siempre da "Sin manual" — es el estado correcto,
+      no un bug.
+- [x] `app/(app)/viajes/listado/page.tsx` conectado a `infraruts` + `cps_campo` +
+      `bajas_arca`.
+- **Probado en vivo**: datos de prueba con 3 brechas intencionales (6 CPs mismo día, 18
+  CPs con cambio de día → marcado "⚠ Revisar", 0 CPs) + un `cps_campo` de prueba —
+  panel de brechas, filas de salto, colores condicionales (Pureza/Rdto/Trash) y filtro
+  por finca verificados correctos. Datos de prueba borrados después.
 
 ### 6. Libreta del Campo + migración de datos legacy
 - [ ] `lib/excel/parse-libreta.ts` + `lib/excel/parse-common.ts`

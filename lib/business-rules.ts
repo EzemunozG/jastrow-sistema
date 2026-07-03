@@ -88,3 +88,33 @@ export function rdtoPillClass(rdto: number): "ok" | "warn" | "bad" {
   if (rdto >= UMBRALES.rdtoWarn) return "warn";
   return "bad";
 }
+
+export type Gap = {
+  desde: number;
+  hasta: number;
+  faltantes: number;
+  fechaAnt: string;
+  fechaSig: string;
+};
+
+// index_10.html:1882-1930 — algoritmo GLOBAL por número de CP consecutivo sobre todo
+// el dataset ordenado (no por finca ni por fecha): los CPs son un correlativo único del
+// ingenio compartido entre productores, así que un salto puede ser de otro productor o
+// un INFRARUT de Jastrow que no se cargó todavía.
+export function detectGaps(infraruts: InfrarutRow[]): Gap[] {
+  const sorted = [...infraruts].sort((a, b) => a.cp - b.cp);
+  const gaps: Gap[] = [];
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const diff = sorted[i + 1].cp - sorted[i].cp;
+    if (diff > 1) {
+      gaps.push({
+        desde: sorted[i].cp,
+        hasta: sorted[i + 1].cp,
+        faltantes: diff - 1,
+        fechaAnt: sorted[i].fecha,
+        fechaSig: sorted[i + 1].fecha,
+      });
+    }
+  }
+  return gaps;
+}
