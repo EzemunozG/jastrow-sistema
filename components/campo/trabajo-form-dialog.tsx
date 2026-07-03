@@ -3,12 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import {
-  TRABAJO_ACTION_IDLE,
-  TRABAJO_TIPOS_GRUPOS,
-  TRABAJO_UNIDADES,
-  saveTrabajo,
-} from "@/actions/trabajos";
+import { saveTrabajo } from "@/actions/trabajos";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +24,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Database } from "@/lib/database.types";
+import {
+  TRABAJO_ACTION_IDLE,
+  TRABAJO_TIPOS_GRUPOS,
+  TRABAJO_UNIDADES,
+} from "@/lib/forms/trabajos";
 
 type Lote = Database["public"]["Tables"]["lotes"]["Row"];
 type Factura = Database["public"]["Tables"]["facturas"]["Row"];

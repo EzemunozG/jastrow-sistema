@@ -1,24 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-
-const appSettingsSchema = z.object({
-  precio_bolsa: z.coerce.number().nonnegative(),
-  tc_oficial: z.coerce.number().positive(),
-  tc_blue: z.coerce.number().positive(),
-  tc_ccl: z.coerce.number().positive(),
-});
-
-export type AppSettingsActionState =
-  | { status: "idle" }
-  | { status: "error"; error: string }
-  | { status: "success" };
-
-export const APP_SETTINGS_ACTION_IDLE: AppSettingsActionState = {
-  status: "idle",
-};
+import {
+  appSettingsSchema,
+  type AppSettingsActionState,
+} from "@/lib/forms/app-settings";
 
 export async function updateAppSettings(
   _prevState: AppSettingsActionState,

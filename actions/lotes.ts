@@ -1,30 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-
-export const loteSchema = z.object({
-  id: z.string().min(1, "El ID del lote es obligatorio"),
-  idOriginal: z.string().optional(), // presente al editar, para permitir renombrar el id
-  nombre: z.string().optional(),
-  ha: z.coerce.number().positive("Las hectáreas deben ser mayores a 0"),
-  tipo: z.enum(["Propio", "Arrendado"]),
-  finca_id: z.string().optional(),
-  variedad: z.string().optional(),
-  soca: z.coerce.number().int().nonnegative().optional(),
-  fecha_plantacion: z.string().optional(),
-  estado: z.enum(["Pendiente", "En cosecha", "Cosechado"]),
-  arriendo: z.coerce.number().nonnegative().optional(),
-  arriendo_obs: z.string().optional(),
-  lat: z.coerce.number().optional(),
-  lon: z.coerce.number().optional(),
-  propietario: z.string().optional(),
-  contrato: z.string().optional(),
-  obs: z.string().optional(),
-});
-
-export type LoteFormValues = z.input<typeof loteSchema>;
+import { loteSchema, type LoteActionState } from "@/lib/forms/lotes";
 
 function emptyToUndefined(v: FormDataEntryValue | null) {
   const s = (v as string) ?? "";
@@ -52,13 +30,6 @@ function parseLoteForm(formData: FormData) {
     obs: emptyToUndefined(formData.get("obs")),
   });
 }
-
-export type LoteActionState =
-  | { status: "idle" }
-  | { status: "error"; error: string }
-  | { status: "success" };
-
-export const LOTE_ACTION_IDLE: LoteActionState = { status: "idle" };
 
 export async function saveLote(
   _prevState: LoteActionState,

@@ -15,12 +15,39 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
 - [x] Dependencias de test: `vitest`, `@testing-library/react`, `@testing-library/jest-dom`,
       `jsdom`, `@playwright/test`
 - [x] `CLAUDE.md`
-- [x] `supabase/migrations/*_schema.sql`, `*_rls.sql`, `*_views.sql` (esquema completo de
-      las 3 migraciones — todavía NO aplicadas al proyecto Supabase remoto, ver "Próximo paso
-      manual" abajo)
+- [x] **Migraciones aplicadas al Supabase remoto (2026-07-03)** — las 4 migraciones de
+      `supabase/migrations/` (schema, rls, views, storage) corren contra
+      `izeiiwdhitseqkkwbama` (`supabase migration list` las muestra sincronizadas). Se hizo
+      con un Personal Access Token de Supabase de corta duración (1h, ya revocado) vía
+      `supabase login --token` + `link` + `db push`, porque `supabase login` interactivo no
+      funciona en un shell no-TTY. Tipos hand-written en `lib/database.types.ts` verificados
+      contra `supabase gen types typescript --linked` (mismo set de tablas/columnas; no se
+      reemplazó el archivo por el generado para no perder los union types de los campos con
+      `check` constraint, que el generador no infiere).
 - [x] `lib/supabase/{server,client,admin}.ts` + `proxy.ts` (refresh de sesión)
-- [x] `lib/database.types.ts` escrito a mano (falta regenerar con `supabase gen types` una vez
-      linkeado el proyecto real)
+- [x] `lib/database.types.ts` escrito a mano, verificado contra el esquema real (ver arriba)
+- [x] **Usuarios reales creados en Supabase Auth**: `admin@jastrow.local` (rol admin) y
+      `operador@jastrow.local` (rol user) — mismas credenciales `admin`/`operador` que el
+      HTML legacy pero con email placeholder + contraseña real (pedile las contraseñas al
+      usuario, no están en este repo). `SUPABASE_SERVICE_ROLE_KEY` cargada en `.env.local` y
+      en Vercel (scope Preview + rama `nextjs-rewrite`) — el panel de admin de usuarios ya
+      funciona de punta a punta.
+- [x] **Bug de runtime encontrado y corregido (2026-07-03)**: los 4 archivos
+      `actions/*.ts` (lotes, facturas, trabajos, app-settings) exportaban además del
+      Server Action, un schema de zod y un objeto `*_ACTION_IDLE` — Next.js 16 permite que
+      un archivo `"use server"` exporte *solo* funciones async; exportar un objeto rompe en
+      runtime ("A 'use server' file can only export async functions, found object"), algo
+      que **`npm run build` no detecta** (el error solo aparece al ejercitar la acción en el
+      navegador). Se movieron los schemas/constantes/tipos a `lib/forms/{lotes,facturas,
+      trabajos,app-settings}.ts` (archivos planos, no "use server"); los componentes ahora
+      importan la función desde `actions/` y las constantes desde `lib/forms/`. **Lección
+      para todo código nuevo de Server Actions**: verificar siempre en el navegador, no solo
+      con `npm run build` — ver [[feedback-verify-server-actions-in-browser]].
+- [x] **Probado de punta a punta en local (2026-07-03)**: login real, alta/edición/borrado
+      de Lotes, Trabajos (con insumos dinámicos) y Facturas (con cálculo de total en vivo),
+      página de Costos con datos reales, alta de usuarios. Todo contra la base de Supabase
+      real, sin datos de prueba dejados atrás (se creó y borró un lote+trabajo+factura de
+      test).
 - [x] `lib/business-rules.ts`, `lib/reconciliation.ts`, `lib/costos.ts`, `lib/stock.ts`,
       `lib/alerts.ts` — lógica de negocio portada, pendiente de tests Vitest
 - [x] `lib/excel/parse-common.ts`, `parse-libreta.ts`, `parse-infraruts.ts` (mapeo provisorio)
@@ -43,8 +70,8 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
       `actions/facturas.ts`, migración `supabase/migrations/20260703193000_storage.sql`
       con el bucket `facturas-imgs` — mismas tablas `facturas`/`factura_items` que ya
       estaban en el schema de milestone 1) — `npm run build` y `npm run lint` pasan
-      limpio, pendiente de probar en vivo (bloqueado por lo mismo que milestone 1: sin
-      migraciones aplicadas no hay login funcional)
+      limpio; **probado en vivo el 2026-07-03** (alta/borrado de factura con ítems reales,
+      resumen y distribución por categoría correctos).
 - [x] Milestone 3 completo en código: Trabajos + Costos. `actions/trabajos.ts` (alta +
       borrado de trabajos, sin edición — igual que el HTML legacy, que tampoco la
       soporta), `TrabajoFormDialog` (insumos dinámicos vía react-hook-form, con `<select>`
@@ -54,8 +81,9 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
       cambio (antes hardcodeadas en el HTML legacy). `app/(app)/campo/costos/page.tsx`
       usa `lib/costos.ts` tal cual ya estaba escrito (arriendo, costo por categoría,
       costo por lote) — el costo/kg azúcar da "—" hasta que haya datos reales en
-      `infraruts` (milestone 4/6). `npm run build`/`lint` pasan limpio, mismo bloqueo de
-      migraciones sin aplicar para probar en vivo.
+      `infraruts` (milestone 4/6). `npm run build`/`lint` pasan limpio; **probado en vivo el
+      2026-07-03** (trabajo con insumo real, costo total y $/ha calculados bien, página de
+      Costos reflejando los números correctos).
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -71,26 +99,19 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
   `jastrow-app/vercel.json` fuerza `framework: "nextjs"` solo para los commits que lo
   incluyen, sin tocar nada compartido.
 - Variables de entorno de Supabase cargadas en Vercel con scope `Preview` + rama
-  `nextjs-rewrite` únicamente. Falta `SUPABASE_SERVICE_ROLE_KEY` ahí también (mismo bloqueo
-  que en local).
+  `nextjs-rewrite` únicamente, incluida `SUPABASE_SERVICE_ROLE_KEY` (agregada 2026-07-03).
 - Antes de mergear `nextjs-rewrite` a `main`: correr las migraciones de Supabase, tener al
   menos Resumen/Tendencia/Viajes reales, y hacer el checklist de paridad numérica contra
   `index_10.html` (ver sección de Verificación en el plan original).
 
-## ⚠️ Próximo paso manual (no lo puede hacer un agente sin tus credenciales)
+## ✅ Setup de Supabase — resuelto (2026-07-03)
 
-Las migraciones de `supabase/migrations/` están escritas pero **no aplicadas** — hace falta
-correr esto una vez con tus credenciales de Supabase (ver comandos en `CLAUDE.md`):
+Migraciones aplicadas, `.env.local` completo (incluida `SUPABASE_SERVICE_ROLE_KEY`) y
+usuarios reales creados — ver el detalle en "Estado actual" arriba. Ya no bloquea nada.
 
-```bash
-supabase login
-supabase link --project-ref izeiiwdhitseqkkwbama
-supabase db push
-supabase gen types typescript --linked > lib/database.types.ts
-```
-
-Y crear `.env.local` (copiando `.env.local.example`) con la anon key y la service role key
-reales del proyecto. Sin esto la app compila pero no tiene datos para mostrar.
+Pendiente menor, no urgente: cargar `SUPABASE_SERVICE_ROLE_KEY` también en el entorno
+**Production** de Vercel el día que `nextjs-rewrite` se mergee a `main` (hoy solo está en
+Preview, a propósito, para no tocar nada de la producción legacy antes de tiempo).
 
 ## Milestones
 

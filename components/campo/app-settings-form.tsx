@@ -1,15 +1,13 @@
 "use client";
 
 import { useActionState } from "react";
-import {
-  APP_SETTINGS_ACTION_IDLE,
-  updateAppSettings,
-} from "@/actions/app-settings";
+import { updateAppSettings } from "@/actions/app-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Database } from "@/lib/database.types";
 import { PESO_BOLSA } from "@/lib/costos";
+import { APP_SETTINGS_ACTION_IDLE } from "@/lib/forms/app-settings";
 
 type AppSettings = Database["public"]["Tables"]["app_settings"]["Row"];
 

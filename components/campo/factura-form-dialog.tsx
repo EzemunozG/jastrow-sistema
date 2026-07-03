@@ -3,12 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import {
-  FACTURA_ACTION_IDLE,
-  FACTURA_CATEGORIAS,
-  FACTURA_TIPOS,
-  saveFactura,
-} from "@/actions/facturas";
+import { saveFactura } from "@/actions/facturas";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,6 +23,11 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { Database } from "@/lib/database.types";
+import {
+  FACTURA_ACTION_IDLE,
+  FACTURA_CATEGORIAS,
+  FACTURA_TIPOS,
+} from "@/lib/forms/facturas";
 
 type FacturaItem = Database["public"]["Tables"]["factura_items"]["Row"];
 type Factura = Database["public"]["Tables"]["facturas"]["Row"] & {

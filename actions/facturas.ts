@@ -1,62 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-
-export const FACTURA_TIPOS = [
-  "Factura A",
-  "Factura B",
-  "Factura C",
-  "Ticket",
-  "Remito",
-  "Presupuesto",
-  "Otro",
-] as const;
-
-export const FACTURA_CATEGORIAS = [
-  "Agroquímicos",
-  "Fertilizantes",
-  "Semillas / Plantines",
-  "Combustible",
-  "Maquinaria / Servicios",
-  "Mano de obra",
-  "Arriendo",
-  "Otros insumos",
-  "Otro",
-] as const;
-
-export const facturaItemSchema = z.object({
-  descripcion: z.string().min(1, "Descripción del ítem requerida"),
-  cantidad: z.coerce.number().positive("La cantidad debe ser mayor a 0"),
-  unidad: z.string().min(1, "Unidad requerida"),
-  precio_unit: z.coerce.number().nonnegative("El precio no puede ser negativo"),
-});
-
-const facturaSchema = z.object({
-  idOriginal: z.string().optional(),
-  numero: z.string().min(1, "N° de comprobante obligatorio"),
-  tipo: z.enum(FACTURA_TIPOS),
-  proveedor: z.string().min(1, "Proveedor obligatorio"),
-  cuit: z.string().optional(),
-  fecha: z.string().min(1, "Fecha obligatoria"),
-  categoria: z.enum(FACTURA_CATEGORIAS),
-  obs: z.string().optional(),
-  existingImgPath: z.string().optional(),
-  items: z
-    .array(facturaItemSchema)
-    .min(1, "Agregá al menos un ítem a la factura"),
-});
-
-export type FacturaItemValues = z.input<typeof facturaItemSchema>;
-export type FacturaFormValues = z.input<typeof facturaSchema>;
-
-export type FacturaActionState =
-  | { status: "idle" }
-  | { status: "error"; error: string }
-  | { status: "success" };
-
-export const FACTURA_ACTION_IDLE: FacturaActionState = { status: "idle" };
+import {
+  facturaSchema,
+  type FacturaActionState,
+} from "@/lib/forms/facturas";
 
 function emptyToUndefined(v: FormDataEntryValue | null) {
   const s = (v as string) ?? "";

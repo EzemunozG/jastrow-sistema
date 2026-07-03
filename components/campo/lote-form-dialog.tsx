@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { LOTE_ACTION_IDLE, saveLote } from "@/actions/lotes";
+import { saveLote } from "@/actions/lotes";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Database } from "@/lib/database.types";
+import { LOTE_ACTION_IDLE } from "@/lib/forms/lotes";
 
 type Lote = Database["public"]["Tables"]["lotes"]["Row"];
 type Finca = Database["public"]["Tables"]["fincas"]["Row"];
