@@ -38,6 +38,13 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
       `https://jastrow-sistema-git-nextjs-rewrite-jastrow.vercel.app` (requirió
       `vercel.json` con `framework: "nextjs"` + env vars de Supabase en Vercel, scopeadas a
       Preview + rama `nextjs-rewrite` para no tocar `main`)
+- [x] Milestone 2 completo en código: Facturas + Storage (`app/(app)/campo/facturas`,
+      `FacturasTable`, `FacturaFormDialog` con ítems dinámicos vía react-hook-form,
+      `actions/facturas.ts`, migración `supabase/migrations/20260703193000_storage.sql`
+      con el bucket `facturas-imgs` — mismas tablas `facturas`/`factura_items` que ya
+      estaban en el schema de milestone 1) — `npm run build` y `npm run lint` pasan
+      limpio, pendiente de probar en vivo (bloqueado por lo mismo que milestone 1: sin
+      migraciones aplicadas no hay login funcional)
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -86,10 +93,16 @@ reales del proyecto. Sin esto la app compila pero no tiene datos para mostrar.
 - [x] `app/(app)/layout.tsx` con chequeo de sesión
 - [x] `app/(app)/campo/lotes/page.tsx` + `LotesTable` + `LoteFormDialog` + `actions/lotes.ts`
 
-### 2. Facturas + Storage
-- [ ] Tablas `facturas`, `factura_items`
-- [ ] Bucket de Storage `facturas-imgs` + políticas
-- [ ] CRUD completo con adjunto de imagen (reemplaza el base64 inline del HTML legacy)
+### 2. Facturas + Storage ✅ código listo, pendiente aplicar migraciones
+- [x] Tablas `facturas`, `factura_items` (ya estaban en `0001_schema.sql`)
+- [x] Bucket de Storage `facturas-imgs` + políticas (`0004_storage.sql`, todo usuario
+      autenticado puede leer/escribir, mismo criterio que el resto de tablas operativas)
+- [x] CRUD completo con adjunto de imagen: `app/(app)/campo/facturas/page.tsx`,
+      `FacturasTable` (resumen + tabla + link a imagen vía signed URL), `FacturaFormDialog`
+      (ítems dinámicos con `useFieldArray` de react-hook-form sobre inputs nativos,
+      submit vía Server Action + FormData como Lotes), `actions/facturas.ts`
+      (reemplazo completo de ítems en cada guardado, borra el objeto de Storage al
+      eliminar una factura)
 
 ### 3. Trabajos + Costos
 - [ ] Tablas `trabajos`, `trabajo_insumos`, `app_settings` (precio_bolsa + tasas de cambio)
