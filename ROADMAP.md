@@ -84,6 +84,8 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
       `infraruts` (milestone 4/6). `npm run build`/`lint` pasan limpio; **probado en vivo el
       2026-07-03** (trabajo con insumo real, costo total y $/ha calculados bien, página de
       Costos reflejando los números correctos).
+- [x] Milestone 4 completo: Infraruts + Resumen/Tendencia — ver detalle en el milestone 4
+      más abajo.
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -143,12 +145,36 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
 - [x] `app/(app)/campo/costos/page.tsx` + `AppSettingsForm` + `TrabajoFormDialog`/
       `TrabajosDialog` colgados de `LotesTable`
 
-### 4. Infraruts + Resumen/Tendencia
-- [ ] Tablas `infraruts`, `infraruts_imports`
-- [ ] `lib/business-rules.ts` (statsFor, META, umbrales — `index_10.html:1014-1023`)
-- [ ] `lib/excel/parse-infraruts.ts` (**mapeo de columnas provisorio**, ver "Decisiones
-      pendientes" abajo)
-- [ ] Import admin-only + `app/(app)/resumen`, `app/(app)/tendencia` con gráficos Recharts
+### 4. Infraruts + Resumen/Tendencia ✅ completo, probado en vivo (2026-07-03)
+- [x] Tablas `infraruts`, `infraruts_imports` (ya estaban en `0001_schema.sql`)
+- [x] `lib/business-rules.ts` (ya estaba portado — statsFor, META, umbrales)
+- [x] `lib/excel/parse-infraruts.ts` (ya estaba escrito — **mapeo de columnas
+      provisorio**, ver "Decisiones pendientes" abajo)
+- [x] `actions/infraruts.ts`: `importInfraruts()` admin-only (`requireAdmin()`), crea un
+      registro en `infraruts_imports` y hace upsert por `cp` en `infraruts` (permite
+      reimportar/corregir sin duplicar). `finca_id` se resuelve igual que el HTML legacy:
+      `finca_raw` contiene "LOTE4" → `LOTE4`, cualquier otra cosa → `VIRGINIA` (no hay un
+      tercer estado "sin mapear").
+- [x] `components/resumen/infraruts-import-form.tsx`: parsea el Excel en el cliente
+      (`parseInfrarutWorkbook`, ya escrito) y manda el array ya validado al Server Action —
+      visible solo si `profile.role === "admin"` (cosmético; `importInfraruts` vuelve a
+      chequear `requireAdmin()` server-side).
+- [x] `app/(app)/resumen/page.tsx`: KPIs globales + tarjetas por finca (LOTE4/LA VIRGINIA)
+      con el mismo color-coding condicional que `index_10.html` (POL<15, Pureza<85,
+      Trash%>10 en ámbar).
+- [x] `app/(app)/tendencia/page.tsx` + `components/tendencia/tendencia-charts.tsx`: 3
+      gráficos de línea (Rendimiento/POL/Pureza) con Recharts, colores LOTE4/LA VIRGINIA
+      idénticos al Chart.js legacy (`#378ADD`/`#1D9E75`), validados con
+      `scripts/validate_palette.js` de la skill dataviz (todos los checks PASS en modo
+      claro) + tabla diaria con delta vs. día anterior por finca.
+- **Probado en vivo**: se insertaron 4 filas de INFRARUT de prueba directo en Supabase
+  (bypaseando el upload de Excel — el entorno de este agente no puede adjuntar archivos a
+  un `<input type=file>` en Chrome) y se verificó que Resumen/Tendencia calculan y
+  colorean todo correctamente; los datos de prueba se borraron después. El flujo de
+  parseo+upload en sí no se ejercitó en el navegador — el mapeo de tipos entre
+  `parseInfrarutWorkbook` y `importInfraruts` sí está validado por TypeScript en
+  `npm run build`. **Pendiente**: probar la subida real de un Excel desde el navegador
+  (o pedirle a un admin que lo haga) antes de confiar en el flujo end-to-end completo.
 
 ### 5. Viajes / Listado + detección de brechas
 - [ ] `ViajesTable`, `GapPanel` (algoritmo global por número de CP, no por finca/fecha —
