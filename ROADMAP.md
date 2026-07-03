@@ -45,6 +45,17 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
       estaban en el schema de milestone 1) — `npm run build` y `npm run lint` pasan
       limpio, pendiente de probar en vivo (bloqueado por lo mismo que milestone 1: sin
       migraciones aplicadas no hay login funcional)
+- [x] Milestone 3 completo en código: Trabajos + Costos. `actions/trabajos.ts` (alta +
+      borrado de trabajos, sin edición — igual que el HTML legacy, que tampoco la
+      soporta), `TrabajoFormDialog` (insumos dinámicos vía react-hook-form, con `<select>`
+      nativo para unidad/factura vinculada) y `TrabajosDialog` (listado + resumen por
+      lote), ambos colgados de un botón "Trabajos (n)" nuevo en `LotesTable`.
+      `actions/app-settings.ts` + `AppSettingsForm` para editar precio_bolsa/tasas de
+      cambio (antes hardcodeadas en el HTML legacy). `app/(app)/campo/costos/page.tsx`
+      usa `lib/costos.ts` tal cual ya estaba escrito (arriendo, costo por categoría,
+      costo por lote) — el costo/kg azúcar da "—" hasta que haya datos reales en
+      `infraruts` (milestone 4/6). `npm run build`/`lint` pasan limpio, mismo bloqueo de
+      migraciones sin aplicar para probar en vivo.
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -104,10 +115,12 @@ reales del proyecto. Sin esto la app compila pero no tiene datos para mostrar.
       (reemplazo completo de ítems en cada guardado, borra el objeto de Storage al
       eliminar una factura)
 
-### 3. Trabajos + Costos
-- [ ] Tablas `trabajos`, `trabajo_insumos`, `app_settings` (precio_bolsa + tasas de cambio)
-- [ ] `lib/costos.ts` (arriendo, costo/kg azúcar — fórmulas exactas en `index_10.html:2572-2701`)
-- [ ] `app/(app)/campo/costos/page.tsx`
+### 3. Trabajos + Costos ✅ código listo, pendiente aplicar migraciones
+- [x] Tablas `trabajos`, `trabajo_insumos`, `app_settings` (ya estaban en `0001_schema.sql`)
+- [x] `lib/costos.ts` (ya portado en milestone 1 — arriendo, costo/kg azúcar, fórmulas
+      exactas de `index_10.html:2572-2701`)
+- [x] `app/(app)/campo/costos/page.tsx` + `AppSettingsForm` + `TrabajoFormDialog`/
+      `TrabajosDialog` colgados de `LotesTable`
 
 ### 4. Infraruts + Resumen/Tendencia
 - [ ] Tablas `infraruts`, `infraruts_imports`

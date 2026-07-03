@@ -376,6 +376,7 @@ export type Database = {
           tc_oficial: number;
           tc_blue: number;
           tc_ccl: number;
+          updated_at: string;
         }>
       >;
     };
