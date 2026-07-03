@@ -371,7 +371,7 @@ tbody tr:hover td{background:#FAFAF8}
             <option value="fecha">Fecha</option>
           </select>
           <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-            <input id="busca-cp" type="number" placeholder="Buscar CP..." oninput="renderViajes()"
+            <input id="busca-cp" type="number" placeholder="Buscar remito..." oninput="renderViajes()"
               style="padding:6px 10px;border:1px solid var(--gris-border);border-radius:7px;font-size:13px;width:130px">
             <button onclick="toggleGaps()" id="btn-gaps" style="padding:6px 12px;font-size:12px;border:1px solid var(--gris-border);border-radius:7px;background:white;cursor:pointer">
               <i class="ti ti-search" style="font-size:12px;vertical-align:-1px;margin-right:4px"></i>Ver brechas
@@ -383,8 +383,8 @@ tbody tr:hover td{background:#FAFAF8}
         <div class="card ovf">
           <table>
             <thead><tr>
-              <th style="cursor:pointer" onclick="sortViajes('cp')">CP #<span id="sort-cp-icon"> ↑</span></th>
-              <th>Remito</th>
+              <th style="cursor:pointer" onclick="sortViajes('cp')">Remito<span id="sort-cp-icon"> ↑</span></th>
+              <th>CP #</th>
               <th>Fecha</th><th>Finca</th><th>Veh.</th><th>Máq.</th>
               <th>Kg neto</th><th>Trash%</th><th>Brix%</th><th>POL%</th><th>Pureza%</th><th>Rdto%</th><th>Kg azúcar</th><th>Libreta</th>
             </tr></thead>
@@ -402,6 +402,7 @@ tbody tr:hover td{background:#FAFAF8}
             <option value="">Todas</option>
             <option value="TANO">TANO (Lote4)</option>
             <option value="LAS100">LAS 100</option>
+            <option value="PACO">PACO</option>
           </select>
           <label style="font-size:13px;color:var(--text-2);margin-left:4px">Estado:</label>
           <select id="lib-filtro-estado" onchange="renderLibreta()" style="padding:6px 10px;border:1px solid var(--gris-border);border-radius:7px;font-size:13px;background:white">
@@ -411,7 +412,7 @@ tbody tr:hover td{background:#FAFAF8}
             <option value="baja">⚠ Bajas ARCA</option>
           </select>
           <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-            <input id="lib-busca-cp" type="number" placeholder="Buscar CP..." oninput="renderLibreta()"
+            <input id="lib-busca-cp" type="number" placeholder="Buscar remito..." oninput="renderLibreta()"
               style="padding:6px 10px;border:1px solid var(--gris-border);border-radius:7px;font-size:13px;width:130px">
             <label style="padding:6px 14px;background:var(--verde);color:white;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer">
               <i class="ti ti-upload" style="font-size:12px;vertical-align:-1px;margin-right:4px"></i>Subir libreta (.xlsx)
@@ -424,7 +425,7 @@ tbody tr:hover td{background:#FAFAF8}
         <div class="card ovf">
           <table>
             <thead><tr>
-              <th>CP #</th><th>Fecha</th><th>Finca</th><th>Matrícula</th><th>N° Camión</th><th>Despacho</th><th>Hora</th><th>Obs.</th><th>Estado</th>
+              <th>Remito</th><th>Fecha</th><th>Finca</th><th>Matrícula</th><th>N° Camión</th><th>Despacho</th><th>Hora</th><th>Obs.</th><th>Estado</th>
             </tr></thead>
             <tbody id="libreta-tbody"></tbody>
           </table>
@@ -486,7 +487,7 @@ tbody tr:hover td{background:#FAFAF8}
           <div id="bajas-arca-lista"></div>
           <div style="display:flex;gap:8px;align-items:flex-end;margin-top:10px;flex-wrap:wrap">
             <div class="fg">
-              <label>N° CP a dar de baja *</label>
+              <label>N° de remito a dar de baja *</label>
               <input id="inp-baja-cp" type="number" placeholder="Ej: 6908" style="width:130px;padding:7px 10px;border:1px solid var(--gris-border);border-radius:7px;font-size:13px">
             </div>
             <div class="fg">
@@ -868,46 +869,46 @@ const INFRARUTS = [
   {cp:2805,remito:6926,fecha:'2026-06-18',finca:'JASTROW - LA VIRGINIA',veh:1171,maq:40,kg_neto:33001,kg_trash:4339,kg_azucar:3343,brix:18.18,pol:15.70,pureza:86.36,rdto:10.13},
   {cp:2806,remito:6925,fecha:'2026-06-18',finca:'JASTROW - LA VIRGINIA',veh:1131,maq:40,kg_neto:33867,kg_trash:4453,kg_azucar:3444,brix:18.24,pol:15.76,pureza:86.40,rdto:10.17},
   {cp:2822,remito:6927,fecha:'2026-06-18',finca:'JASTROW - LOTE4',veh:1186,maq:28,kg_neto:37107,kg_trash:2793,kg_azucar:3525,brix:17.54,pol:14.87,pureza:84.78,rdto:9.50},
-  {cp:2940,remito:6928,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1163,maq:40,kg_neto:33920,kg_trash:4460,kg_azucar:3429,brix:18.08,pol:15.65,pureza:86.56,rdto:10.11},
-  {cp:2978,remito:6930,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1174,maq:28,kg_neto:32082,kg_trash:4218,kg_azucar:2974,brix:16.82,pol:14.42,pureza:85.73,rdto:9.27},
-  {cp:2993,remito:6932,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1118,maq:40,kg_neto:33832,kg_trash:4448,kg_azucar:3464,brix:18.24,pol:15.83,pureza:86.79,rdto:10.24},
-  {cp:3012,remito:6929,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1175,maq:40,kg_neto:27840,kg_trash:3660,kg_azucar:2837,brix:18.07,pol:15.73,pureza:87.05,rdto:10.19},
-  {cp:3040,remito:6931,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1155,maq:40,kg_neto:29165,kg_trash:3835,kg_azucar:2992,brix:18.40,pol:15.90,pureza:86.41,rdto:10.26},
-  {cp:3046,remito:6933,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1171,maq:28,kg_neto:36456,kg_trash:2744,kg_azucar:3562,brix:17.44,pol:15.11,pureza:86.64,rdto:9.77},
-  {cp:3058,remito:6934,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1131,maq:28,kg_neto:35364,kg_trash:3886,kg_azucar:3398,brix:17.40,pol:14.94,pureza:85.86,rdto:9.61},
-  {cp:3074,remito:6935,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1186,maq:28,kg_neto:38419,kg_trash:4221,kg_azucar:3600,brix:17.34,pol:14.68,pureza:84.66,rdto:9.37},
-  {cp:3109,remito:6938,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1139,maq:40,kg_neto:31888,kg_trash:4192,kg_azucar:3367,brix:19.16,pol:16.43,pureza:85.75,rdto:10.56},
-  {cp:3110,remito:6937,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1163,maq:40,kg_neto:27380,kg_trash:3600,kg_azucar:2790,brix:18.20,pol:15.77,pureza:86.65,rdto:10.19},
-  {cp:3111,remito:6936,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1174,maq:28,kg_neto:32663,kg_trash:4607,kg_azucar:3123,brix:17.40,pol:14.89,pureza:85.57,rdto:9.56},
-  {cp:3117,remito:6939,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1118,maq:28,kg_neto:34761,kg_trash:3819,kg_azucar:3205,brix:17.62,pol:14.73,pureza:83.60,rdto:9.22},
-  {cp:3132,remito:6940,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1175,maq:28,kg_neto:34328,kg_trash:3772,kg_azucar:3309,brix:17.62,pol:15.03,pureza:85.30,rdto:9.64},
-  {cp:3210,remito:6942,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1155,maq:40,kg_neto:30253,kg_trash:4267,kg_azucar:3180,brix:18.86,pol:16.29,pureza:86.37,rdto:10.51},
-  {cp:3237,remito:6943,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1171,maq:28,kg_neto:36076,kg_trash:3964,kg_azucar:3561,brix:18.06,pol:15.40,pureza:85.27,rdto:9.87},
-  {cp:3249,remito:6941,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1131,maq:40,kg_neto:31375,kg_trash:4425,kg_azucar:3194,brix:18.66,pol:15.89,pureza:85.16,rdto:10.18},
-  {cp:3282,remito:6945,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1186,maq:28,kg_neto:33427,kg_trash:3673,kg_azucar:3232,brix:17.30,pol:14.97,pureza:86.53,rdto:9.67},
-  {cp:3321,remito:6946,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1139,maq:28,kg_neto:36725,kg_trash:4035,kg_azucar:3401,brix:17.02,pol:14.47,pureza:85.02,rdto:9.26},
-  {cp:3348,remito:6944,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:38995,kg_trash:4285,kg_azucar:3853,brix:17.78,pol:15.33,pureza:86.22,rdto:9.88},
+  {cp:2940,remito:6928,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1103,maq:40,kg_neto:33920,kg_trash:4460,kg_azucar:3429,brix:18.08,pol:15.65,pureza:86.56,rdto:10.11},
+  {cp:2978,remito:6930,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1122,maq:28,kg_neto:32082,kg_trash:4218,kg_azucar:2974,brix:16.82,pol:14.42,pureza:85.73,rdto:9.27},
+  {cp:2993,remito:6932,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1175,maq:40,kg_neto:33832,kg_trash:4448,kg_azucar:3464,brix:18.24,pol:15.83,pureza:86.79,rdto:10.24},
+  {cp:3012,remito:6929,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1111,maq:40,kg_neto:27840,kg_trash:3660,kg_azucar:2837,brix:18.07,pol:15.73,pureza:87.05,rdto:10.19},
+  {cp:3040,remito:6931,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1139,maq:40,kg_neto:29165,kg_trash:3835,kg_azucar:2992,brix:18.4,pol:15.9,pureza:86.41,rdto:10.26},
+  {cp:3046,remito:6933,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1131,maq:28,kg_neto:36456,kg_trash:2744,kg_azucar:3562,brix:17.44,pol:15.11,pureza:86.64,rdto:9.77},
+  {cp:3058,remito:6934,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1186,maq:28,kg_neto:35364,kg_trash:3886,kg_azucar:3398,brix:17.4,pol:14.94,pureza:85.86,rdto:9.61},
+  {cp:3074,remito:6935,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1159,maq:28,kg_neto:38419,kg_trash:4221,kg_azucar:3600,brix:17.34,pol:14.68,pureza:84.66,rdto:9.37},
+  {cp:3109,remito:6938,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1155,maq:40,kg_neto:31888,kg_trash:4192,kg_azucar:3367,brix:19.16,pol:16.43,pureza:85.75,rdto:10.56},
+  {cp:3110,remito:6937,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1174,maq:40,kg_neto:27380,kg_trash:3600,kg_azucar:2790,brix:18.2,pol:15.77,pureza:86.65,rdto:10.19},
+  {cp:3111,remito:6936,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1118,maq:28,kg_neto:32663,kg_trash:4607,kg_azucar:3123,brix:17.4,pol:14.89,pureza:85.57,rdto:9.56},
+  {cp:3117,remito:6939,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:34761,kg_trash:3819,kg_azucar:3205,brix:17.62,pol:14.73,pureza:83.6,rdto:9.22},
+  {cp:3132,remito:6940,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1170,maq:28,kg_neto:34328,kg_trash:3772,kg_azucar:3309,brix:17.62,pol:15.03,pureza:85.3,rdto:9.64},
+  {cp:3210,remito:6942,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1175,maq:40,kg_neto:30253,kg_trash:4267,kg_azucar:3180,brix:18.86,pol:16.29,pureza:86.37,rdto:10.51},
+  {cp:3237,remito:6943,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1131,maq:28,kg_neto:36076,kg_trash:3964,kg_azucar:3561,brix:18.06,pol:15.4,pureza:85.27,rdto:9.87},
+  {cp:3249,remito:6941,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1139,maq:40,kg_neto:31375,kg_trash:4425,kg_azucar:3194,brix:18.66,pol:15.89,pureza:85.16,rdto:10.18},
+  {cp:3282,remito:6945,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1106,maq:28,kg_neto:33427,kg_trash:3673,kg_azucar:3232,brix:17.3,pol:14.97,pureza:86.53,rdto:9.67},
+  {cp:3321,remito:6946,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:36725,kg_trash:4035,kg_azucar:3401,brix:17.02,pol:14.47,pureza:85.02,rdto:9.26},
+  {cp:3348,remito:6944,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1159,maq:28,kg_neto:38995,kg_trash:4285,kg_azucar:3853,brix:17.78,pol:15.33,pureza:86.22,rdto:9.88},
   {cp:3357,remito:6949,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1174,maq:40,kg_neto:27054,kg_trash:3816,kg_azucar:2819,brix:18.57,pol:16.11,pureza:86.75,rdto:10.42},
-  {cp:3418,remito:6947,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1118,maq:28,kg_neto:34745,kg_trash:3525,kg_azucar:3131,brix:17.17,pol:14.37,pureza:83.69,rdto:9.01},
-  {cp:3434,remito:6954,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1175,maq:40,kg_neto:34399,kg_trash:4851,kg_azucar:3560,brix:18.97,pol:16.15,pureza:85.13,rdto:10.35},
-  {cp:3442,remito:6948,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1155,maq:28,kg_neto:36062,kg_trash:3658,kg_azucar:3246,brix:17.62,pol:14.59,pureza:82.80,rdto:9.00},
-  {cp:3510,remito:6951,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1171,maq:28,kg_neto:36434,kg_trash:3696,kg_azucar:3359,brix:17.62,pol:14.73,pureza:83.60,rdto:9.22},
-  {cp:3514,remito:6952,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1131,maq:40,kg_neto:33417,kg_trash:4713,kg_azucar:3295,brix:17.52,pol:15.23,pureza:86.93,rdto:9.86},
-  {cp:3526,remito:6957,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1186,maq:40,kg_neto:34074,kg_trash:4806,kg_azucar:3455,brix:18.22,pol:15.72,pureza:86.28,rdto:10.14},
-  {cp:3529,remito:6953,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1139,maq:28,kg_neto:30487,kg_trash:3093,kg_azucar:2838,brix:16.92,pol:14.49,pureza:85.64,rdto:9.31},
-  {cp:3545,remito:6950,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:36262,kg_trash:3678,kg_azucar:3496,brix:17.34,pol:14.95,pureza:86.22,rdto:9.64},
-  {cp:3550,remito:6955,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1174,maq:28,kg_neto:33992,kg_trash:3448,kg_azucar:3165,brix:16.74,pol:14.44,pureza:86.26,rdto:9.31},
-  {cp:3579,remito:6956,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1118,maq:28,kg_neto:36588,kg_trash:3712,kg_azucar:3480,brix:17.16,pol:14.76,pureza:86.01,rdto:9.51},
-  {cp:3614,remito:6958,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1175,maq:28,kg_neto:40038,kg_trash:4062,kg_azucar:3844,brix:17.16,pol:14.86,pureza:86.60,rdto:9.60},
-  {cp:3667,remito:6959,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1155,maq:28,kg_neto:35118,kg_trash:3562,kg_azucar:3255,brix:17.42,pol:14.66,pureza:84.16,rdto:9.27},
-  {cp:3695,remito:6960,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1171,maq:28,kg_neto:37453,kg_trash:4287,kg_azucar:3491,brix:17.62,pol:14.79,pureza:83.94,rdto:9.32},
-  {cp:3752,remito:6964,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1131,maq:40,kg_neto:33268,kg_trash:4692,kg_azucar:3310,brix:18.12,pol:15.50,pureza:85.54,rdto:9.95},
-  {cp:3753,remito:6961,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1186,maq:28,kg_neto:32877,kg_trash:3763,kg_azucar:3153,brix:17.60,pol:14.97,pureza:85.06,rdto:9.59},
-  {cp:3755,remito:6965,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1139,maq:40,kg_neto:32453,kg_trash:4577,kg_azucar:3320,brix:18.40,pol:15.86,pureza:86.20,rdto:10.23},
-  {cp:3773,remito:6963,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:40055,kg_trash:4585,kg_azucar:3849,brix:17.68,pol:15.02,pureza:84.95,rdto:9.61},
-  {cp:3783,remito:6962,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1186,maq:40,kg_neto:32186,kg_trash:3214,kg_azucar:3325,brix:18.84,pol:16.10,pureza:85.46,rdto:10.33},
-  {cp:3814,remito:6966,fecha:'2026-06-19',finca:'JASTROW - LOTE4',veh:1139,maq:28,kg_neto:43483,kg_trash:4977,kg_azucar:4113,brix:17.54,pol:14.84,pureza:84.61,rdto:9.46},
-  {cp:3853,remito:6970,fecha:'2026-06-19',finca:'JASTROW - LA VIRGINIA',veh:1131,maq:40,kg_neto:34777,kg_trash:3473,kg_azucar:3495,brix:17.97,pol:15.56,pureza:86.59,rdto:10.05},
+  {cp:3418,remito:6947,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1118,maq:28,kg_neto:34745,kg_trash:3525,kg_azucar:3131,brix:17.17,pol:14.37,pureza:83.69,rdto:9.01},
+  {cp:3434,remito:6954,fecha:'2026-06-20',finca:'JASTROW - LA VIRGINIA',veh:1175,maq:40,kg_neto:34399,kg_trash:4851,kg_azucar:3560,brix:18.97,pol:16.15,pureza:85.13,rdto:10.35},
+  {cp:3442,remito:6948,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1170,maq:28,kg_neto:36062,kg_trash:3658,kg_azucar:3246,brix:17.62,pol:14.59,pureza:82.8,rdto:9.0},
+  {cp:3510,remito:6951,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1131,maq:28,kg_neto:36434,kg_trash:3696,kg_azucar:3359,brix:17.62,pol:14.73,pureza:83.6,rdto:9.22},
+  {cp:3514,remito:6952,fecha:'2026-06-20',finca:'JASTROW - LA VIRGINIA',veh:1139,maq:40,kg_neto:33417,kg_trash:4713,kg_azucar:3295,brix:17.52,pol:15.23,pureza:86.93,rdto:9.86},
+  {cp:3526,remito:6957,fecha:'2026-06-20',finca:'JASTROW - LA VIRGINIA',veh:1126,maq:40,kg_neto:34074,kg_trash:4806,kg_azucar:3455,brix:18.22,pol:15.72,pureza:86.28,rdto:10.14},
+  {cp:3529,remito:6953,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1149,maq:28,kg_neto:30487,kg_trash:3093,kg_azucar:2838,brix:16.92,pol:14.49,pureza:85.64,rdto:9.31},
+  {cp:3545,remito:6950,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1186,maq:28,kg_neto:36262,kg_trash:3678,kg_azucar:3496,brix:17.34,pol:14.95,pureza:86.22,rdto:9.64},
+  {cp:3550,remito:6955,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1106,maq:28,kg_neto:33992,kg_trash:3448,kg_azucar:3165,brix:16.74,pol:14.44,pureza:86.26,rdto:9.31},
+  {cp:3579,remito:6956,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:36588,kg_trash:3712,kg_azucar:3480,brix:17.16,pol:14.76,pureza:86.01,rdto:9.51},
+  {cp:3614,remito:6958,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1159,maq:28,kg_neto:40038,kg_trash:4062,kg_azucar:3844,brix:17.16,pol:14.86,pureza:86.6,rdto:9.6},
+  {cp:3667,remito:6959,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1118,maq:28,kg_neto:35118,kg_trash:3562,kg_azucar:3255,brix:17.42,pol:14.66,pureza:84.16,rdto:9.27},
+  {cp:3695,remito:6960,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1131,maq:28,kg_neto:37453,kg_trash:4287,kg_azucar:3491,brix:17.62,pol:14.79,pureza:83.94,rdto:9.32},
+  {cp:3752,remito:6964,fecha:'2026-06-20',finca:'JASTROW - LA VIRGINIA',veh:1175,maq:40,kg_neto:33268,kg_trash:4692,kg_azucar:3310,brix:18.12,pol:15.5,pureza:85.54,rdto:9.95},
+  {cp:3753,remito:6961,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1149,maq:28,kg_neto:32877,kg_trash:3763,kg_azucar:3153,brix:17.6,pol:14.97,pureza:85.06,rdto:9.59},
+  {cp:3755,remito:6965,fecha:'2026-06-20',finca:'JASTROW - LA VIRGINIA',veh:1174,maq:40,kg_neto:32453,kg_trash:4577,kg_azucar:3320,brix:18.4,pol:15.86,pureza:86.2,rdto:10.23},
+  {cp:3773,remito:6963,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1186,maq:28,kg_neto:40055,kg_trash:4585,kg_azucar:3849,brix:17.68,pol:15.02,pureza:84.95,rdto:9.61},
+  {cp:3783,remito:6962,fecha:'2026-06-20',finca:'JASTROW - LA VIRGINIA',veh:1126,maq:40,kg_neto:32186,kg_trash:3214,kg_azucar:3325,brix:18.84,pol:16.1,pureza:85.46,rdto:10.33},
+  {cp:3814,remito:6966,fecha:'2026-06-20',finca:'JASTROW - LOTE4',veh:1159,maq:28,kg_neto:43483,kg_trash:4977,kg_azucar:4113,brix:17.54,pol:14.84,pureza:84.61,rdto:9.46},
+  {cp:3853,remito:6970,fecha:'2026-06-20',finca:'JASTROW - LA VIRGINIA',veh:1155,maq:40,kg_neto:34777,kg_trash:3473,kg_azucar:3495,brix:17.97,pol:15.56,pureza:86.59,rdto:10.05},
   {cp:3873,remito:6968,fecha:'2026-06-21',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:39535,kg_trash:4525,kg_azucar:3878,brix:17.58,pol:15.19,pureza:86.41,rdto:9.81},
   {cp:3950,remito:6971,fecha:'2026-06-21',finca:'JASTROW - LOTE4',veh:1106,maq:28,kg_neto:37731,kg_trash:4319,kg_azucar:3660,brix:17.37,pol:15.02,pureza:86.47,rdto:9.70},
   {cp:3951,remito:6969,fecha:'2026-06-21',finca:'JASTROW - LOTE4',veh:1118,maq:28,kg_neto:37839,kg_trash:4331,kg_azucar:3735,brix:17.58,pol:15.26,pureza:86.80,rdto:9.87},
@@ -998,7 +999,22 @@ const INFRARUTS = [
   {cp:7366,remito:7050,fecha:'2026-06-29',finca:'JASTROW - LOTE4',veh:1139,maq:40,kg_neto:34550,kg_trash:3920,kg_azucar:3479,brix:18.12,pol:15.62,pureza:86.2,rdto:10.07},
   {cp:7405,remito:7051,fecha:'2026-06-29',finca:'JASTROW - LOTE4',veh:1175,maq:40,kg_neto:35008,kg_trash:3972,kg_azucar:3504,brix:17.82,pol:15.47,pureza:86.81,rdto:10.01},
   {cp:7438,remito:7055,fecha:'2026-06-29',finca:'JASTROW - LOTE4',veh:1137,maq:40,kg_neto:34900,kg_trash:3960,kg_azucar:3476,brix:18.27,pol:15.55,pureza:85.11,rdto:9.96},
-  {cp:7458,remito:7052,fecha:'2026-06-29',finca:'JASTROW - LOTE4',veh:1166,maq:28,kg_neto:39903,kg_trash:4527,kg_azucar:3699,brix:16.82,pol:14.42,pureza:85.73,rdto:9.27}
+  {cp:7458,remito:7052,fecha:'2026-06-29',finca:'JASTROW - LOTE4',veh:1166,maq:28,kg_neto:39903,kg_trash:4527,kg_azucar:3699,brix:16.82,pol:14.42,pureza:85.73,rdto:9.27},
+  // ---- INFRARUT 01/07/2026 ----
+  {cp:8004,remito:7064,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1175,maq:40,kg_neto:32707,kg_trash:3513,kg_azucar:3245,brix:18.24,pol:15.56,pureza:85.31,rdto:9.92},
+  {cp:8006,remito:7066,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:39795,kg_trash:4275,kg_azucar:3876,brix:18.04,pol:15.32,pureza:84.92,rdto:9.74},
+  {cp:8007,remito:7065,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1174,maq:40,kg_neto:33546,kg_trash:3604,kg_azucar:3311,brix:18.18,pol:15.49,pureza:85.2,rdto:9.87},
+  {cp:8049,remito:7067,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1166,maq:28,kg_neto:38838,kg_trash:4172,kg_azucar:3736,brix:17.94,pol:15.18,pureza:84.62,rdto:9.62},
+  {cp:8054,remito:7068,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1155,maq:40,kg_neto:35027,kg_trash:3763,kg_azucar:3370,brix:18.24,pol:15.33,pureza:84.05,rdto:9.62},
+  {cp:8101,remito:7070,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1149,maq:28,kg_neto:26927,kg_trash:2893,kg_azucar:2440,brix:17.3,pol:14.5,pureza:83.82,rdto:9.06},
+  {cp:8124,remito:7071,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1161,maq:40,kg_neto:37763,kg_trash:4057,kg_azucar:3818,brix:18.08,pol:15.71,pureza:86.89,rdto:10.11},
+  {cp:8140,remito:7069,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1131,maq:28,kg_neto:39723,kg_trash:4267,kg_azucar:3976,brix:17.88,pol:15.55,pureza:86.97,rdto:10.01},
+  {cp:8177,remito:7072,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:40635,kg_trash:4365,kg_azucar:4072,brix:17.98,pol:15.59,pureza:86.71,rdto:10.02},
+  {cp:8220,remito:7073,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1175,maq:40,kg_neto:35795,kg_trash:3845,kg_azucar:3612,brix:18.18,pol:15.72,pureza:86.47,rdto:10.09},
+  {cp:8221,remito:7074,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1174,maq:40,kg_neto:37513,kg_trash:3737,kg_azucar:3823,brix:18.48,pol:15.91,pureza:86.09,rdto:10.19},
+  {cp:8239,remito:7075,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1155,maq:40,kg_neto:36267,kg_trash:3613,kg_azucar:3674,brix:18.32,pol:15.8,pureza:86.24,rdto:10.13},
+  {cp:8339,remito:7076,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1131,maq:28,kg_neto:43888,kg_trash:4372,kg_azucar:4406,brix:18.02,pol:15.62,pureza:86.68,rdto:10.04},
+  {cp:8436,remito:7078,fecha:'2026-07-01',finca:'JASTROW - LOTE4',veh:1163,maq:28,kg_neto:42587,kg_trash:4243,kg_azucar:4037,brix:17.42,pol:14.87,pureza:85.36,rdto:9.48}
 ];
 
 const META = 10.0;
@@ -1294,6 +1310,9 @@ function viajesTab(name){
 
 // ---- CPs DEL CAMPO ----
 // Datos de la libreta hardcodeados — siempre disponibles, independiente de localStorage
+// NOTA: en la libreta el campo 'cp' contiene el N° DE REMITO del talonario
+// (numeración propia de Jastrow, generada al salir el camión del campo).
+// Es la clave que usa el ingenio en sus reportes y por la que se reconcilia TODO.
 const _LIBRETA_DEFAULT = [
   {cp:6901,fecha:'2026-06-25',camion:'KWU 137 / cam.1155',obs:'TANO · desp.1'},
   {cp:6902,fecha:'2026-06-25',camion:'JKM 516 / cam.1155',obs:'TANO · desp.1 · 39.350 kg neto'},
@@ -1418,18 +1437,47 @@ const _LIBRETA_DEFAULT = [
   {cp:7047,fecha:'2026-06-30',camion:'JKM 516 / cam.1164',obs:'LA100 · desp.102 · 12:40'},
   {cp:7048,fecha:'2026-06-30',camion:'SWE 615 / cam.1149',obs:'LA100 · desp.103 · 12:15'},
   // ---- Libreta pag.10: despachos 148-159 ----
-  {cp:7049,fecha:'2026-06-30',camion:'DMI 720 / cam.1134',obs:'LAS100 · desp.104 · 12:33'},
-  {cp:7050,fecha:'2026-06-30',camion:'BKU 200 / cam.1139',obs:'LAS100 · desp.105 · 13:00'},
-  {cp:7051,fecha:'2026-06-30',camion:'FND 536 / cam.1175',obs:'LAS100 · desp.106 · 14:50'},
-  {cp:7052,fecha:'2026-06-30',camion:'KXC 342 / cam.1166',obs:'LAS100 · desp.107 · 16:20'},
-  {cp:7053,fecha:'2026-06-30',camion:'AAJ84KS / cam.1163',obs:'LAS100 · desp.108 · 16:25'},
-  {cp:7054,fecha:'2026-06-30',camion:'GPE 247 / cam.1136',obs:'LAS100 · desp.109 · 16:40'},
-  {cp:7055,fecha:'2026-06-30',camion:'JSS 619 / cam.1137',obs:'LAS100 · desp.110 · 17:00'},
-  {cp:7056,fecha:'2026-06-30',camion:'JKM 516 / cam.1131',obs:'LA100 · desp.111 · 18:00'},
-  {cp:7057,fecha:'2026-06-30',camion:'DMI 720 / cam.1134',obs:'LA100 · desp.112 · 19:00'},
-  {cp:7058,fecha:'2026-06-30',camion:'DML 9I6 / cam.1157',obs:'LA100 · desp.113 · 19:30'},
-  {cp:7059,fecha:'2026-06-30',camion:'SWE 615 / cam.1149',obs:'LA100 · desp.114 · 20:45'},
-  {cp:7060,fecha:'2026-06-30',camion:'KXC 342 / cam.1166',obs:'LAS100 · desp.115 · 11:50'}
+  {cp:7049,fecha:'2026-06-29',camion:'DMI 720 / cam.1134',obs:'LAS100 · desp.104 · 12:33'},
+  {cp:7050,fecha:'2026-06-29',camion:'BKU 200 / cam.1139',obs:'LAS100 · desp.105 · 13:00'},
+  {cp:7051,fecha:'2026-06-29',camion:'FND 536 / cam.1175',obs:'LAS100 · desp.106 · 14:50'},
+  {cp:7052,fecha:'2026-06-29',camion:'KXC 342 / cam.1166',obs:'LAS100 · desp.107 · 16:20'},
+  {cp:7053,fecha:'2026-06-29',camion:'AA 784 KS / cam.1163',obs:'LAS100 · desp.108 · 16:25'},
+  {cp:7054,fecha:'2026-06-29',camion:'GPE 247 / cam.1136',obs:'LAS100 · desp.109 · 16:40'},
+  {cp:7055,fecha:'2026-06-29',camion:'(patente tachada) / cam.1137',obs:'LAS100 · desp.110 · 17:00'},
+  {cp:7056,fecha:'2026-06-29',camion:'JKM 546 / cam.1131',obs:'LAS100 · desp.111 · 18:00'},
+  {cp:7057,fecha:'2026-06-29',camion:'DMI 720 / cam.1134',obs:'LAS100 · desp.112 · 19:00'},
+  {cp:7058,fecha:'2026-06-29',camion:'OMI 076 / cam.1157',obs:'LAS100 · desp.113 · 19:30'},
+  {cp:7059,fecha:'2026-06-29',camion:'SVE 615 / cam.1149',obs:'LAS100 · desp.114 · 20:45'},
+  {cp:7060,fecha:'2026-06-30',camion:'KXC 342 / cam.1166',obs:'LAS100 · desp.115 · 11:50'},
+  // ---- LIBRETA página 10 (fechas 29-30/06 deducidas por horario + cruce INFRARUT) ----
+  {cp:7061,fecha:'2026-06-30',camion:'JKM 546 / cam.1131',obs:'LAS100 · desp.116 · 16:00'},
+  {cp:7062,fecha:'2026-06-30',camion:'KWU 137 / cam.1155',obs:'LAS100 · desp.117 · 16:30'},
+  {cp:7063,fecha:'2026-06-30',camion:'BKU 200 / cam.1139',obs:'LAS100 · desp.118 · 17:00'},
+  {cp:7064,fecha:'2026-06-30',camion:'FND 536 / cam.1175',obs:'LAS100 · desp.119 · 22:00'},
+  {cp:7065,fecha:'2026-06-30',camion:'HJW 884 / cam.1174',obs:'LAS100 · desp.120 · 22:15'},
+  // ---- LIBRETA página 11 (30/06 a 02/07, fechas por horario cruzando medianoche) ----
+  {cp:7066,fecha:'2026-06-30',camion:'AA 784 KS / cam.1163',obs:'LAS100 · desp.121 · 23:30'},
+  {cp:7067,fecha:'2026-07-01',camion:'KXC 342 / cam.1166',obs:'LAS100 · desp.122 · 01:15'},
+  {cp:7068,fecha:'2026-07-01',camion:'KWU 137 / cam.1155',obs:'LAS100 · desp.123 · 02:00'},
+  {cp:7069,fecha:'2026-07-01',camion:'JKM 516 / cam.1131',obs:'LAS100 · desp.124 · 02:15'},
+  {cp:7070,fecha:'2026-07-01',camion:'SWE 615 / cam.1149',obs:'LAS100 · desp.125 · 03:15'},
+  {cp:7071,fecha:'2026-07-01',camion:'FZQ 517 / cam.1161',obs:'LAS100 · desp.126 · 04:20'},
+  {cp:7072,fecha:'2026-07-01',camion:'AA 784 KS / cam.1163',obs:'LAS100 · desp.127 · 08:45'},
+  {cp:7073,fecha:'2026-07-01',camion:'FND 536 / cam.1175',obs:'LAS100 · desp.128 · 09:20'},
+  {cp:7074,fecha:'2026-07-01',camion:'HJW 884 / cam.1174',obs:'LAS100 · desp.129 · 09:30'},
+  {cp:7075,fecha:'2026-07-01',camion:'KWU 137 / cam.1155',obs:'LAS100 · desp.130 · 12:00'},
+  {cp:7076,fecha:'2026-07-01',camion:'JKM 516 / cam.1131',obs:'LAS100 · desp.131 · 16:25'},
+  {cp:7077,fecha:'2026-07-01',camion:'KXC 342 / cam.1166',obs:'LAS100 · desp.132 · 19:00'},
+  {cp:7078,fecha:'2026-07-01',camion:'AA 784 KS / cam.1163',obs:'LAS100 · desp.133 · 19:30'},
+  {cp:7079,fecha:'2026-07-02',camion:'DMI 720 / cam.1134',obs:'LAS100 · desp.134 · 00:00'},
+  {cp:7080,fecha:'2026-07-02',camion:'JKM 516 / cam.1131',obs:'LAS100 · desp.135 · 01:00'},
+  {cp:7081,fecha:'2026-07-02',camion:'BKU 200 / cam.1139',obs:'LAS100 · desp.136 · 02:20'},
+  // ---- LIBRETA página 12 (02/07 · inicio finca PACO) ----
+  {cp:7082,fecha:'2026-07-02',camion:'KKD 762 / cam.1186',obs:'PACO · desp.1 · 02:30'},
+  {cp:7083,fecha:'2026-07-02',camion:'FND 536 / cam.1175',obs:'PACO · desp.2 · 09:20'},
+  {cp:7084,fecha:'2026-07-02',camion:'HJW 884 / cam.1174',obs:'PACO · desp.3 · 09:30'},
+  {cp:7085,fecha:'2026-07-02',camion:'FZQ 517 / cam.1161',obs:'PACO · desp.4 · 09:40'},
+  {cp:7086,fecha:'2026-07-02',camion:'KWU 137 / cam.1155',obs:'PACO · desp.5 · 10:00'}
 ];
 
 const _BAJAS_DEFAULT = [
@@ -1506,7 +1554,7 @@ function parseCPInput(raw){
 }
 
 function deleteCPCampo(cp){
-  if(!confirm('¿Eliminar CP '+cp+' de tus registros?')) return;
+  if(!confirm('¿Eliminar el remito '+cp+' de tus registros?')) return;
   saveCPsCampo(getCPsCampo().filter(x=>x.cp!==cp));
   renderReconcilia();
 }
@@ -1639,6 +1687,7 @@ function renderLibreta(){
 
     function getFinca(x){
       const o = (x.obs||'').toUpperCase();
+      if(o.includes('PACO')) return 'PACO';
       return (o.includes('LAS100')||o.includes('LAS 100')||o.includes('LA 100')) ? 'LAS100' : 'TANO';
     }
     function getMatricula(x){ return (x.camion||'').split('/')[0].trim(); }
@@ -1665,7 +1714,7 @@ function renderLibreta(){
     const res = document.getElementById('libreta-resumen');
     if(res) res.innerHTML =
       '<div style="display:flex;gap:10px;flex-wrap:wrap">'
-      +'<div class="mc info" style="flex:1;min-width:110px"><div class="lbl">Total despachos</div><div class="val">'+total+'</div><div class="sub">CP 6901–7001</div></div>'
+      +'<div class="mc info" style="flex:1;min-width:110px"><div class="lbl">Total despachos</div><div class="val">'+total+'</div><div class="sub">remitos del talonario</div></div>'
       +'<div class="mc ok" style="flex:1;min-width:110px"><div class="lbl">✅ Reconciliados</div><div class="val">'+recon+'</div><div class="sub">en INFRARUT</div></div>'
       +'<div class="mc bad" style="flex:1;min-width:110px"><div class="lbl">❌ Sin reconciliar</div><div class="val">'+pend+'</div><div class="sub">no están en INFRARUT</div></div>'
       +'<div class="mc warn" style="flex:1;min-width:110px"><div class="lbl">⚠ Bajas ARCA</div><div class="val">'+nbaja+'</div><div class="sub">a gestionar</div></div>'
@@ -1722,7 +1771,7 @@ function renderBajasArca(){
     return;
   }
   cont.innerHTML = '<div class="ovf"><table style="font-size:12px">'
-    +'<thead><tr><th>CP #</th><th>Fecha</th><th>Motivo</th><th>Obs.</th><th>Estado</th><th></th></tr></thead>'
+    +'<thead><tr><th>Remito</th><th>Fecha</th><th>Motivo</th><th>Obs.</th><th>Estado</th><th></th></tr></thead>'
     +'<tbody>'+bajas.map(b=>`<tr style="background:${b.gestionado?'#F0FBF0':'var(--rojo-light)'}">
       <td style="font-weight:700;color:var(--rojo)">${b.cp}</td>
       <td>${b.fecha||'—'}</td>
@@ -1749,7 +1798,7 @@ function addBajaArca(){
 }
 
 function deleteBajaArca(cp){
-  if(!confirm('¿Eliminar la baja del CP '+cp+'?')) return;
+  if(!confirm('¿Eliminar la baja del remito '+cp+'?')) return;
   saveBajasArca(getBajasArca().filter(b=>b.cp!==cp));
   renderBajasArca(); renderReconcilia(); renderLibreta();
 }
@@ -1766,28 +1815,59 @@ function renderReconcilia(){
   const infrarut_map = Object.fromEntries(INFRARUTS.filter(r=>r.remito).map(r=>[r.remito,r]));
   const bajasSet = new Set(getBajasArca().map(b=>b.cp));
 
-  const reconciliados = mios.filter(x=>enInfrarut.has(x.cp) && !bajasSet.has(x.cp));
-  const pendientes    = mios.filter(x=>!enInfrarut.has(x.cp) && !bajasSet.has(x.cp));
+  const reconciliados = mios.filter(x=>enInfrarut.has(x.cp) && !bajasSet.has(x.cp))
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||b.cp-a.cp);
+  const pendientes    = mios.filter(x=>!enInfrarut.has(x.cp) && !bajasSet.has(x.cp))
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||b.cp-a.cp);
   const bajas         = getBajasArca();
+
+  // Cruces con diferencias entre libreta e INFRARUT.
+  // Regla de fechas: el camión sale el día X (libreta) y el ingenio lo recibe el mismo día o al siguiente (~12 hs de viaje).
+  function diaSiguiente(f){ const d=new Date(f+'T12:00:00'); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); }
+  function chequeoFecha(x,inf){
+    if(!x.fecha||!inf?.fecha) return 'ok';
+    if(inf.fecha===x.fecha||inf.fecha===diaSiguiente(x.fecha)) return 'ok';
+    return inf.fecha<x.fecha ? 'imposible' : 'demora';
+  }
+  const conDif = reconciliados.filter(x=>{
+    const inf=infrarut_map[x.cp]; if(!inf) return false;
+    const mm=(x.camion||'').match(/cam\.?(\d+)/i);
+    const camLib=mm?parseInt(mm[1]):null;
+    return chequeoFecha(x,inf)!=='ok'||(camLib!==null&&camLib!==inf.veh);
+  });
+
+  // Días con registros de libreta pero sin INFRARUT cargado
+  const fechasInf = new Set(INFRARUTS.map(r=>r.fecha));
+  const diasSinInfrarut = [...new Set(pendientes.map(x=>x.fecha).filter(f=>f&&!fechasInf.has(f)))].sort();
 
   function getMatricula(x){ return (x.camion||'').split('/')[0].trim(); }
 
   document.getElementById('reconcilia-resultado').innerHTML=`
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem">
-      <div class="mc info"  style="flex:1;min-width:120px"><div class="lbl">Total libreta</div><div class="val">${mios.length}</div><div class="sub">CPs del campo</div></div>
+      <div class="mc info"  style="flex:1;min-width:120px"><div class="lbl">Total libreta</div><div class="val">${mios.length}</div><div class="sub">remitos emitidos en el campo</div></div>
       <div class="mc ok"   style="flex:1;min-width:120px"><div class="lbl">✅ Reconciliados</div><div class="val">${reconciliados.length}</div><div class="sub">confirmados por ingenio</div></div>
       <div class="mc bad"  style="flex:1;min-width:120px"><div class="lbl">❌ Sin reconciliar</div><div class="val">${pendientes.length}</div><div class="sub">no están en INFRARUT</div></div>
       <div class="mc warn" style="flex:1;min-width:120px"><div class="lbl">⚠ Bajas ARCA</div><div class="val">${bajas.length}</div><div class="sub">no deben aparecer</div></div>
+      ${conDif.length>0?`<div class="mc warn" style="flex:1;min-width:120px"><div class="lbl">⚠ Con diferencias</div><div class="val">${conDif.length}</div><div class="sub">fecha o camión no coinciden</div></div>`:''}
     </div>
+    ${conDif.length>0?`<div style="font-size:12px;background:var(--naranja-light);color:var(--naranja);padding:8px 12px;border-radius:8px;margin-bottom:1rem">
+      <i class="ti ti-alert-triangle" style="vertical-align:-2px;margin-right:4px"></i>
+      <strong>${conDif.length} remitos reconciliados tienen diferencias de fecha o camión</strong> entre lo anotado en la libreta y lo reportado por el ingenio. El cruce por remito es válido, pero conviene revisar la transcripción de esos talonarios. Están marcados en naranja en la tabla.
+    </div>`:''}
 
     ${pendientes.length>0?`
     <div class="card" style="margin-bottom:1rem;border-left:4px solid var(--rojo)">
       <div class="card-title" style="color:var(--rojo)"><i class="ti ti-alert-circle" style="vertical-align:-2px;margin-right:6px"></i>
         Sin reconciliar — no aparecen en el INFRARUT (${pendientes.length})
       </div>
-      <div style="font-size:12px;color:var(--text-2);margin-bottom:10px">Estos CPs salieron del campo pero el ingenio no los reportó. Verificar si el INFRARUT correspondiente está pendiente de llegada o si hay que reclamar.</div>
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:10px">Estos remitos salieron del campo pero el ingenio no los reportó. Verificar si el INFRARUT correspondiente está pendiente de llegada o si hay que reclamar.</div>
+      ${diasSinInfrarut.length>0?`<div style="font-size:12px;background:var(--naranja-light);color:var(--naranja);padding:8px 12px;border-radius:8px;margin-bottom:10px">
+        <i class="ti ti-file-alert" style="vertical-align:-2px;margin-right:4px"></i>
+        <strong>Falta cargar el INFRARUT de: ${diasSinInfrarut.map(f=>f.slice(5).split('-').reverse().join('/')).join(', ')}.</strong>
+        Los remitos de esos días se van a reconciliar solos cuando llegue el reporte del ingenio.
+      </div>`:''}
       <div class="ovf"><table style="font-size:12px">
-        <thead><tr><th>CP #</th><th>Fecha salida</th><th>Matrícula / Camión</th><th>Obs.</th></tr></thead>
+        <thead><tr><th>Remito</th><th>Fecha salida</th><th>Matrícula / Camión</th><th>Obs.</th></tr></thead>
         <tbody>${pendientes.map(x=>`<tr style="background:var(--rojo-light)">
           <td style="font-weight:700;color:var(--rojo);font-size:14px">${x.cp}</td>
           <td>${x.fecha||'—'}</td>
@@ -1803,21 +1883,32 @@ function renderReconcilia(){
         Reconciliados — confirmados por el ingenio (${reconciliados.length})
       </div>
       <div class="ovf"><table style="font-size:12px">
-        <thead><tr><th>CP #</th><th>Fecha campo</th><th>Fecha INFRARUT</th><th>Finca</th><th>Rdto%</th><th>Kg neto</th><th>Kg azúcar</th></tr></thead>
+        <thead><tr><th>Remito</th><th>CP ingenio</th><th>Fecha campo</th><th>Fecha INFRARUT</th><th>Camión campo</th><th>Veh. ingenio</th><th>Finca</th><th>Rdto%</th><th>Kg neto</th><th>Kg azúcar</th><th>Chequeo</th></tr></thead>
         <tbody>${reconciliados.map(x=>{
           const inf=infrarut_map[x.cp];
-          return `<tr>
+          const mm=(x.camion||'').match(/cam\.?(\d+)/i);
+          const camLib=mm?parseInt(mm[1]):null;
+          const cf=chequeoFecha(x,inf);
+          const vOk=camLib===null||!inf||camLib===inf.veh;
+          const problemas=[cf==='imposible'?'Fecha imposible':cf==='demora'?'Demora >1 día':'', !vOk?'Camión':''].filter(Boolean);
+          const chk = problemas.length===0 ? '<span class="pill pill-ok" style="font-size:10px">✓ OK</span>'
+            : '<span class="pill '+(cf==='imposible'?'pill-bad':'pill-warn')+'" style="font-size:10px;white-space:nowrap">⚠ '+problemas.join(' + ')+'</span>';
+          return `<tr style="${problemas.length>0?'background:var(--naranja-light)':''}">
             <td style="font-weight:600;color:var(--verde)">${x.cp}</td>
+            <td style="font-size:11px;color:var(--text-3)">${inf?.cp||'—'}</td>
             <td>${x.fecha||'—'}</td>
             <td>${inf?.fecha?.slice(5)||'—'}</td>
+            <td style="font-size:11px">${camLib?'cam.'+camLib:'—'}</td>
+            <td style="font-size:11px">${inf?.veh||'—'}</td>
             <td><span class="pill ${inf?.finca?.includes('LOTE4')?'pill-blue':'pill-verde'}" style="font-size:10px">${inf?.finca?.includes('LOTE4')?'LOTE4':'VIRGINIA'}</span></td>
             <td><span class="pill ${inf?.rdto>=10?'pill-ok':'pill-warn'}">${inf?.rdto?.toFixed(2)||'—'}%</span></td>
             <td>${inf?.kg_neto?(inf.kg_neto/1000).toFixed(1)+' t':'—'}</td>
             <td>${inf?.kg_azucar?.toLocaleString('es-AR')||'—'} kg</td>
+            <td>${chk}</td>
           </tr>`;
         }).join('')}</tbody>
       </table></div>
-    </div>`:'<div class="card" style="text-align:center;color:var(--text-3);padding:1.5rem">Todavía no hay CPs reconciliados. Cargá los INFRARUTs del 25/06 en adelante para empezar a cruzar.</div>'}`;
+    </div>`:'<div class="card" style="text-align:center;color:var(--text-3);padding:1.5rem">Todavía no hay remitos reconciliados. Cargá los INFRARUTs a medida que lleguen del ingenio para empezar a cruzar.</div>'}`;
 }
 
 
@@ -1855,11 +1946,11 @@ function renderViajes(){
   let data = [...INFRARUTS];
   if(ff) data = data.filter(r=>r.fecha===ff);
   if(fi) data = data.filter(r=>r.finca.includes(fi));
-  if(busca) data = data.filter(r=>String(r.cp).includes(String(busca)));
+  if(busca) data = data.filter(r=>String(r.remito||'').includes(String(busca)));
 
-  if(ord==='cp_asc')  data.sort((a,b)=>a.cp-b.cp);
-  else if(ord==='cp_desc') data.sort((a,b)=>b.cp-a.cp);
-  else data.sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.cp-b.cp);
+  if(ord==='cp_asc')  data.sort((a,b)=>(a.remito||0)-(b.remito||0));
+  else if(ord==='cp_desc') data.sort((a,b)=>(b.remito||0)-(a.remito||0));
+  else data.sort((a,b)=>a.fecha.localeCompare(b.fecha)||(a.remito||0)-(b.remito||0));
 
   // Sort icon
   const icon = document.getElementById('sort-cp-icon');
@@ -1882,13 +1973,13 @@ function renderViajes(){
   const gapPanel = document.getElementById('panel-gaps');
   if(gapPanel){
     if(_gapsVisible){
-      const sorted = [...INFRARUTS].sort((a,b)=>a.cp-b.cp);
+      const sorted = INFRARUTS.filter(r=>r.remito!=null).sort((a,b)=>a.remito-b.remito);
       const gaps = [];
       for(let i=0; i<sorted.length-1; i++){
-        const diff = sorted[i+1].cp - sorted[i].cp;
+        const diff = sorted[i+1].remito - sorted[i].remito;
         if(diff > 1){
           gaps.push({
-            desde: sorted[i].cp, hasta: sorted[i+1].cp,
+            desde: sorted[i].remito, hasta: sorted[i+1].remito,
             faltantes: diff - 1,
             fecha_ant: sorted[i].fecha, fecha_sig: sorted[i+1].fecha
           });
@@ -1897,26 +1988,26 @@ function renderViajes(){
       const bigGaps = gaps.sort((a,b)=>b.faltantes-a.faltantes);
       gapPanel.innerHTML = `<div class="card">
         <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
-          <span><i class="ti ti-search" style="vertical-align:-2px;margin-right:6px;font-size:14px"></i>Análisis de remitos faltantes entre CPs cargados</span>
+          <span><i class="ti ti-search" style="vertical-align:-2px;margin-right:6px;font-size:14px"></i>Análisis de remitos faltantes en la secuencia de Jastrow</span>
           <span style="font-size:11px;color:var(--text-3)">${bigGaps.length} brechas detectadas</span>
         </div>
         <div style="font-size:12px;color:var(--text-3);margin-bottom:10px">
-          Los CPs salteados pueden ser de otros productores del ingenio o INFRARUTs de Jastrow que no fueron cargados todavía.
+          Los remitos son la secuencia propia del campo: un salto significa un viaje que no llegó en los INFRARUTs cargados (reporte faltante, remito anulado o baja ARCA).
         </div>
         <div class="ovf"><table style="font-size:12px">
           <thead><tr>
-            <th>Desde CP</th><th>Hasta CP</th><th>CPs faltantes</th><th>Fecha ant.</th><th>Fecha sig.</th><th>¿Posible INFRARUT faltante?</th>
+            <th>Desde remito</th><th>Hasta remito</th><th>Remitos faltantes</th><th>Fecha ant.</th><th>Fecha sig.</th><th>¿Posible INFRARUT faltante?</th>
           </tr></thead>
           <tbody>${bigGaps.map(g=>{
             const dayDiff = g.fecha_sig !== g.fecha_ant;
-            const probable = g.faltantes >= 5 && dayDiff;
+            const probable = g.faltantes >= 3 && dayDiff;
             return `<tr style="${probable?'background:var(--naranja-light)':''}">
               <td style="font-weight:500">${g.desde}</td>
               <td style="font-weight:500">${g.hasta}</td>
-              <td><span class="pill ${g.faltantes>=20?'pill-bad':g.faltantes>=5?'pill-warn':'pill-gray'}">${g.faltantes} CP${g.faltantes>1?'s':''}</span></td>
+              <td><span class="pill ${g.faltantes>=5?'pill-bad':g.faltantes>=2?'pill-warn':'pill-gray'}">${g.faltantes} remito${g.faltantes>1?'s':''}</span></td>
               <td>${g.fecha_ant.slice(5)}</td>
               <td>${g.fecha_sig.slice(5)}</td>
-              <td style="font-size:11px">${probable ? '⚠ Revisar — puede faltar INFRARUT del ' + g.fecha_ant.slice(5) + ' o ' + g.fecha_sig.slice(5) : g.fecha_ant===g.fecha_sig ? 'Mismo día — son de otros productores' : 'Días diferentes'}</td>
+              <td style="font-size:11px">${probable ? '⚠ Revisar — puede faltar el INFRARUT del ' + g.fecha_ant.slice(5) + ' o ' + g.fecha_sig.slice(5) : dayDiff ? 'Días diferentes — cotejar con la libreta' : 'Mismo día — cotejar con la libreta (¿anulado o baja ARCA?)'}</td>
             </tr>`;
           }).join('')}</tbody>
         </table></div>
@@ -1932,26 +2023,25 @@ function renderViajes(){
   const tc=r=>r.rdto>=META?'pill-ok':r.rdto>=9.5?'pill-warn':'pill-bad';
   const pc=r=>r.pureza>=85?'':'color:var(--naranja);font-weight:500';
 
-  const cpsSet = new Set(INFRARUTS.map(r=>r.cp));
   const cpsCampoSet = new Set(getCPsCampo().map(x=>x.cp));
   const bajasCampoSet = new Set(getBajasArca().map(b=>b.cp));
 
   document.getElementById('viajes-tbody').innerHTML = data.map((r,i)=>{
     // Gap indicator between consecutive rows when sorted by CP
     let gapRow = '';
-    if(ord==='cp_asc' && i>0){
+    if(ord==='cp_asc' && i>0 && r.remito!=null && data[i-1].remito!=null){
       const prev = data[i-1];
-      const diff = r.cp - prev.cp;
+      const diff = r.remito - prev.remito;
       if(diff > 1){
         gapRow = `<tr style="background:#FFF8E7">
           <td colspan="14" style="font-size:11px;color:var(--naranja);text-align:center;padding:5px;border-bottom:1px dashed var(--gris-border)">
             <i class="ti ti-dots" style="vertical-align:-1px;margin-right:4px"></i>
-            Salto de <strong>${diff-1} CP${diff>2?'s':''}</strong> entre CP${prev.cp} y CP${r.cp}
+            Salto de <strong>${diff-1} remito${diff>2?'s':''}</strong> entre remito ${prev.remito} y remito ${r.remito}
             ${r.fecha!==prev.fecha ? ' · Cambio de fecha: '+prev.fecha.slice(5)+' → '+r.fecha.slice(5) : ''}
           </td></tr>`;
       }
     }
-    const highlight = busca && String(r.cp).includes(String(busca)) ? 'background:var(--verde-light)' : '';
+    const highlight = busca && String(r.remito||'').includes(String(busca)) ? 'background:var(--verde-light)' : '';
     // Libreta status
     const enLibreta = r.remito!=null && cpsCampoSet.has(r.remito);
     const esBaja    = r.remito!=null && bajasCampoSet.has(r.remito);
@@ -1961,8 +2051,8 @@ function renderViajes(){
         ? `<span class="pill pill-ok"   style="font-size:10px;white-space:nowrap">✅ En libreta</span>`
         : `<span class="pill pill-bad"  style="font-size:10px;white-space:nowrap">❌ Sin manual</span>`;
     return gapRow + `<tr style="${highlight}${!enLibreta&&!esBaja?';border-left:3px solid var(--naranja)':''}">
-      <td style="font-weight:600;color:var(--azul)">${r.cp}</td>
-      <td style="font-size:12px;color:var(--text-3)">${r.remito||'—'}</td>
+      <td style="font-weight:600;color:var(--azul)">${r.remito||'—'}</td>
+      <td style="font-size:12px;color:var(--text-3)">${r.cp}</td>
       <td>${r.fecha.slice(5)}</td>
       <td><span class="pill ${r.finca.includes('LOTE4')?'pill-blue':'pill-verde'}" style="white-space:nowrap">${r.finca.includes('LOTE4')?'LOTE4':'LA VIRGINIA'}</span></td>
       <td>${r.veh}</td><td>#${r.maq}</td>
@@ -3154,9 +3244,9 @@ function renderAlertas(){
     const enInfrarut = new Set(INFRARUTS.filter(r=>r.remito).map(r=>r.remito));
     const bajasSet = new Set(getBajasArca().map(b=>b.cp));
     const pend = mios.filter(x=>!enInfrarut.has(x.cp)&&!bajasSet.has(x.cp));
-    if(pend.length>0) al.push({t:'warn',i:'ti-file-alert',m:`<strong>${pend.length} despacho${pend.length!==1?'s':''} de la libreta sin reconciliar:</strong> ${pend.slice(0,8).map(x=>'CP'+x.cp).join(', ')}${pend.length>8?'…':''}. Verificar si falta cargar el INFRARUT correspondiente o si hay que reclamar al ingenio.`});
+    if(pend.length>0) al.push({t:'warn',i:'ti-file-alert',m:`<strong>${pend.length} despacho${pend.length!==1?'s':''} de la libreta sin reconciliar:</strong> ${pend.slice(0,8).map(x=>'remito '+x.cp).join(', ')}${pend.length>8?'…':''}. Verificar si falta cargar el INFRARUT correspondiente o si hay que reclamar al ingenio.`});
     const bajasPend = getBajasArca().filter(b=>!b.gestionado);
-    if(bajasPend.length>0) al.push({t:'bad',i:'ti-file-x',m:`<strong>${bajasPend.length} baja${bajasPend.length!==1?'s':''} ARCA pendiente${bajasPend.length!==1?'s':''} de gestión:</strong> ${bajasPend.map(b=>'CP'+b.cp).join(', ')}. Recordá dar de baja estas cartas de porte para evitar inconsistencias fiscales.`});
+    if(bajasPend.length>0) al.push({t:'bad',i:'ti-file-x',m:`<strong>${bajasPend.length} baja${bajasPend.length!==1?'s':''} ARCA pendiente${bajasPend.length!==1?'s':''} de gestión:</strong> ${bajasPend.map(b=>'remito '+b.cp).join(', ')}. Recordá dar de baja estas cartas de porte para evitar inconsistencias fiscales.`});
     const sinLibreta = INFRARUTS.filter(r=>r.remito && !new Set(mios.map(x=>x.cp)).has(r.remito));
     if(sinLibreta.length>0) al.push({t:'info',i:'ti-notebook',m:`<strong>${sinLibreta.length} viaje${sinLibreta.length!==1?'s':''} del INFRARUT sin registro manual en la libreta.</strong> Falta transcribir esas páginas de la libreta del campo.`});
   }catch(e){ console.error('alertas reconciliación:', e); }
