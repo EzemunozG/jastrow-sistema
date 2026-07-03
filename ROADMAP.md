@@ -32,7 +32,32 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
       milestone 10 para probar el patrón RLS/service-role de punta a punta)
 - [x] Rutas placeholder para las 6 pestañas + subtabs (navegación completa, contenido real
       pendiente por milestone)
+- [x] Git conectado a `github.com/EzemunozG/jastrow-sistema`, rama `nextjs-rewrite` (no
+      `main` — ver "Git y deploy" abajo)
+- [x] Preview de Vercel funcionando de punta a punta en
+      `https://jastrow-sistema-git-nextjs-rewrite-jastrow.vercel.app` (requirió
+      `vercel.json` con `framework: "nextjs"` + env vars de Supabase en Vercel, scopeadas a
+      Preview + rama `nextjs-rewrite` para no tocar `main`)
 - [ ] Todo lo demás — ver milestones abajo
+
+## Git y deploy
+
+- Repo: mismo que el sistema legacy (`EzemunozG/jastrow-sistema`), pero en una rama aparte
+  (`nextjs-rewrite`) para no tocar `main` (el `index.html` que sigue usando la familia) hasta
+  que este sistema tenga paridad al menos en Resumen/Tendencia/Viajes.
+- El proyecto de Vercel (`jastrow`/`jastrow-sistema`) es el mismo de siempre — no se creó uno
+  nuevo. Cada push a `nextjs-rewrite` genera un preview deployment automático en
+  `jastrow-sistema-git-nextjs-rewrite-jastrow.vercel.app` (URL estable por rama).
+- El dashboard del proyecto tiene el Framework Preset en "Other" (config del `index.html`
+  estático) — **no cambiar eso a nivel de proyecto**, rompería el próximo build de `main`.
+  `jastrow-app/vercel.json` fuerza `framework: "nextjs"` solo para los commits que lo
+  incluyen, sin tocar nada compartido.
+- Variables de entorno de Supabase cargadas en Vercel con scope `Preview` + rama
+  `nextjs-rewrite` únicamente. Falta `SUPABASE_SERVICE_ROLE_KEY` ahí también (mismo bloqueo
+  que en local).
+- Antes de mergear `nextjs-rewrite` a `main`: correr las migraciones de Supabase, tener al
+  menos Resumen/Tendencia/Viajes reales, y hacer el checklist de paridad numérica contra
+  `index_10.html` (ver sección de Verificación en el plan original).
 
 ## ⚠️ Próximo paso manual (no lo puede hacer un agente sin tus credenciales)
 
