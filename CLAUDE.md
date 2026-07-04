@@ -118,6 +118,20 @@ archivo sin darse cuenta de que ya existía en `reconciliation.ts`.
 - **Toda la lógica derivada (no CRUD) vive en `lib/`**, como funciones puras de TypeScript, no
   como vistas/RPC de Postgres — excepción: `stock_saldo` es una vista SQL porque se consulta
   desde varias pantallas. Ver el porqué en `ROADMAP.md`.
+- **Una mutación que escribe en más de una tabla y no puede quedar a medias es una función
+  Postgres (`supabase.rpc(...)`), no una secuencia de `.insert()` sueltos desde la Server
+  Action.** Ejemplo: `create_receta` (`supabase/migrations/20260704000000_receta_rpc.sql`)
+  inserta `recetas` + `receta_lotes` + `receta_items` + el movimiento de salida en
+  `movimientos_stock` en una sola transacción — si el guardado de la receta fallara a mitad
+  de camino con inserts separados, quedaría stock descontado sin receta asociada (o viceversa).
+- **Al probar un `<Select>` de shadcn/Radix con clicks automatizados (Chrome extension)**: un
+  solo click sobre el trigger puede *parecer* que seleccionó un valor (el texto de la opción
+  se renderiza superpuesto al trigger por el posicionamiento `item-aligned`) sin que el
+  `<select>` nativo oculto que arma Radix para el submit realmente cambie de valor — el
+  formulario se manda igual pero con el campo vacío. No pasa con un click real de usuario
+  (dispara mousedown+mouseup por separado). Antes de dar una selección por buena en una
+  prueba automatizada, verificar el valor real con `new FormData(form)` (o clickear la opción
+  ya renderizada en el listbox, no re-clickear el trigger).
 - **RLS es el enforcement real**, no la UI. El botón de admin oculto en el topbar es solo
   cosmético — la tabla `infraruts` (datos del ingenio) es de solo lectura para usuarios
   normales a nivel de base de datos vía la función `is_admin()`.

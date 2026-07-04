@@ -90,6 +90,7 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
 - [x] Milestone 6 completo: Libreta del Campo + seed de datos reales de la zafra
       (148 INFRARUT + 128 despachos de libreta) — ver detalle abajo.
 - [x] Milestone 7 completo: Reconciliación + Bajas ARCA — ver detalle abajo.
+- [x] Milestone 8 completo: Stock + Recetas — ver detalle abajo.
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -279,10 +280,54 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
   prueba (9999) confirmada y luego borrada a mano (no hay botón de borrado en la UI,
   ver arriba).
 
-### 8. Stock + Recetas
-- [ ] Tablas `productos`, `movimientos_stock`, `recetas`, `receta_lotes`, `receta_items`
-- [ ] `supabase/migrations/0003_views.sql` (vista `stock_saldo`)
-- [ ] Guardar receta = transacción (receta + movimiento de salida), nunca dos pasos sueltos
+### 8. Stock + Recetas ✅ completo, probado en vivo (2026-07-04)
+- [x] Tablas `productos`, `movimientos_stock`, `recetas`, `receta_lotes`, `receta_items`
+      (ya estaban en `0001_schema.sql`) + vista `stock_saldo` (`0003_views.sql`, ya
+      escrita en milestone 1) — `lib/stock.ts` (`calcStock`) ya portado, sin cambios.
+- [x] `supabase/migrations/20260704000000_receta_rpc.sql`: función Postgres
+      `create_receta(...)` que inserta `recetas` + `receta_lotes` + `receta_items` +
+      el movimiento de salida en `movimientos_stock` **en una sola transacción**
+      (requisito explícito del roadmap: "nunca dos pasos sueltos") — aplicada al
+      proyecto remoto con el mismo mecanismo de PAT de corta duración que milestone 6.
+      `lib/database.types.ts` actualizado con el tipo de `Functions.create_receta`.
+- [x] `lib/forms/stock.ts` + `actions/stock.ts` (`addEntradaStock`): alta de entradas de
+      stock, matchea producto existente por nombre (case-insensitive) o crea uno nuevo.
+- [x] `lib/forms/recetas.ts` + `actions/recetas.ts` (`saveReceta`): parsea ítems dinámicos
+      (mismo truco de bracket-notation que facturas/trabajos), recalcula
+      cantidad/precio/costo **en el servidor** desde `productos`/`stock_saldo` (nunca
+      confía en lo que mandó el cliente) y llama al RPC `create_receta`.
+- [x] `components/stock/{entrada-stock-dialog,inventario-view}.tsx` +
+      `app/(app)/stock/inventario/page.tsx`: resumen (productos, valor stock, sin
+      precio), tabla de productos con saldo/precio prom./valor, botón "+ Entrada" por
+      fila, historial de movimientos con saldo corriente recalculado.
+- [x] `components/stock/{receta-form-dialog,recetas-view}.tsx` +
+      `app/(app)/stock/recetas/page.tsx`: alta de receta con ítems dinámicos vía
+      `useFieldArray` (react-hook-form), preview en vivo de cantidad/costo por ítem y
+      costo total/por ha, listado de recetas con detalle de ítems y aviso "Parcial*"
+      cuando falta precio de algún producto.
+- **Encontrado en el camino (bug de testing, no de la app)**: al probar el diálogo de
+  receta con clicks automatizados de Chrome, un solo click sobre el `Select` de Lote
+  (shadcn/Radix) parecía dejarlo "seleccionado" (el texto de la opción se renderiza
+  superpuesto al trigger por el posicionamiento `item-aligned`), pero el `<select>`
+  nativo oculto que arma Radix para el submit del form seguía en `""` — el guardado
+  fallaba con "Seleccioná un lote" a pesar de que la UI se veía bien. No reproduce con
+  un click real de usuario (que dispara mousedown+mouseup por separado); fue un
+  artefacto del click sintético de la herramienta de automatización. Se resolvió
+  verificando el valor real del campo vía JS (`new FormData(form)`) antes de dar por
+  buena una selección, y clickeando la opción ya renderizada en el listbox en vez de
+  re-clickear el trigger.
+- **Probado en vivo**: creado un lote y producto de prueba, cargada una entrada de
+  stock (100 l), guardada una receta real contra el RPC (2 l/ha × 10 ha = 20 l,
+  $1.500/l → $30.000, $3.000/ha) — verificado que la receta, el ítem y el lote
+  quedaron guardados y que el movimiento de salida (−20 l) impactó correctamente el
+  saldo de Inventario (100 → 80 l). Todos los datos de prueba borrados después
+  (producto, movimientos, lote, receta) vía script puntual con el cliente
+  service-role.
+- **Pendiente/decisión del usuario**: `index_10.html` tiene datos reales hardcodeados
+  de Stock (~11 productos con movimientos de compra reales) y Recetas (~6 recetas,
+  REC-001 a REC-006) — igual que INFRARUT/libreta en milestone 6, cargarlos requiere
+  confirmación explícita antes de correr el seed contra la base real (todavía no se
+  pidió).
 
 ### 9. Alertas
 - [ ] `lib/alerts.ts` — depende de todo lo anterior, portar reglas y umbrales exactos de

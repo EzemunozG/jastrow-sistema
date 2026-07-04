@@ -1,7 +1,20 @@
-export default function InventarioPage() {
+import { InventarioView } from "@/components/stock/inventario-view";
+import { createClient } from "@/lib/supabase/server";
+
+export default async function InventarioPage() {
+  const supabase = await createClient();
+  const [{ data: productos }, { data: movimientos }, { data: facturas }] =
+    await Promise.all([
+      supabase.from("productos").select("*").order("nombre"),
+      supabase.from("movimientos_stock").select("*"),
+      supabase.from("facturas").select("*").order("fecha", { ascending: false }),
+    ]);
+
   return (
-    <div className="rounded-xl border bg-white p-6 text-sm text-neutral-500">
-      Inventario — pendiente (milestone 8 del ROADMAP).
-    </div>
+    <InventarioView
+      productos={productos ?? []}
+      movimientos={movimientos ?? []}
+      facturas={facturas ?? []}
+    />
   );
 }

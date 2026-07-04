@@ -397,7 +397,24 @@ export type Database = {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      // supabase/migrations/20260704000000_receta_rpc.sql — guarda receta + items +
+      // movimientos de salida de stock como una única transacción atómica.
+      create_receta: {
+        Args: {
+          p_id: string;
+          p_nombre: string;
+          p_fecha: string;
+          p_tipo: string;
+          p_ha: number;
+          p_empresa: string | null;
+          p_obs: string | null;
+          p_lote_ids: string[];
+          p_items: unknown;
+        };
+        Returns: string;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
