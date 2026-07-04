@@ -91,6 +91,7 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
       (148 INFRARUT + 128 despachos de libreta) — ver detalle abajo.
 - [x] Milestone 7 completo: Reconciliación + Bajas ARCA — ver detalle abajo.
 - [x] Milestone 8 completo: Stock + Recetas — ver detalle abajo.
+- [x] Milestone 9 completo: Alertas — ver detalle abajo.
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -329,9 +330,27 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
   confirmación explícita antes de correr el seed contra la base real (todavía no se
   pidió).
 
-### 9. Alertas
-- [ ] `lib/alerts.ts` — depende de todo lo anterior, portar reglas y umbrales exactos de
-      `index_10.html:3113-3190`
+### 9. Alertas ✅ completo, probado en vivo (2026-07-03)
+- [x] `lib/alerts.ts` (`computeAlerts`) ya estaba escrito desde milestone 1 (adelantado,
+      igual que el resto de `lib/`) — mismas reglas, orden y umbrales exactos de
+      `index_10.html:3113-3190` (`renderAlertas`), verbatim (no se tocó nada al construir
+      la UI, solo se leyó).
+- [x] `components/alertas/alertas-list.tsx`: mapea el string de ícono (`"trending-down"`,
+      `"alert-circle"`, etc., ya devuelto por `computeAlerts`) a un ícono real de
+      `@tabler/icons-react`, colorea cada alerta por `severity` (`bad`→rojo, `warn`→ámbar,
+      `info`→azul, mismos tonos que el resto de la app) y muestra el header "Análisis
+      acumulado — {desde} al {hasta}" igual que el legacy. Estado vacío (sin INFRARUT
+      cargado todavía) con el mismo estilo que el resto de las tablas vacías de la app.
+- [x] `app/(app)/alertas/page.tsx`: server component puro (sin mutaciones, sin
+      interactividad todavía — Realtime queda para milestone 10), fetch de
+      `infraruts`/`cps_campo`/`bajas_arca` igual que Reconciliación.
+- **Probado en vivo contra los datos reales** de la zafra (148 INFRARUT + 128 libreta,
+  seed de milestone 6): salieron 6 alertas — 11 despachos sin reconciliar (warn), 1 baja
+  ARCA pendiente CP6908 (bad, la misma que se probó en milestone 7), 32 viajes sin
+  registro manual (info), tendencia positiva en ambas fincas (info) y "Último INFRARUT
+  cargado hace 5 días" (warn, `diasDesde` calculado bien contra la fecha real del
+  sistema). No hubo alertas de caída de rendimiento/pureza crítica/trash alto — ningún
+  dato real cruza esos umbrales hoy, es coherente con lo visto en Resumen/Tendencia.
 
 ### 10. Realtime + Admin + hardening + QA de paridad
 - [ ] `hooks/useRealtimeTable.ts` wireado en Viajes/Listado, Reconciliación, Alertas
