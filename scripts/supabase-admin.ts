@@ -61,3 +61,24 @@ export function extractArrayLiteral(source: string, constName: string): string {
 export function evalArrayLiteral<T>(literal: string): T[] {
   return new Function(`return (${literal});`)() as T[];
 }
+
+// Extrae el array default de `function getX(){ return gSt('key') || [ ... ]; }` — el
+// patrón que usan getLotes/getFacturas/getStock/getRecetas en index_10.html (distinto de
+// `const NOMBRE = [...]` que ya cubre extractArrayLiteral).
+export function extractGstArrayLiteral(source: string, gstKey: string): string {
+  const startMarker = `gSt('${gstKey}') || [`;
+  const startIdx = source.indexOf(startMarker);
+  if (startIdx === -1) {
+    throw new Error(`No se encontró "${startMarker}" en index_10.html`);
+  }
+  const arrayStart = startIdx + startMarker.length - 1;
+  let depth = 0;
+  for (let i = arrayStart; i < source.length; i++) {
+    if (source[i] === "[") depth++;
+    else if (source[i] === "]") {
+      depth--;
+      if (depth === 0) return source.slice(arrayStart, i + 1);
+    }
+  }
+  throw new Error(`No se encontró el cierre del array gSt('${gstKey}')`);
+}

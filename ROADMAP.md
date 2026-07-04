@@ -375,21 +375,34 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
     la alerta correspondiente).
 - [x] `app/(app)/admin/usuarios/page.tsx` — ya estaba completo desde milestone 1
       (adelantado), reverificado funcionando en esta pasada final.
-- [x] **Revisión final de RLS — encontrado y mitigado un hallazgo real de seguridad**:
-      la tabla legacy `jw_storage` (la que sigue usando `main`/`index_10.html`) **no
-      tiene RLS habilitado**, y con la sola clave anon pública (la misma que usa esta
-      app nueva) se podía leer el registro `key='users'`, que tenía las contraseñas de
-      `admin`/`operador` **en texto plano**. No se puede arreglar con RLS sin romper el
-      login del HTML legacy hoy mismo (`getUsers()` lee esa fila con la clave anon para
-      comparar la contraseña client-side — es la arquitectura completa del login
-      legacy). Con autorización explícita del usuario, se rotaron las contraseñas
-      expuestas (nuevas credenciales entregadas por chat, no viven en el repo) sin
-      tocar RLS — la exposición estructural queda documentada como pendiente hasta que
-      `main` se decomisione. El resto de las tablas nuevas (`0002_rls.sql`) y el bucket
-      de Storage (`0004_storage.sql`) se revisaron y están bien: todas las tablas
-      operativas exigen `auth.uid() is not null`, `infraruts`/`infraruts_imports` son
-      solo-lectura para no-admins, `profiles` tiene la separación
-      self-update/admin-update correcta.
+- [x] **Revisión final de RLS — hallazgo real de seguridad, sin fix completo posible sin
+      tocar `index_10.html`**: la tabla legacy `jw_storage` (la que sigue usando
+      `main`/`index_10.html`) **no tiene RLS habilitado**, y con la sola clave anon
+      pública (la misma que usa esta app nueva) se podía leer el registro `key='users'`,
+      con las contraseñas de `admin`/`operador` **en texto plano**. Se intentó mitigar
+      rotando esas contraseñas vía la clave service-role (sin tocar RLS, para no romper
+      el login legacy) — **pero esto resultó insuficiente por dos motivos, encontrados
+      al re-verificar**:
+      1. `doLogin()` en `index_10.html` acepta la contraseña guardada en `jw_storage`
+         **o** la de un array `DEFAULT_USERS` (`admin`/`jastrow2026`,
+         `operador`/`zafra2026`) escrito **literalmente en el código fuente del HTML**
+         que sirve `main` — cualquiera con "Ver código fuente" en el sitio legacy lee
+         esas credenciales directamente, sin necesitar la clave anon ni acceso a la
+         base. Rotar la fila de `jw_storage` no invalida ese fallback.
+      2. `initUsers()` corre en cada carga de `index_10.html` y tiene una condición de
+         carrera: si la lectura asincrónica de `jw_storage` todavía no completó cuando
+         corre, `gSt('users')` devuelve `null` y `initUsers()` **reescribe
+         `DEFAULT_USERS` de vuelta en la base** — se confirmó en vivo: la rotación se
+         deshizo sola ~3 minutos después de recargar la página, sin que nadie tocara
+         nada.
+      El único fix completo sería editar `DEFAULT_USERS` directamente en
+      `index_10.html` — **con autorización explícita del usuario, se decidió NO tocar
+      ese archivo** (producción legacy en uso real por la familia) y dejar esta
+      exposición documentada como riesgo estructural, cerrable solo decomisionando
+      `main`. El resto de las tablas nuevas (`0002_rls.sql`) y el bucket de Storage
+      (`0004_storage.sql`) se revisaron y están bien: todas las tablas operativas
+      exigen `auth.uid() is not null`, `infraruts`/`infraruts_imports` son solo-lectura
+      para no-admins, `profiles` tiene la separación self-update/admin-update correcta.
 - [x] **Checklist de paridad numérica contra `index_10.html`** — se sirvió el HTML legacy
       con un servidor estático temporal (`python3 -m http.server`, no queda corriendo)
       para compararlo en vivo contra la app nueva, ambos leyendo/calculando sobre los
@@ -418,11 +431,29 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
     probado con datos de prueba.
 
 **Conclusión de la QA de paridad**: los 10 milestones del roadmap original están
-completos. Antes de mergear `nextjs-rewrite` a `main` y decomisionar `index_10.html`
-faltan dos cosas, ambas decisiones del usuario, no trabajo técnico pendiente: (1) seedear
-los datos reales de Lotes/Facturas/Trabajos/Stock/Recetas (mismo patrón que milestones 6
-y 8), y (2) decidir qué hacer con la exposición estructural de `jw_storage` (solo se
-puede cerrar completamente decomisionando `main`).
+completos.
+
+**Actualización 2026-07-04 — datos reales de Campo/Stock/Recetas sembrados**: con
+autorización explícita del usuario, `scripts/seed-legacy-campo-stock.ts` (nuevo, mismo
+patrón que `seed-legacy-infraruts.ts`/`seed-legacy-libreta.ts`: idempotente, extrae los
+arrays hardcodeados de `index_10.html` con `extractGstArrayLiteral` — nueva variante de
+`extractArrayLiteral` para el patrón `function getX(){ return gSt('key') || [...]; }`
+en vez de `const NOMBRE = [...]`) cargó los **15 lotes reales** (VA-01...VA-10,
+L4-100/PILOT/LUCHO/TP2/TP3 · ~690 ha con arriendos y contratos reales), **9 facturas
+reales** (con sus ítems), **11 productos de stock con sus movimientos** (entradas y
+salidas, incluidas 2 salidas ya vinculadas a `REC-001` vía `movimientos_stock.receta_id`)
+y **6 recetas reales** (REC-001 a REC-006, con `receta_lotes`/`receta_items`). Las
+tablas hijas sin key natural (`receta_lotes`, `receta_items`, `movimientos_stock`,
+`factura_items`) se recrean con delete-then-insert por parent id en cada corrida, para
+que el script siga siendo re-corrible sin duplicar. Probado en vivo: Campo/Lotes,
+Campo/Costos (arriendo 301.5 ha · 3.618 bolsas/año · $133.866.000) y Stock/Recetas ya
+muestran los números reales.
+
+Antes de mergear `nextjs-rewrite` a `main` y decomisionar `index_10.html` queda una sola
+cosa pendiente, y no tiene arreglo técnico dentro de este proyecto: la exposición
+estructural de `jw_storage` (ver el detalle en la revisión de RLS de este milestone) —
+el usuario decidió explícitamente no tocar `index_10.html` para cerrarla del todo, así
+que sigue abierta hasta que `main` se decomisione.
 
 ## Decisiones pendientes
 

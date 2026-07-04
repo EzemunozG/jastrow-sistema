@@ -141,9 +141,15 @@ archivo sin darse cuenta de que ya existía en `reconciliation.ts`.
   normales a nivel de base de datos vía la función `is_admin()`.
 - **`jw_storage` (tabla del sistema legacy) no tiene RLS y expone lo que tenga adentro con la
   sola clave anon** — ya se encontró una vez con las contraseñas de `admin`/`operador` en
-  texto plano ahí (rotadas el 2026-07-04, ver `ROADMAP.md`). No se puede cerrar con RLS sin
-  romper el login de `main`/`index_10.html` (lee esa tabla con la clave anon). Si se agrega
-  algo sensible a `jw_storage` alguna vez, tenerlo presente.
+  texto plano ahí. **No alcanza con rotarlas ni con habilitar RLS**: `index_10.html` tiene
+  un `DEFAULT_USERS` hardcodeado en el propio HTML como fallback de login (visible con "Ver
+  código fuente" del sitio legacy, sin necesitar la clave anon) y además `initUsers()` tiene
+  una condición de carrera que reescribe esas credenciales default de vuelta en
+  `jw_storage` en cada carga de la página si el fetch async todavía no completó — confirmado
+  en vivo, deshizo una rotación sola en ~3 minutos. El único fix real es editar
+  `DEFAULT_USERS` en `index_10.html`, y el usuario decidió explícitamente no tocar ese
+  archivo (producción legacy en uso real) — la exposición se cierra recién decomisionando
+  `main`. Si se agrega algo sensible a `jw_storage` alguna vez, tenerlo presente.
 - **Una tabla con Realtime habilitado (agregada a la publicación `supabase_realtime`, ver
   `hooks/useRealtimeTable.ts`) también necesita RLS-aware auth en el cliente**: si la tabla
   tiene RLS, el socket de Realtime solo reenvía `postgres_changes` si se le pasó el JWT de
@@ -215,11 +221,25 @@ hardcodeados de `index_10.html`. Antes de dar de baja `index_10.html`:
    + 1 baja ARCA hardcodeados en `index_10.html` (arrays `INFRARUTS`, `_LIBRETA_DEFAULT`,
    `_BAJAS_DEFAULT`). Idempotentes (upsert por `cp`), se pueden re-correr si hace falta
    corregir algo.
-2. `scripts/migrate-jw-storage.ts` migra lo que esté en la tabla `jw_storage` (lotes,
+2. ✅ `scripts/seed-legacy-campo-stock.ts` — **ya corrido** (2026-07-04): carga los 15
+   lotes reales, 9 facturas, 11 productos de stock (con movimientos) y 6 recetas
+   hardcodeados en `index_10.html` (`getLotes`/`getFacturas`/`getStock`/`getRecetas`, no
+   `jw_storage`). Usa `extractGstArrayLiteral` (variante de `extractArrayLiteral` para el
+   patrón `function getX(){ return gSt('key') || [...]; }`). Idempotente: upsert por id
+   en tablas padre, delete-then-insert por parent id en las hijas sin key natural
+   (`receta_lotes`, `receta_items`, `movimientos_stock`, `factura_items`).
+3. `scripts/migrate-jw-storage.ts` migra lo que esté en la tabla `jw_storage` (lotes,
    facturas, trabajos, cps_campo_v2, bajas_arca_v2, precio_bolsa — `stock`/`recetas`
-   quedan afuera a propósito, son del milestone 8). Escrito y probado en dry-run, pero
-   **`jw_storage` está casi vacía hoy** (la familia no llegó a cargar nada ahí antes de
-   este rewrite) — el mapeo de lotes/facturas/trabajos no se pudo probar todavía contra
-   datos reales poblados. Revisar con cuidado si aparece algo ahí antes de decomisionar.
-3. Comparación numérica de paridad (KPIs, costo/kg azúcar, alertas) entre la app vieja y la
-   nueva antes de decomisionar `index_10.html`.
+   quedan afuera a propósito). Escrito y probado en dry-run, pero **`jw_storage` está
+   casi vacía hoy** (la familia no llegó a cargar nada ahí antes de este rewrite; los
+   datos reales de lotes/facturas/stock/recetas vivían hardcodeados en el JS del HTML,
+   no en `jw_storage` — ver punto 2) — el mapeo en sí no se pudo probar todavía contra
+   datos reales poblados de esa tabla específica. Revisar con cuidado si aparece algo ahí
+   antes de decomisionar.
+4. Comparación numérica de paridad (KPIs, costo/kg azúcar, alertas) entre la app vieja y la
+   nueva — **hecha** (milestone 10, 2026-07-04): Resumen/Tendencia/Viajes coinciden exacto.
+5. **`jw_storage` sin RLS expone las contraseñas de `admin`/`operador`** (ver la nota más
+   arriba, en Convenciones) — intento de rotarlas resultó insuficiente por el fallback
+   `DEFAULT_USERS` hardcodeado en `index_10.html` y una condición de carrera en
+   `initUsers()` que revierte la rotación sola. No tiene fix sin editar `index_10.html`
+   (decisión explícita del usuario: no tocarlo) — se cierra recién al decomisionar `main`.
