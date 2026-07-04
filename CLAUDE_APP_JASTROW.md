@@ -15,21 +15,41 @@ corre en **https://jastrow-sistema.vercel.app** (rama `main` de
 descargar archivos ni deployar nada.** Se insertan filas en la base y la app las
 muestra al instante — el papá de Ezequiel entra a la URL y ve todo actualizado.
 
-## El flujo diario nuevo: llega un INFRARUT
+## El flujo diario nuevo: llega un INFRARUT → LO CARGÁS VOS con el navegador
 
-Cuando Ezequiel te suba el Excel/foto/PDF del INFRARUT del ingenio:
+Cuando Ezequiel te suba el Excel/foto/PDF del INFRARUT del ingenio, **el objetivo es
+que él no tenga que hacer nada más**: vos extraés los datos y los cargás usando el
+navegador (Claude in Chrome). Paso a paso:
 
 1. **Extraé las filas** (un viaje por fila). Cada viaje tiene: carta de porte (CP),
    remito, fecha, finca, vehículo, máquina, kg neto, kg trash, kg azúcar, brix, pol,
-   pureza, rdto.
+   pureza, rdto. Mostrale a Ezequiel un resumen corto de lo que leíste (cuántos
+   viajes, qué fechas, rango de remitos) antes de cargar.
 2. **Generá UN solo bloque SQL** de upsert (plantilla abajo) con todas las filas.
-3. **Decile que lo corra en el SQL Editor de Supabase**:
-   https://supabase.com/dashboard/project/izeiiwdhitseqkkwbama/sql/new
-   (⚠ avisarle que desactive el traductor automático de Chrome en esa página — es un
-   bug conocido: traduce el código SQL y lo rompe).
-4. Listo. **No hay paso 4** — ni deploy, ni descarga, ni GitHub. La app lee de la base
-   en cada carga de página, y las pestañas de Viajes abiertas se actualizan solas
-   (Realtime).
+3. **Abrí el SQL Editor de Supabase con el navegador y correlo vos mismo**:
+   - Navegá a https://supabase.com/dashboard/project/izeiiwdhitseqkkwbama/sql/new
+     (Chrome ya tiene la sesión de Supabase iniciada; si pide login, pedile a
+     Ezequiel que se loguee él — nunca manejes contraseñas vos).
+   - ⚠ Si la página aparece traducida al español por el traductor automático de
+     Chrome, NO escribas el SQL todavía: el traductor corrompe el código del editor.
+     Verificá que el texto del editor quede exactamente como lo generaste.
+   - Escribí el bloque SQL en el editor y ejecutalo (botón Run / Ctrl+Enter).
+   - Confirmá el resultado: tiene que decir "Success" sin errores. Si da error,
+     leelo, corregí el SQL y reintentá — no sigas adelante con un error a medias.
+4. **Verificá en la app y reportá**: navegá a
+   https://jastrow-sistema.vercel.app/viajes/reconciliacion y leé los 4 números
+   (Total libreta / Reconciliados / Sin reconciliar / Bajas ARCA). Después pasá por
+   /resumen y confirmá que la fecha del último día cargado sea la del reporte nuevo.
+   Terminá el chat con un resumen para Ezequiel: cuántos viajes entraron, qué remitos
+   pendientes se saldaron con este reporte y cuáles siguen sin aparecer (esos son los
+   que hay que reclamar al ingenio).
+
+Ni deploy, ni descarga, ni GitHub: la app lee de la base en cada carga de página y el
+papá de Ezequiel ve todo actualizado al entrar.
+
+**Fallback sin navegador**: si en esa conversación no tenés acceso a Chrome (extensión
+apagada, celular, etc.), entregá el bloque SQL en el chat y decile a Ezequiel que lo
+pegue y corra él en el SQL Editor (misma URL de arriba).
 
 ### Plantilla SQL para INFRARUT (upsert por carta de porte)
 
@@ -109,6 +129,10 @@ Viajes → Reconciliación.)
 - ❌ Inventar valores: si al reporte le falta un dato (ej. remito ilegible en una
   foto), dejá la columna en `null` y avisale a Ezequiel, no lo adivines.
 - ❌ Pedir o usar la `service_role` key de Supabase — el SQL Editor no la necesita.
+- ❌ En el dashboard de Supabase, tocar cualquier cosa que no sea el SQL Editor: nada
+  de Settings, Auth, Storage, borrar tablas ni "Reset database". Es la base de
+  producción que usa la familia. Solo INSERT ... ON CONFLICT como las plantillas; un
+  DELETE o UPDATE distinto solo si Ezequiel lo pide explícitamente en ese chat.
 
 ## Referencias
 
