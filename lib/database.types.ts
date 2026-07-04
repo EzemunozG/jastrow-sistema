@@ -379,6 +379,13 @@ export type Database = {
           updated_at: string;
         }>
       >;
+
+      // Tabla KV del HTML legacy — se mantiene archivada (no se borra) hasta migrar todo
+      // vía scripts/migrate-jw-storage.ts. Ningún código de la app nueva escribe acá.
+      jw_storage: Tbl<
+        { key: string; value: unknown; updated_at: string },
+        { key: string; value: unknown; updated_at?: string }
+      >;
     };
     Views: {
       stock_saldo: {

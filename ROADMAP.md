@@ -87,6 +87,8 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
 - [x] Milestone 4 completo: Infraruts + Resumen/Tendencia — ver detalle en el milestone 4
       más abajo.
 - [x] Milestone 5 completo: Viajes/Listado + detección de brechas — ver detalle abajo.
+- [x] Milestone 6 completo: Libreta del Campo + seed de datos reales de la zafra
+      (148 INFRARUT + 128 despachos de libreta) — ver detalle abajo.
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -192,9 +194,10 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
       consecutivos cuando el orden es CP ascendente, y estado de "Libreta" por fila
       (✅ En libreta / ⚠ Baja ARCA / ❌ Sin manual) vía `libretaStatus()` — **ojo**:
       matchea `cps_campo.cp` contra `infraruts.remito`, no contra `infraruts.cp` (mismo
-      detalle no obvio que en milestone 7, ver `index_10.html:1765`); como Libreta del
-      Campo (milestone 6) todavía no está implementado, hoy siempre da "Sin manual" — es
-      el estado correcto, no un bug.
+      detalle no obvio que en milestone 7, ver `index_10.html:1765`). Al momento de
+      escribir esto la Libreta del Campo (milestone 6) todavía no estaba implementada, así
+      que esta columna daba siempre "Sin manual"; desde que se cargó la libreta real
+      (milestone 6, mismo día) ya refleja el estado correcto.
 - [x] `app/(app)/viajes/listado/page.tsx` conectado a `infraruts` + `cps_campo` +
       `bajas_arca`.
 - **Probado en vivo**: datos de prueba con 3 brechas intencionales (6 CPs mismo día, 18
@@ -203,11 +206,48 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
   por finca verificados correctos (antes y después de deduplicar contra
   `reconciliation.ts`, mismo resultado pixel-a-pixel). Datos de prueba borrados después.
 
-### 6. Libreta del Campo + migración de datos legacy
-- [ ] `lib/excel/parse-libreta.ts` + `lib/excel/parse-common.ts`
-- [ ] `scripts/migrate-jw-storage.ts` — correr una vez, migra `jw_storage` completo
-- [ ] `scripts/seed-legacy-infraruts.ts`, `seed-legacy-libreta.ts` — cargan los datos hoy
-      hardcodeados en `index_10.html` (arrays `INFRARUTS`, `_LIBRETA_DEFAULT`, `_BAJAS_DEFAULT`)
+### 6. Libreta del Campo + migración de datos legacy ✅ completo, probado en vivo (2026-07-03)
+- [x] `lib/excel/parse-libreta.ts` + `lib/excel/parse-common.ts` (ya estaban escritos)
+- [x] `lib/libreta.ts` (nuevo): `getFinca`/`getMatricula`/`getCamNum`/`getDesp`/`getHora` —
+      parsean el campo `obs`/`camion` (string armado, no columnas separadas) para mostrar
+      la tabla de la Libreta. "TANO"/"LAS100" son potreros del campo, **no** son lo mismo
+      que `finca_id` (LOTE4/VIRGINIA) que usa INFRARUT — no confundir las dos
+      clasificaciones.
+- [x] `actions/cps-campo.ts` (`importLibreta`): sin gate de admin (a diferencia de
+      infraruts, cualquier autenticado puede subir la libreta, RLS lo permite) — el Excel
+      siempre pisa lo ya guardado por CP; las bajas ARCA detectadas (obs con "BAJA") solo
+      se agregan si no existían.
+- [x] `components/viajes/libreta-import-form.tsx` + `components/viajes/libreta-table.tsx`
+      (filtros finca/estado/buscar CP, tiles de resumen, tabla) — reutiliza
+      `reconciliar()` de `lib/reconciliation.ts` (ya escrito en milestone 1) para
+      reconciliados/pendientes, sin reinventar el cálculo esta vez.
+- [x] `app/(app)/viajes/libreta/page.tsx` conectado a `cps_campo` + `bajas_arca` +
+      `infraruts`.
+- [x] `scripts/supabase-admin.ts`: helper compartido para correr scripts one-off contra
+      Supabase con service-role (fuera del request lifecycle de Next.js) + extractor de
+      arrays literales de `index_10.html` (JS válido pero no JSON — se evalúa con
+      `new Function`, seguro porque es nuestro propio archivo fuente). Se agregó `tsx`
+      como devDependency para poder correr `.ts` sueltos con `npx tsx`.
+- [x] `scripts/seed-legacy-infraruts.ts` y `scripts/seed-legacy-libreta.ts`: cargan
+      `INFRARUTS` (148 filas), `_LIBRETA_DEFAULT` (128 despachos) y `_BAJAS_DEFAULT` (1
+      baja) — **datos reales de la zafra, no de prueba**. Confirmado con el usuario antes
+      de correrlos (a diferencia del resto de las pruebas de este proyecto, que fueron
+      datos descartables). Ya corridos contra la base real el 2026-07-03; upsert por
+      `cp`, se pueden re-correr sin duplicar.
+- [x] `scripts/migrate-jw-storage.ts`: implementa el mapeo de `lotes`/`facturas`
+      (+ imagen a Storage)/`trabajos`/`cps_campo_v2`/`bajas_arca_v2`/`precio_bolsa`.
+      **`jw_storage` está casi vacía hoy** (solo `cps_campo_v2=[]` y `users`, ya migrada a
+      mano a Supabase Auth) — este script corrido en dry-run confirma que no hay nada más
+      que migrar todavía, pero el mapeo en sí **no se pudo probar contra datos reales
+      poblados** porque no existen. `stock`/`recetas` quedan deliberadamente afuera
+      (milestone 8, para no adivinar su forma exacta).
+- **Encontrado y corregido en el camino**: al instalar `tsx` corrí `npm install -D tsx`
+  después de un `cd` que no persistió entre llamadas del agente — terminó instalado (y
+  con su propio `package.json`/`package-lock.json`/`node_modules`) en
+  `/Users/ezequiel/Desktop/JS/` (el directorio padre, fuera del repo) en vez de en
+  `jastrow-app/`. `next build` lo detectó solo (warning de "multiple lockfiles"). Se
+  borró el `package.json`/`node_modules` accidental del padre y se reinstaló `tsx`
+  correctamente adentro de `jastrow-app/`.
 
 ### 7. Reconciliación + Bajas ARCA
 - [x] `lib/reconciliation.ts`: `detectarBrechas()` y `libretaStatus()` ya se usan desde

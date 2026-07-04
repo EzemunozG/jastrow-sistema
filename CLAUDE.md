@@ -176,11 +176,20 @@ automáticamente.
 
 ## Migración de datos existentes
 
-No se descarta nada de la app legacy. Antes de dar de baja `index_10.html`:
-1. `scripts/migrate-jw-storage.ts` migra lo que hoy está en la tabla `jw_storage` (lotes,
-   facturas, trabajos, stock, recetas, cps_campo_v2, bajas_arca_v2, precio_bolsa, users).
-2. `scripts/seed-legacy-infraruts.ts` / `seed-legacy-libreta.ts` cargan los datos que hoy están
-   hardcodeados directamente en `index_10.html` (arrays `INFRARUTS`, `_LIBRETA_DEFAULT`,
-   `_BAJAS_DEFAULT`) — se leen del archivo local, no hace falta acceder a la app en vivo.
+No se descarta nada de la app legacy. Estos scripts corren con `npx tsx scripts/<nombre>.ts`
+(agregá `--dry-run` para ver qué haría sin escribir nada) — usan
+`scripts/supabase-admin.ts` para el cliente service-role y el parseo de los arrays
+hardcodeados de `index_10.html`. Antes de dar de baja `index_10.html`:
+1. ✅ `scripts/seed-legacy-infraruts.ts` / `seed-legacy-libreta.ts` — **ya corridos**
+   (2026-07-03) contra la base real: cargaron los 148 INFRARUT + 128 despachos de libreta
+   + 1 baja ARCA hardcodeados en `index_10.html` (arrays `INFRARUTS`, `_LIBRETA_DEFAULT`,
+   `_BAJAS_DEFAULT`). Idempotentes (upsert por `cp`), se pueden re-correr si hace falta
+   corregir algo.
+2. `scripts/migrate-jw-storage.ts` migra lo que esté en la tabla `jw_storage` (lotes,
+   facturas, trabajos, cps_campo_v2, bajas_arca_v2, precio_bolsa — `stock`/`recetas`
+   quedan afuera a propósito, son del milestone 8). Escrito y probado en dry-run, pero
+   **`jw_storage` está casi vacía hoy** (la familia no llegó a cargar nada ahí antes de
+   este rewrite) — el mapeo de lotes/facturas/trabajos no se pudo probar todavía contra
+   datos reales poblados. Revisar con cuidado si aparece algo ahí antes de decomisionar.
 3. Comparación numérica de paridad (KPIs, costo/kg azúcar, alertas) entre la app vieja y la
    nueva antes de decomisionar `index_10.html`.
