@@ -455,6 +455,33 @@ estructural de `jw_storage` (ver el detalle en la revisión de RLS de este miles
 el usuario decidió explícitamente no tocar `index_10.html` para cerrarla del todo, así
 que sigue abierta hasta que `main` se decomisione.
 
+## Revisión post-lanzamiento (2026-07-04, ya en producción en main)
+
+Pasada completa de código + navegación en vivo sobre producción después del merge a
+`main`. Cero errores de consola en las 12 páginas. Hallazgos y fixes:
+
+1. **404 en las pestañas Viajes/Campo/Stock del top-nav** (reportado por el usuario
+   real): esas rutas solo tenían `layout.tsx` sin `page.tsx` propio — Next.js necesita
+   un `page.tsx` en la ruta exacta. Fix: `page.tsx` con `redirect()` a la primera
+   subtab en cada una. El bug existía desde milestone 1; nunca se detectó porque las
+   pruebas siempre navegaban directo a las subrutas, nunca clickeando el top-nav.
+2. **El flag `disabled` de usuarios no se aplicaba**: solo lo miraba `is_admin()` (para
+   privilegios), pero un usuario deshabilitado podía seguir logueándose y operando —
+   el botón "Deshabilitar" del panel de admin era cosmético. Fix en dos capas:
+   `getCurrentProfile()` (lib/dal.ts) ahora hace signOut+redirect si
+   `profile.disabled`, y `toggleUserDisabled` además banea/desbanea a nivel de
+   Supabase Auth (`ban_duration`), que es lo que realmente corta la emisión de tokens
+   aunque le peguen a la API de Supabase directo.
+3. **Faltaba el gráfico "Rdto% por viaje — último día cargado" del Resumen** (paridad):
+   la QA de milestone 10 comparó KPIs y tarjetas por finca pero no ese chart. Portado
+   como `components/resumen/rdto-viaje-chart.tsx` (Recharts, mismos colores/escala/meta
+   que el `drawRdto()` legacy, index_10.html:1189-1208).
+
+Omisión deliberada que quedó documentada (no es bug): el botón "Respaldo" del topbar
+legacy (exportar todo el jw_storage a JSON) no se porta — los datos ahora viven en
+Postgres con backups de Supabase; si algún día se quiere un export local, es una
+feature nueva, no paridad.
+
 ## Decisiones pendientes
 
 - **Emails reales para Auth**: `admin`/`operador` no tienen email hoy. Se está usando

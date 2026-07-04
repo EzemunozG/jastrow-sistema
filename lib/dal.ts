@@ -22,6 +22,14 @@ export const getCurrentProfile = cache(async () => {
     .single<Profile>();
   if (!profile) redirect("/login");
 
+  // Un usuario deshabilitado desde el panel de admin no debe poder seguir usando la
+  // app aunque su sesión siga viva (además del ban a nivel Auth en actions/users.ts,
+  // que corta los tokens nuevos — esto corta la sesión ya emitida).
+  if (profile.disabled) {
+    await supabase.auth.signOut();
+    redirect("/login");
+  }
+
   return { user, profile };
 });
 

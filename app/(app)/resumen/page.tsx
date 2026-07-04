@@ -1,4 +1,8 @@
 import { InfrarutsImportForm } from "@/components/resumen/infraruts-import-form";
+import {
+  RdtoViajeChart,
+  type RdtoViajePoint,
+} from "@/components/resumen/rdto-viaje-chart";
 import { META, avg, statsFor, sum, type InfrarutRow } from "@/lib/business-rules";
 import { getCurrentProfile } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
@@ -102,6 +106,16 @@ export default async function ResumenPage() {
   const l4tot = statsFor(infraruts.filter((r) => r.finca_id === "LOTE4"));
   const vatot = statsFor(infraruts.filter((r) => r.finca_id !== "LOTE4"));
 
+  // index_10.html:1189-1208 (drawRdto) — barras por viaje del último día, orden por CP.
+  const rdtoViaje: RdtoViajePoint[] = infraruts
+    .filter((r) => r.fecha === lastFecha)
+    .sort((a, b) => a.cp - b.cp)
+    .map((r) => ({
+      cp: String(r.cp),
+      LOTE4: r.finca_id === "LOTE4" ? r.rdto : null,
+      VIRGINIA: r.finca_id !== "LOTE4" ? r.rdto : null,
+    }));
+
   const rdtoTot = avg(infraruts, (r) => r.rdto);
   const polTot = avg(infraruts, (r) => r.pol);
   const totTn = sum(infraruts, (r) => r.kg_neto) / 1000;
@@ -187,6 +201,13 @@ export default async function ResumenPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FincaCard stats={l4tot} nombre="LOTE4" color="#378ADD" />
             <FincaCard stats={vatot} nombre="LA VIRGINIA" color="#1D9E75" />
+          </div>
+
+          <div className="rounded-xl border bg-white p-4">
+            <h3 className="mb-3 text-sm font-medium">
+              Rdto% por viaje — último día cargado ({lastFecha})
+            </h3>
+            <RdtoViajeChart data={rdtoViaje} />
           </div>
         </>
       )}
