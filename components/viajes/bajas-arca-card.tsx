@@ -41,7 +41,7 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
           <table className="w-full text-xs">
             <thead>
               <tr className="text-left text-neutral-500">
-                <th className="py-1 pr-3 font-normal">CP #</th>
+                <th className="py-1 pr-3 font-normal">Remito</th>
                 <th className="py-1 pr-3 font-normal">Fecha</th>
                 <th className="py-1 pr-3 font-normal">Motivo</th>
                 <th className="py-1 pr-3 font-normal">Obs.</th>
@@ -101,7 +101,7 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
       <form action={action} className="flex flex-wrap items-end gap-3 border-t pt-3">
         <div className="space-y-1.5">
           <label className="text-xs text-neutral-500" htmlFor="inp-baja-cp">
-            N° CP a dar de baja *
+            N° de remito a dar de baja *
           </label>
           <Input
             id="inp-baja-cp"

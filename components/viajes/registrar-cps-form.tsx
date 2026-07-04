@@ -17,7 +17,7 @@ function ResultMessage({ state }: { state: CpsCampoActionState }) {
   if (state.status === "success") {
     return (
       <p className="text-sm text-emerald-700">
-        {state.added} CP{state.added !== 1 ? "s" : ""} agregado
+        {state.added} remito{state.added !== 1 ? "s" : ""} agregado
         {state.added !== 1 ? "s" : ""}
         {state.skipped > 0 && ` (${state.skipped} ya existían)`}.
       </p>
@@ -59,10 +59,10 @@ export function RegistrarCpsForm() {
     <div className="space-y-4 rounded-xl border bg-white p-4">
       <div>
         <h2 className="text-sm font-semibold">
-          Registrar CPs emitidos desde el campo
+          Registrar remitos emitidos desde el campo
         </h2>
         <p className="mt-1 text-xs text-neutral-500">
-          Ingresá los números de carta de porte que salieron del campo. El
+          Ingresá los números de remito que salieron del campo. El
           sistema los cruza contra el INFRARUT y muestra cuáles no figuran.
         </p>
       </div>
@@ -70,7 +70,7 @@ export function RegistrarCpsForm() {
       <form action={singleAction} className="flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
           <label className="text-xs text-neutral-500" htmlFor="inp-cp-campo">
-            CP individual o rango
+            Remito individual o rango
           </label>
           <Input
             id="inp-cp-campo"

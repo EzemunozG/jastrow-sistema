@@ -49,22 +49,30 @@ export function ViajesTable({
   // `probable` precalculado (index_10.html:1912) — ver lib/reconciliation.ts.
   const bigGaps = useMemo(() => detectarBrechas(infraruts), [infraruts]);
 
-  const cpSorted = useMemo(
-    () => [...infraruts].sort((a, b) => a.cp - b.cp),
+  // Orden, búsqueda, rango y saltos: todo por REMITO (la numeración propia del
+  // campo) — la carta de porte (cp) la asigna el ingenio y solo se muestra como
+  // dato secundario. Ver lib/reconciliation.ts.
+  const rem = (r: InfrarutRow) => r.remito ?? Number.MAX_SAFE_INTEGER;
+  const remitos = useMemo(
+    () =>
+      infraruts
+        .filter((r) => r.remito != null)
+        .map((r) => r.remito as number)
+        .sort((a, b) => a - b),
     [infraruts],
   );
-  const cpMin = cpSorted[0]?.cp;
-  const cpMax = cpSorted[cpSorted.length - 1]?.cp;
-  const totalRange = cpMin !== undefined ? cpMax - cpMin + 1 : 0;
+  const remMin = remitos[0];
+  const remMax = remitos[remitos.length - 1];
+  const totalRange = remMin !== undefined ? remMax - remMin + 1 : 0;
 
   const data = useMemo(() => {
     let d = [...infraruts];
     if (fecha) d = d.filter((r) => r.fecha === fecha);
     if (finca) d = d.filter((r) => r.finca_id === finca);
-    if (busca) d = d.filter((r) => String(r.cp).includes(busca));
-    if (orden === "cp_asc") d.sort((a, b) => a.cp - b.cp);
-    else if (orden === "cp_desc") d.sort((a, b) => b.cp - a.cp);
-    else d.sort((a, b) => a.fecha.localeCompare(b.fecha) || a.cp - b.cp);
+    if (busca) d = d.filter((r) => String(r.remito ?? "").includes(busca));
+    if (orden === "cp_asc") d.sort((a, b) => rem(a) - rem(b));
+    else if (orden === "cp_desc") d.sort((a, b) => rem(b) - rem(a));
+    else d.sort((a, b) => a.fecha.localeCompare(b.fecha) || rem(a) - rem(b));
     return d;
   }, [infraruts, fecha, finca, busca, orden]);
 
@@ -77,9 +85,9 @@ export function ViajesTable({
           <div className="text-xs text-neutral-400">{fechas.length} días</div>
         </div>
         <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">Rango CP</div>
+          <div className="text-xs text-neutral-500">Rango de remitos</div>
           <div className="text-lg font-semibold">
-            {cpMin}–{cpMax}
+            {remMin}–{remMax}
           </div>
           <div className="text-xs text-neutral-400">
             {totalRange} números en rango
@@ -131,7 +139,7 @@ export function ViajesTable({
           </Select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs text-neutral-500">Buscar CP</label>
+          <label className="text-xs text-neutral-500">Buscar remito</label>
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -146,8 +154,8 @@ export function ViajesTable({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="cp_asc">CP ascendente</SelectItem>
-              <SelectItem value="cp_desc">CP descendente</SelectItem>
+              <SelectItem value="cp_asc">Remito ascendente</SelectItem>
+              <SelectItem value="cp_desc">Remito descendente</SelectItem>
               <SelectItem value="fecha">Fecha</SelectItem>
             </SelectContent>
           </Select>
@@ -165,23 +173,24 @@ export function ViajesTable({
         <div className="space-y-2 rounded-xl border bg-white p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold">
-              Análisis de remitos faltantes entre CPs cargados
+              Análisis de remitos faltantes en la secuencia de Jastrow
             </h3>
             <span className="text-xs text-neutral-400">
               {bigGaps.length} brechas detectadas
             </span>
           </div>
           <p className="text-xs text-neutral-500">
-            Los CPs salteados pueden ser de otros productores del ingenio o
-            INFRARUTs de Jastrow que no fueron cargados todavía.
+            Los remitos son la secuencia propia del campo: un salto significa un
+            viaje que no llegó en los INFRARUTs cargados (reporte faltante,
+            remito anulado o baja ARCA).
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-neutral-500">
-                  <th className="py-1 pr-3 font-normal">Desde CP</th>
-                  <th className="py-1 pr-3 font-normal">Hasta CP</th>
-                  <th className="py-1 pr-3 font-normal">CPs faltantes</th>
+                  <th className="py-1 pr-3 font-normal">Desde remito</th>
+                  <th className="py-1 pr-3 font-normal">Hasta remito</th>
+                  <th className="py-1 pr-3 font-normal">Remitos faltantes</th>
                   <th className="py-1 pr-3 font-normal">Fecha ant.</th>
                   <th className="py-1 pr-3 font-normal">Fecha sig.</th>
                   <th className="py-1 pr-3 font-normal">
@@ -200,31 +209,31 @@ export function ViajesTable({
                     <td className="py-1.5 pr-3">
                       <Badge
                         variant={
-                          g.faltantes >= 20
+                          g.faltantes >= 5
                             ? "destructive"
-                            : g.faltantes >= 5
+                            : g.faltantes >= 2
                               ? "secondary"
                               : "outline"
                         }
                       >
-                        {g.faltantes} CP{g.faltantes > 1 ? "s" : ""}
+                        {g.faltantes} remito{g.faltantes > 1 ? "s" : ""}
                       </Badge>
                     </td>
                     <td className="py-1.5 pr-3">{g.fechaAnt.slice(5)}</td>
                     <td className="py-1.5 pr-3">{g.fechaSig.slice(5)}</td>
                     <td className="py-1.5 pr-3">
                       {g.probable
-                        ? `⚠ Revisar — puede faltar INFRARUT del ${g.fechaAnt.slice(5)} o ${g.fechaSig.slice(5)}`
+                        ? `⚠ Revisar — puede faltar el INFRARUT del ${g.fechaAnt.slice(5)} o ${g.fechaSig.slice(5)}`
                         : g.fechaAnt === g.fechaSig
-                          ? "Mismo día — son de otros productores"
-                          : "Días diferentes"}
+                          ? "Mismo día — cotejar con la libreta (¿anulado o baja ARCA?)"
+                          : "Días diferentes — cotejar con la libreta"}
                     </td>
                   </tr>
                 ))}
                 {bigGaps.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-4 text-center text-neutral-400">
-                      Sin brechas — todos los CPs son consecutivos.
+                      Sin brechas — todos los remitos son consecutivos.
                     </td>
                   </tr>
                 )}
@@ -249,8 +258,8 @@ export function ViajesTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>CP</TableHead>
               <TableHead>Remito</TableHead>
+              <TableHead>CP ingenio</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Finca</TableHead>
               <TableHead>Veh</TableHead>
@@ -269,14 +278,22 @@ export function ViajesTable({
             {data.map((r, i) => {
               const prev = data[i - 1];
               const showGapRow =
-                orden === "cp_asc" && !!prev && r.cp - prev.cp > 1;
+                orden === "cp_asc" &&
+                !!prev &&
+                r.remito != null &&
+                prev.remito != null &&
+                r.remito - prev.remito > 1;
+              const saltoRemitos =
+                showGapRow ? (r.remito as number) - (prev.remito as number) - 1 : 0;
               const trashPct =
                 r.kg_trash > 0
                   ? (r.kg_trash / (r.kg_neto + r.kg_trash)) * 100
                   : null;
               const libreta = libretaStatus(r, cpsCampoSet, bajasSet);
               const highlight =
-                busca && String(r.cp).includes(busca) ? "bg-emerald-50" : "";
+                busca && String(r.remito ?? "").includes(busca)
+                  ? "bg-emerald-50"
+                  : "";
               return (
                 <Fragment key={r.cp}>
                   {showGapRow && (
@@ -287,10 +304,9 @@ export function ViajesTable({
                       >
                         Salto de{" "}
                         <strong>
-                          {r.cp - prev.cp - 1} CP
-                          {r.cp - prev.cp - 1 > 1 ? "s" : ""}
+                          {saltoRemitos} remito{saltoRemitos > 1 ? "s" : ""}
                         </strong>{" "}
-                        entre CP{prev.cp} y CP{r.cp}
+                        entre remito {prev.remito} y remito {r.remito}
                         {r.fecha !== prev.fecha &&
                           ` · Cambio de fecha: ${prev.fecha.slice(5)} → ${r.fecha.slice(5)}`}
                       </TableCell>
@@ -300,10 +316,10 @@ export function ViajesTable({
                     className={`${highlight} ${libreta === "sin_manual" ? "border-l-2 border-l-amber-500" : ""}`}
                   >
                     <TableCell className="font-semibold text-blue-700">
-                      {r.cp}
+                      {r.remito ?? "—"}
                     </TableCell>
                     <TableCell className="text-xs text-neutral-500">
-                      {r.remito ?? "—"}
+                      {r.cp}
                     </TableCell>
                     <TableCell>{r.fecha.slice(5)}</TableCell>
                     <TableCell>

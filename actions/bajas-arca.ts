@@ -40,7 +40,7 @@ export async function addBajaArca(
     .eq("cp", parsed.data.cp)
     .maybeSingle();
   if (existing) {
-    return { status: "error", error: "Ese CP ya está registrado como baja." };
+    return { status: "error", error: "Ese remito ya está registrado como baja." };
   }
 
   const { error } = await supabase.from("bajas_arca").insert({

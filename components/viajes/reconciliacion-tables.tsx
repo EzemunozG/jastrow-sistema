@@ -22,7 +22,7 @@ export function ReconciliacionTables({
         <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
           <div className="text-xs text-neutral-500">Total libreta</div>
           <div className="text-lg font-semibold">{cpsCampo.length}</div>
-          <div className="text-xs text-neutral-400">CPs del campo</div>
+          <div className="text-xs text-neutral-400">remitos del campo</div>
         </div>
         <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
           <div className="text-xs text-neutral-500">✅ Reconciliados</div>
@@ -53,7 +53,7 @@ export function ReconciliacionTables({
             Sin reconciliar — no aparecen en el INFRARUT ({pendientes.length})
           </h3>
           <p className="text-xs text-neutral-500">
-            Estos CPs salieron del campo pero el ingenio no los reportó.
+            Estos remitos salieron del campo pero el ingenio no los reportó.
             Verificar si el INFRARUT correspondiente está pendiente de
             llegada o si hay que reclamar.
           </p>
@@ -61,7 +61,7 @@ export function ReconciliacionTables({
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-neutral-500">
-                  <th className="py-1 pr-3 font-normal">CP #</th>
+                  <th className="py-1 pr-3 font-normal">Remito</th>
                   <th className="py-1 pr-3 font-normal">Fecha salida</th>
                   <th className="py-1 pr-3 font-normal">Matrícula / Camión</th>
                   <th className="py-1 pr-3 font-normal">Obs.</th>
@@ -95,7 +95,7 @@ export function ReconciliacionTables({
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-neutral-500">
-                  <th className="py-1 pr-3 font-normal">CP #</th>
+                  <th className="py-1 pr-3 font-normal">Remito</th>
                   <th className="py-1 pr-3 font-normal">Fecha campo</th>
                   <th className="py-1 pr-3 font-normal">Fecha INFRARUT</th>
                   <th className="py-1 pr-3 font-normal">Finca</th>
@@ -148,7 +148,7 @@ export function ReconciliacionTables({
           </div>
         ) : (
           <p className="py-4 text-center text-xs text-neutral-400">
-            Todavía no hay CPs reconciliados. Cargá los INFRARUTs
+            Todavía no hay remitos reconciliados. Cargá los INFRARUTs
             correspondientes para empezar a cruzar.
           </p>
         )}
