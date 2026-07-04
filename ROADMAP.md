@@ -89,6 +89,7 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
 - [x] Milestone 5 completo: Viajes/Listado + detección de brechas — ver detalle abajo.
 - [x] Milestone 6 completo: Libreta del Campo + seed de datos reales de la zafra
       (148 INFRARUT + 128 despachos de libreta) — ver detalle abajo.
+- [x] Milestone 7 completo: Reconciliación + Bajas ARCA — ver detalle abajo.
 - [ ] Todo lo demás — ver milestones abajo
 
 ## Git y deploy
@@ -249,13 +250,34 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
   borró el `package.json`/`node_modules` accidental del padre y se reinstaló `tsx`
   correctamente adentro de `jastrow-app/`.
 
-### 7. Reconciliación + Bajas ARCA
-- [x] `lib/reconciliation.ts`: `detectarBrechas()` y `libretaStatus()` ya se usan desde
-      milestone 5 (`ViajesTable`). Falta la UI de este milestone: pantalla de
-      Reconciliación (usa `reconciliar()`, todavía sin consumidor) + CRUD de `bajas_arca`.
-      **Ojo**: `reconciliar()` matchea `cps_campo.cp` contra `infraruts.remito`, no contra
-      `infraruts.cp` (detalle exacto de `index_10.html:1765`, mismo criterio que
-      `libretaStatus()`).
+### 7. Reconciliación + Bajas ARCA ✅ completo, probado en vivo (2026-07-03)
+- [x] `lib/reconciliation.ts`: `reconciliar()` ya estaba escrito desde milestone 1
+      (adelantado, como el resto de `lib/`) — esta vez sí se grepeó antes de escribir
+      nada nuevo. Devuelve `{reconciliados, pendientes, infrarutPorRemito}`, usado tal
+      cual por `ReconciliacionTables` sin reimplementar el cálculo.
+- [x] `lib/forms/cps-campo.ts` (nuevo): `parseCpInput` (CP individual o rango
+      "4350-4380") y `parseCpLista` (pegar una lista separada por comas/saltos de
+      línea) — portados de `index_10.html:1494-1506` y `:1482`.
+- [x] `actions/cps-campo.ts`: `addCpsCampo`/`addCpsLista` — nunca pisan un CP ya
+      cargado (ni de la libreta importada ni de otra alta manual), solo agregan los
+      que faltan y devuelven cuántos se agregaron/saltearon.
+- [x] `lib/forms/bajas-arca.ts` + `actions/bajas-arca.ts`: alta (rechaza CPs
+      duplicados, igual que el `alert()` del legacy), toggle de "gestionado" (click
+      directo sobre el badge de estado, como el `onclick` inline del HTML original) y
+      borrado.
+- [x] `components/viajes/registrar-cps-form.tsx`, `reconciliacion-tables.tsx`,
+      `bajas-arca-card.tsx` + `app/(app)/viajes/reconciliacion/page.tsx`.
+- **Encontrado en el camino**: `deleteCPCampo()` existe en `index_10.html:1508` pero
+  **no está conectado a ningún botón** en el HTML legacy — es código muerto. Se portó
+  igual como `deleteCpCampo()` en `actions/cps-campo.ts` (puede servir a futuro), pero
+  a propósito no se le agregó un botón en la UI nueva, para no inventar una
+  funcionalidad que el sistema original nunca tuvo.
+- **Probado en vivo**: con los 128 despachos + 148 INFRARUT reales cargados en
+  milestone 6 — resumen (128/116/11/1) idéntico al de Libreta del Campo, tablas de
+  pendientes/reconciliados con datos y colores correctos, toggle de "Gestionado" en
+  la baja real (CP 6908, devuelto a "Pendiente" después de probar), alta de un CP de
+  prueba (9999) confirmada y luego borrada a mano (no hay botón de borrado en la UI,
+  ver arriba).
 
 ### 8. Stock + Recetas
 - [ ] Tablas `productos`, `movimientos_stock`, `recetas`, `receta_lotes`, `receta_items`
