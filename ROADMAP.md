@@ -482,6 +482,32 @@ legacy (exportar todo el jw_storage a JSON) no se porta — los datos ahora vive
 Postgres con backups de Supabase; si algún día se quiere un export local, es una
 feature nueva, no paridad.
 
+### Corrección de semántica remito/carta de porte (2026-07-04, misma jornada)
+
+El usuario aclaró la regla de negocio central: el campo despacha con su talonario de
+REMITOS; la carta de porte la asigna EL INGENIO y el campo no la conoce — todo cruce
+va por remito. El port se había basado en el `index_10.html` viejo, que confundía los
+términos; el legacy corregido de main (2026-07-02) ya lo tenía bien y el rewrite no lo
+había incorporado. Cambios:
+- `detectarBrechas()` ahora recorre la secuencia de REMITOS (antes: la de cartas de
+  porte del ingenio, que medía huecos de otros productores — pasó de 148 brechas de
+  ruido a 6 brechas reales). Heurística `probable` actualizada a la del legacy
+  corregido (≥3 faltantes + cambio de fecha; antes ≥5).
+- Viajes/Listado: remito como columna principal (CP ingenio secundario), orden,
+  búsqueda, rango y filas de salto por remito.
+- Etiquetas "CP" → "remito" en Libreta, Reconciliación, Registrar remitos, Bajas ARCA
+  y en las alertas de pendientes/bajas (la alerta de "viajes más críticos" sigue
+  usando CP porque esos viajes sí están en el INFRARUT y el CP los identifica ante el
+  ingenio).
+- La regla quedó documentada en `CLAUDE.md` (sección Convenciones) — incluida la
+  trampa de que `cps_campo.cp`/`bajas_arca.cp` guardan remitos.
+
+Con los datos al 01/07, el análisis por remito da: 130 reconciliados, 1 baja ARCA
+(6908), **15 remitos que salieron del campo, cuyo día ya tiene INFRARUT cargado, y no
+figuran** (6902-6904, 6985, 7053-7054, 7056-7063, 7077 — para reclamar al ingenio) y 8
+posteriores al último INFRARUT (7079-7086, esperables en el próximo reporte). Además
+32 viajes del INFRARUT sin transcribir en la libreta (06-25 a 06-28).
+
 ## Decisiones pendientes
 
 - **Emails reales para Auth**: `admin`/`operador` no tienen email hoy. Se está usando

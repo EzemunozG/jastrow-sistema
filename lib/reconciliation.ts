@@ -1,10 +1,15 @@
-// Reconciliación de CPs del campo contra el INFRARUT del ingenio.
-// Portado de index_10.html:1763-1821 (renderReconcilia) y :1882-1930 (gap detection).
+// Reconciliación de la libreta del campo contra el INFRARUT del ingenio.
+// Portado de index_10.html (versión corregida en main, 2026-07-02).
 //
-// Detalle importante a preservar: la reconciliación matchea `cps_campo.cp` contra
-// `infraruts.remito` (NO contra `infraruts.cp` — son numeraciones distintas: `cp` es
-// el correlativo interno del ingenio, `remito` es el número de carta de porte que
-// también anota el campo). Ver index_10.html:1765.
+// Semántica de los números — LA BASE DE TODO EL SISTEMA:
+// - `infraruts.remito` = número de REMITO del talonario propio del campo. Es la única
+//   numeración que el campo conoce al despachar, y la secuencia es densa y consecutiva.
+// - `infraruts.cp` = carta de porte que asigna EL INGENIO (correlativo entre todos los
+//   productores, lleno de huecos ajenos). El campo no la conoce hasta que llega el
+//   INFRARUT — NUNCA cruzar por este número.
+// - `cps_campo.cp` y `bajas_arca.cp` guardan NÚMEROS DE REMITO (la columna se llama
+//   "cp" por herencia del legacy viejo, que confundía los términos).
+// Todo cruce libreta↔INFRARUT y toda detección de brechas va por remito.
 
 import type { InfrarutRow } from "./business-rules";
 
@@ -58,32 +63,37 @@ export function libretaStatus(
 }
 
 export type Gap = {
-  desde: number;
-  hasta: number;
+  desde: number; // remito
+  hasta: number; // remito
   faltantes: number;
   fechaAnt: string;
   fechaSig: string;
-  probable: boolean; // heurística: faltantes >= 5 y cambia de fecha (index_10.html:1912)
+  probable: boolean; // heurística: faltantes >= 3 y cambia de fecha (legacy corregido, main:2003)
 };
 
-// Algoritmo GLOBAL por número de CP consecutivo (no por finca/fecha) — se preserva
-// tal cual porque puede estar ajustado a cómo el ingenio asigna CPs entre todos los
-// productores, no solo Jastrow. No "corregir" a un algoritmo por finca sin confirmar.
+// Brechas en la secuencia de REMITOS dentro del INFRARUT. Los remitos son la
+// numeración propia del campo (densa y consecutiva), así que un salto acá significa
+// un viaje que salió del campo y no llegó en los INFRARUTs cargados: reporte
+// faltante del ingenio, remito anulado o baja ARCA. (La versión vieja del legacy
+// hacía esto sobre `cp` — la carta de porte del ingenio — lo cual medía huecos de
+// otros productores; el legacy de main lo corrigió el 2026-07-02.)
 export function detectarBrechas(infraruts: InfrarutRow[]): Gap[] {
-  const sorted = [...infraruts].sort((a, b) => a.cp - b.cp);
+  const sorted = infraruts
+    .filter((r) => r.remito != null)
+    .sort((a, b) => (a.remito as number) - (b.remito as number));
   const gaps: Gap[] = [];
   for (let i = 0; i < sorted.length - 1; i++) {
-    const diff = sorted[i + 1].cp - sorted[i].cp;
+    const diff = (sorted[i + 1].remito as number) - (sorted[i].remito as number);
     if (diff > 1) {
       const fechaAnt = sorted[i].fecha;
       const fechaSig = sorted[i + 1].fecha;
       gaps.push({
-        desde: sorted[i].cp,
-        hasta: sorted[i + 1].cp,
+        desde: sorted[i].remito as number,
+        hasta: sorted[i + 1].remito as number,
         faltantes: diff - 1,
         fechaAnt,
         fechaSig,
-        probable: diff - 1 >= 5 && fechaSig !== fechaAnt,
+        probable: diff - 1 >= 3 && fechaSig !== fechaAnt,
       });
     }
   }

@@ -146,7 +146,7 @@ export function computeAlerts(
       icon: "file-alert",
       message: `${pendientes.length} despacho${pendientes.length !== 1 ? "s" : ""} de la libreta sin reconciliar: ${pendientes
         .slice(0, 8)
-        .map((x) => "CP" + x.cp)
+        .map((x) => "remito " + x.cp)
         .join(", ")}${pendientes.length > 8 ? "…" : ""}. Verificar si falta cargar el INFRARUT correspondiente o reclamar al ingenio.`,
     });
   }
@@ -155,7 +155,7 @@ export function computeAlerts(
     alerts.push({
       severity: "bad",
       icon: "file-x",
-      message: `${bajasPendientes.length} baja${bajasPendientes.length !== 1 ? "s" : ""} ARCA pendiente${bajasPendientes.length !== 1 ? "s" : ""} de gestión: ${bajasPendientes.map((b) => "CP" + b.cp).join(", ")}. Recordá dar de baja estas cartas de porte.`,
+      message: `${bajasPendientes.length} baja${bajasPendientes.length !== 1 ? "s" : ""} ARCA pendiente${bajasPendientes.length !== 1 ? "s" : ""} de gestión: ${bajasPendientes.map((b) => "remito " + b.cp).join(", ")}. Recordá dar de baja estas cartas de porte.`,
     });
   }
   const cpsCampoSet = new Set(cpsCampo.map((x) => x.cp));

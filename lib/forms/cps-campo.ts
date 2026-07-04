@@ -4,14 +4,14 @@
 import { z } from "zod";
 
 export const addCpsCampoSchema = z.object({
-  raw: z.string().min(1, "Ingresá un CP o rango"),
+  raw: z.string().min(1, "Ingresá un remito o rango"),
   fecha: z.string().optional(),
   camion: z.string().optional(),
   obs: z.string().optional(),
 });
 
 export const addCpsListaSchema = z.object({
-  raw: z.string().min(1, "Pegá una lista de CPs"),
+  raw: z.string().min(1, "Pegá una lista de remitos"),
   fecha: z.string().optional(),
 });
 

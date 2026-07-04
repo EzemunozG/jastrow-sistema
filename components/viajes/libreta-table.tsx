@@ -146,7 +146,7 @@ export function LibretaTable({
           </Select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs text-neutral-500">Buscar CP</label>
+          <label className="text-xs text-neutral-500">Buscar remito</label>
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -160,7 +160,7 @@ export function LibretaTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>CP</TableHead>
+              <TableHead>Remito</TableHead>
               <TableHead>Fecha</TableHead>
               <TableHead>Finca</TableHead>
               <TableHead>Matrícula</TableHead>

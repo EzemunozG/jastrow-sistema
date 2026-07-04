@@ -160,6 +160,17 @@ archivo sin darse cuenta de que ya existía en `reconciliation.ts`.
 - Nombres de tablas/columnas en español, en snake_case, siguiendo la terminología del dominio
   ya usada en el HTML legacy (lotes, trabajos, facturas, recetas, cps_campo, bajas_arca) — no
   traducir al inglés a mitad de camino.
+- **REMITO vs CARTA DE PORTE — la distinción más importante del dominio** (confirmada por el
+  usuario, 2026-07-04): el campo despacha con su propio talonario de REMITOS (secuencia densa
+  y consecutiva, ej. 6901–7078); la CARTA DE PORTE la asigna el ingenio después (correlativo
+  entre todos los productores, con huecos ajenos, ej. 1609–8436). El campo NUNCA conoce la
+  carta de porte al despachar. Por eso **todo cruce libreta↔INFRARUT y toda detección de
+  brechas va por `infraruts.remito`, jamás por `infraruts.cp`**, y las brechas se buscan en la
+  secuencia de remitos (un hueco ahí = viaje que salió del campo y el ingenio no acreditó).
+  Trampa de nombres heredada: `cps_campo.cp` y `bajas_arca.cp` guardan NÚMEROS DE REMITO (la
+  columna se llama "cp" por el legacy viejo, que confundía los términos — el legacy corregido
+  de main lo anota igual: "en la libreta el campo 'cp' contiene el N° DE REMITO"). En la UI
+  siempre decir "remito" para estos números; "CP ingenio" solo como dato secundario.
 - Al portar una fórmula o umbral de `index_10.html`, dejá un comentario con el número de línea
   original solo si el valor no es obvio por sí mismo (ej. por qué `META = 10.0` y no otro
   número), no como documentación genérica.
