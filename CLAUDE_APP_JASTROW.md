@@ -144,3 +144,8 @@ Viajes → Reconciliación.)
 - El importador de Excel INFRARUT integrado en la app (Resumen, solo admin) existe
   pero su mapeo de columnas es provisorio y no se probó con un archivo real del
   ingenio todavía — por eso este flujo por SQL es el camino confiable por ahora.
+- **Plan de transición**: la primera vez que llegue un Excel REAL del ingenio,
+  recordale a Ezequiel que le guarde una copia y se la lleve a Claude Code (en su
+  Mac) para calibrar el importador integrado con el archivo verdadero. Una vez
+  calibrado, el flujo diario pasa a ser "arrastrar el Excel en /resumen" — sin SQL ni
+  navegador — y este flujo por SQL queda solo como respaldo y para correcciones.
