@@ -20,8 +20,12 @@ Ver `ROADMAP.md` para el plan de milestones y las decisiones pendientes.
   Storage (imágenes de facturas).
 - **UI**: Tailwind CSS v4 + shadcn/ui (base Radix, preset "nova") + `@tabler/icons-react`.
 - **Datos/mutaciones**: Server Components + Server Actions (`'use server'`) para todo el CRUD.
-  TanStack Query + Supabase Realtime solo en las vistas que necesitan sync en vivo entre
-  usuarios (Viajes/Listado, Reconciliación, Alertas).
+  Supabase Realtime solo en las vistas que necesitan sync en vivo entre usuarios
+  (Viajes/Listado, Reconciliación, Alertas) — sin TanStack Query: un componente cliente
+  (`components/realtime-refresh.tsx`) se suscribe a `postgres_changes` vía
+  `hooks/useRealtimeTable.ts` y llama `router.refresh()`, que vuelve a pedir los datos a la
+  Server Component. Más simple que traer un cache client-side para algo que ya vive en el
+  server; alcanza para el volumen de datos de este proyecto.
 - **Estado de UI efímero** (tab activo, filtros, modal abierto/cerrado): Zustand
   (`store/ui-store.ts`).
 - **Formularios**: los formularios CRUD simples (lotes, facturas, usuarios) usan `useActionState`
@@ -135,6 +139,18 @@ archivo sin darse cuenta de que ya existía en `reconciliation.ts`.
 - **RLS es el enforcement real**, no la UI. El botón de admin oculto en el topbar es solo
   cosmético — la tabla `infraruts` (datos del ingenio) es de solo lectura para usuarios
   normales a nivel de base de datos vía la función `is_admin()`.
+- **`jw_storage` (tabla del sistema legacy) no tiene RLS y expone lo que tenga adentro con la
+  sola clave anon** — ya se encontró una vez con las contraseñas de `admin`/`operador` en
+  texto plano ahí (rotadas el 2026-07-04, ver `ROADMAP.md`). No se puede cerrar con RLS sin
+  romper el login de `main`/`index_10.html` (lee esa tabla con la clave anon). Si se agrega
+  algo sensible a `jw_storage` alguna vez, tenerlo presente.
+- **Una tabla con Realtime habilitado (agregada a la publicación `supabase_realtime`, ver
+  `hooks/useRealtimeTable.ts`) también necesita RLS-aware auth en el cliente**: si la tabla
+  tiene RLS, el socket de Realtime solo reenvía `postgres_changes` si se le pasó el JWT de
+  sesión con `supabase.realtime.setAuth(session.access_token)` **antes** de `subscribe()` — la
+  anon key con la que arranca el cliente no alcanza, aunque el usuario esté logueado y el
+  `channel.subscribe()` devuelva `SUBSCRIBED` sin error (falla en silencio, no llega ningún
+  evento). Ver el hook para el patrón completo.
 - Nombres de tablas/columnas en español, en snake_case, siguiendo la terminología del dominio
   ya usada en el HTML legacy (lotes, trabajos, facturas, recetas, cps_campo, bajas_arca) — no
   traducir al inglés a mitad de camino.

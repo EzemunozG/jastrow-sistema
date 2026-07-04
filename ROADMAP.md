@@ -352,11 +352,77 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
   sistema). No hubo alertas de caída de rendimiento/pureza crítica/trash alto — ningún
   dato real cruza esos umbrales hoy, es coherente con lo visto en Resumen/Tendencia.
 
-### 10. Realtime + Admin + hardening + QA de paridad
-- [ ] `hooks/useRealtimeTable.ts` wireado en Viajes/Listado, Reconciliación, Alertas
-- [ ] `app/(app)/admin/usuarios/page.tsx`
-- [ ] Revisión final de políticas RLS
-- [ ] Checklist de paridad numérica contra `index_10.html` antes de decomisionarlo
+### 10. Realtime + Admin + hardening + QA de paridad ✅ completo (2026-07-04)
+- [x] `hooks/useRealtimeTable.ts` + `components/realtime-refresh.tsx` (wrapper cliente que
+      no renderiza nada, para poder usar el hook desde una page.tsx que es Server
+      Component) wireados en Viajes/Listado, Reconciliación y Alertas, suscriptos a
+      `infraruts`/`cps_campo`/`bajas_arca` con debounce de 400ms (para no disparar un
+      refresh por fila al importar un Excel de 148 filas de una sola vez). Requiere
+      `supabase/migrations/20260705000000_realtime.sql` (agrega esas 3 tablas a la
+      publicación `supabase_realtime`, aplicada al proyecto remoto).
+  - **Bug encontrado y corregido**: el canal se suscribía OK (`status: SUBSCRIBED`) pero
+    no llegaba ningún evento — porque esas tablas tienen RLS habilitado y Supabase
+    Realtime respeta las políticas RLS al reenviar `postgres_changes`; el cliente del
+    navegador arranca autenticado con la **anon key** en el socket de Realtime hasta que
+    se le pasa explícitamente el JWT de sesión. Se arregló llamando
+    `supabase.realtime.setAuth(session.access_token)` (leyendo la sesión con
+    `supabase.auth.getSession()`) antes de `channel.subscribe()`. **Si se agrega
+    Realtime a una tabla nueva con RLS en el futuro, hay que repetir este patrón** — no
+    alcanza con suscribirse nomás.
+  - Probado en vivo con dos pestañas logueadas en Reconciliación (y luego en Alertas):
+    togglear "Gestionado" en la baja ARCA CP6908 en una pestaña actualizó la otra sola,
+    sin recargar, en ~2s (incluida la lista de Alertas derivada, que hizo desaparecer
+    la alerta correspondiente).
+- [x] `app/(app)/admin/usuarios/page.tsx` — ya estaba completo desde milestone 1
+      (adelantado), reverificado funcionando en esta pasada final.
+- [x] **Revisión final de RLS — encontrado y mitigado un hallazgo real de seguridad**:
+      la tabla legacy `jw_storage` (la que sigue usando `main`/`index_10.html`) **no
+      tiene RLS habilitado**, y con la sola clave anon pública (la misma que usa esta
+      app nueva) se podía leer el registro `key='users'`, que tenía las contraseñas de
+      `admin`/`operador` **en texto plano**. No se puede arreglar con RLS sin romper el
+      login del HTML legacy hoy mismo (`getUsers()` lee esa fila con la clave anon para
+      comparar la contraseña client-side — es la arquitectura completa del login
+      legacy). Con autorización explícita del usuario, se rotaron las contraseñas
+      expuestas (nuevas credenciales entregadas por chat, no viven en el repo) sin
+      tocar RLS — la exposición estructural queda documentada como pendiente hasta que
+      `main` se decomisione. El resto de las tablas nuevas (`0002_rls.sql`) y el bucket
+      de Storage (`0004_storage.sql`) se revisaron y están bien: todas las tablas
+      operativas exigen `auth.uid() is not null`, `infraruts`/`infraruts_imports` son
+      solo-lectura para no-admins, `profiles` tiene la separación
+      self-update/admin-update correcta.
+- [x] **Checklist de paridad numérica contra `index_10.html`** — se sirvió el HTML legacy
+      con un servidor estático temporal (`python3 -m http.server`, no queda corriendo)
+      para compararlo en vivo contra la app nueva, ambos leyendo/calculando sobre los
+      mismos datos reales sembrados en milestone 6 (148 INFRARUT + 128 libreta):
+  - **Resumen**: KPIs globales y por finca (Rdto%/POL%/Tn/Kg azúcar/Viajes) — **coincide
+    exacto**, número por número.
+  - **Tendencia**: tabla comparativa diaria por finca (18 filas, 06-14 a 06-29) —
+    **coincide exacto** fila por fila (viajes, tn netas, brix/pol/pureza/rdto/trash,
+    kg azúcar, Δ vs. día anterior). Los charts se ven distintos a primera vista (Chart.js
+    legacy vs. Recharts nuevo, distinto escalado de ejes) pero grafican los mismos datos
+    — no comparar chart contra chart a ojo, comparar la tabla subyacente.
+  - **Viajes/Listado**: remitos cargados (148), rango de CP (1609–7458, 5850 números en
+    rango) y la detección de brechas (mismos saltos: 261 CPs, 54 CPs, 21 CPs...) —
+    **coincide exacto**.
+  - **Alertas** y **Reconciliación**: ya validados en milestones 9 y 7 contra estos
+    mismos datos reales (la baja ARCA CP6908, el conteo 128/116/11/1).
+  - **Campo (Lotes/Facturas/Costos) y Stock/Recetas — NO comparables todavía**: el HTML
+    legacy tiene 15 lotes reales hardcodeados (VA-01...VA-15, ~690 ha, arrendamientos
+    reales) y datos reales de facturas/trabajos/stock/recetas que **nunca se migraron**
+    a la base nueva (`jw_storage` estaba casi vacía — ver milestone 6 — y estos son
+    arrays hardcodeados en el JS del HTML, no filas de `jw_storage`). Es el mismo tipo
+    de dato real que INFRARUT/libreta (milestone 6) o Stock/Recetas (milestone 8):
+    **seedearlo requiere confirmación explícita del usuario antes de correr el script
+    contra la base real** — todavía no se pidió. Hasta que esto no se cargue, Costos y
+    Stock/Recetas de la app nueva van a seguir vacíos aunque el código esté completo y
+    probado con datos de prueba.
+
+**Conclusión de la QA de paridad**: los 10 milestones del roadmap original están
+completos. Antes de mergear `nextjs-rewrite` a `main` y decomisionar `index_10.html`
+faltan dos cosas, ambas decisiones del usuario, no trabajo técnico pendiente: (1) seedear
+los datos reales de Lotes/Facturas/Trabajos/Stock/Recetas (mismo patrón que milestones 6
+y 8), y (2) decidir qué hacer con la exposición estructural de `jw_storage` (solo se
+puede cerrar completamente decomisionando `main`).
 
 ## Decisiones pendientes
 

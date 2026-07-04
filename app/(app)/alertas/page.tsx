@@ -1,4 +1,5 @@
 import { AlertasList } from "@/components/alertas/alertas-list";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { computeAlerts } from "@/lib/alerts";
 import type { InfrarutRow } from "@/lib/business-rules";
 import { fechasUnicas } from "@/lib/business-rules";
@@ -33,10 +34,13 @@ export default async function AlertasPage() {
   const fechas = fechasUnicas(infraruts);
 
   return (
-    <AlertasList
-      alerts={alerts}
-      desde={fechas[0] ?? null}
-      hasta={fechas[fechas.length - 1] ?? null}
-    />
+    <>
+      <RealtimeRefresh tables={["infraruts", "cps_campo", "bajas_arca"]} />
+      <AlertasList
+        alerts={alerts}
+        desde={fechas[0] ?? null}
+        hasta={fechas[fechas.length - 1] ?? null}
+      />
+    </>
   );
 }

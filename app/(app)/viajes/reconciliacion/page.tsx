@@ -1,3 +1,4 @@
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { BajasArcaCard } from "@/components/viajes/bajas-arca-card";
 import { ReconciliacionTables } from "@/components/viajes/reconciliacion-tables";
 import { RegistrarCpsForm } from "@/components/viajes/registrar-cps-form";
@@ -31,6 +32,7 @@ export default async function ViajesReconciliacionPage() {
 
   return (
     <div className="space-y-4">
+      <RealtimeRefresh tables={["infraruts", "cps_campo", "bajas_arca"]} />
       <RegistrarCpsForm />
       <ReconciliacionTables
         cpsCampo={cpsCampo ?? []}

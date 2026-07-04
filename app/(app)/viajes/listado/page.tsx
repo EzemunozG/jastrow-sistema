@@ -1,3 +1,4 @@
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { ViajesTable } from "@/components/viajes/viajes-table";
 import type { InfrarutRow } from "@/lib/business-rules";
 import { createClient } from "@/lib/supabase/server";
@@ -29,17 +30,23 @@ export default async function ViajesListadoPage() {
 
   if (infraruts.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-6 text-sm text-neutral-500">
-        Todavía no hay viajes de INFRARUT cargados — importalos desde Resumen.
-      </div>
+      <>
+        <RealtimeRefresh tables={["infraruts", "cps_campo", "bajas_arca"]} />
+        <div className="rounded-xl border bg-white p-6 text-sm text-neutral-500">
+          Todavía no hay viajes de INFRARUT cargados — importalos desde Resumen.
+        </div>
+      </>
     );
   }
 
   return (
-    <ViajesTable
-      infraruts={infraruts}
-      cpsCampo={(cpsCampo ?? []).map((r) => r.cp)}
-      bajas={(bajas ?? []).map((r) => r.cp)}
-    />
+    <>
+      <RealtimeRefresh tables={["infraruts", "cps_campo", "bajas_arca"]} />
+      <ViajesTable
+        infraruts={infraruts}
+        cpsCampo={(cpsCampo ?? []).map((r) => r.cp)}
+        bajas={(bajas ?? []).map((r) => r.cp)}
+      />
+    </>
   );
 }
