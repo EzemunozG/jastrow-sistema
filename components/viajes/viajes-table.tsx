@@ -1,7 +1,8 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { META, detectGaps, type InfrarutRow } from "@/lib/business-rules";
+import { META, type InfrarutRow } from "@/lib/business-rules";
+import { detectarBrechas, libretaStatus } from "@/lib/reconciliation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,11 +45,9 @@ export function ViajesTable({
   );
   const cpsCampoSet = useMemo(() => new Set(cpsCampo), [cpsCampo]);
   const bajasSet = useMemo(() => new Set(bajas), [bajas]);
-  const gaps = useMemo(() => detectGaps(infraruts), [infraruts]);
-  const bigGaps = useMemo(
-    () => [...gaps].sort((a, b) => b.faltantes - a.faltantes),
-    [gaps],
-  );
+  // detectarBrechas ya devuelve las brechas ordenadas por faltantes desc, con
+  // `probable` precalculado (index_10.html:1912) — ver lib/reconciliation.ts.
+  const bigGaps = useMemo(() => detectarBrechas(infraruts), [infraruts]);
 
   const cpSorted = useMemo(
     () => [...infraruts].sort((a, b) => a.cp - b.cp),
@@ -158,7 +157,7 @@ export function ViajesTable({
           size="sm"
           onClick={() => setShowGaps((v) => !v)}
         >
-          {showGaps ? "Ocultar brechas" : `Ver brechas (${gaps.length})`}
+          {showGaps ? "Ocultar brechas" : `Ver brechas (${bigGaps.length})`}
         </Button>
       </div>
 
@@ -191,41 +190,37 @@ export function ViajesTable({
                 </tr>
               </thead>
               <tbody>
-                {bigGaps.map((g) => {
-                  const dayDiff = g.fechaSig !== g.fechaAnt;
-                  const probable = g.faltantes >= 5 && dayDiff;
-                  return (
-                    <tr
-                      key={`${g.desde}-${g.hasta}`}
-                      className={probable ? "bg-amber-50" : "border-t"}
-                    >
-                      <td className="py-1.5 pr-3 font-medium">{g.desde}</td>
-                      <td className="py-1.5 pr-3 font-medium">{g.hasta}</td>
-                      <td className="py-1.5 pr-3">
-                        <Badge
-                          variant={
-                            g.faltantes >= 20
-                              ? "destructive"
-                              : g.faltantes >= 5
-                                ? "secondary"
-                                : "outline"
-                          }
-                        >
-                          {g.faltantes} CP{g.faltantes > 1 ? "s" : ""}
-                        </Badge>
-                      </td>
-                      <td className="py-1.5 pr-3">{g.fechaAnt.slice(5)}</td>
-                      <td className="py-1.5 pr-3">{g.fechaSig.slice(5)}</td>
-                      <td className="py-1.5 pr-3">
-                        {probable
-                          ? `⚠ Revisar — puede faltar INFRARUT del ${g.fechaAnt.slice(5)} o ${g.fechaSig.slice(5)}`
-                          : g.fechaAnt === g.fechaSig
-                            ? "Mismo día — son de otros productores"
-                            : "Días diferentes"}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {bigGaps.map((g) => (
+                  <tr
+                    key={`${g.desde}-${g.hasta}`}
+                    className={g.probable ? "bg-amber-50" : "border-t"}
+                  >
+                    <td className="py-1.5 pr-3 font-medium">{g.desde}</td>
+                    <td className="py-1.5 pr-3 font-medium">{g.hasta}</td>
+                    <td className="py-1.5 pr-3">
+                      <Badge
+                        variant={
+                          g.faltantes >= 20
+                            ? "destructive"
+                            : g.faltantes >= 5
+                              ? "secondary"
+                              : "outline"
+                        }
+                      >
+                        {g.faltantes} CP{g.faltantes > 1 ? "s" : ""}
+                      </Badge>
+                    </td>
+                    <td className="py-1.5 pr-3">{g.fechaAnt.slice(5)}</td>
+                    <td className="py-1.5 pr-3">{g.fechaSig.slice(5)}</td>
+                    <td className="py-1.5 pr-3">
+                      {g.probable
+                        ? `⚠ Revisar — puede faltar INFRARUT del ${g.fechaAnt.slice(5)} o ${g.fechaSig.slice(5)}`
+                        : g.fechaAnt === g.fechaSig
+                          ? "Mismo día — son de otros productores"
+                          : "Días diferentes"}
+                    </td>
+                  </tr>
+                ))}
                 {bigGaps.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-4 text-center text-neutral-400">
@@ -279,8 +274,7 @@ export function ViajesTable({
                 r.kg_trash > 0
                   ? (r.kg_trash / (r.kg_neto + r.kg_trash)) * 100
                   : null;
-              const enLibreta = r.remito != null && cpsCampoSet.has(r.remito);
-              const esBaja = r.remito != null && bajasSet.has(r.remito);
+              const libreta = libretaStatus(r, cpsCampoSet, bajasSet);
               const highlight =
                 busca && String(r.cp).includes(busca) ? "bg-emerald-50" : "";
               return (
@@ -303,7 +297,7 @@ export function ViajesTable({
                     </TableRow>
                   )}
                   <TableRow
-                    className={`${highlight} ${!enLibreta && !esBaja ? "border-l-2 border-l-amber-500" : ""}`}
+                    className={`${highlight} ${libreta === "sin_manual" ? "border-l-2 border-l-amber-500" : ""}`}
                   >
                     <TableCell className="font-semibold text-blue-700">
                       {r.cp}
@@ -350,14 +344,14 @@ export function ViajesTable({
                     </TableCell>
                     <TableCell>{r.kg_azucar.toLocaleString("es-AR")}</TableCell>
                     <TableCell>
-                      {esBaja ? (
+                      {libreta === "baja" ? (
                         <Badge
                           variant="outline"
                           className="border-amber-200 bg-amber-50 text-amber-700"
                         >
                           ⚠ Baja ARCA
                         </Badge>
-                      ) : enLibreta ? (
+                      ) : libreta === "en_libreta" ? (
                         <Badge
                           variant="outline"
                           className="border-emerald-200 bg-emerald-50 text-emerald-700"

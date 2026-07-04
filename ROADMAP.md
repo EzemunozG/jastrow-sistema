@@ -103,8 +103,9 @@ Guía de desarrollo y tareas pendientes. Ver `CLAUDE.md` para stack/convenciones
   incluyen, sin tocar nada compartido.
 - Variables de entorno de Supabase cargadas en Vercel con scope `Preview` + rama
   `nextjs-rewrite` únicamente, incluida `SUPABASE_SERVICE_ROLE_KEY` (agregada 2026-07-03).
-- Antes de mergear `nextjs-rewrite` a `main`: correr las migraciones de Supabase, tener al
-  menos Resumen/Tendencia/Viajes reales, y hacer el checklist de paridad numérica contra
+- Antes de mergear `nextjs-rewrite` a `main`: migraciones ✅ ya aplicadas, Resumen/Tendencia/
+  Viajes ✅ ya reales (milestones 4-5) — falta cargar `SUPABASE_SERVICE_ROLE_KEY` en el
+  entorno Production de Vercel y hacer el checklist de paridad numérica contra
   `index_10.html` (ver sección de Verificación en el plan original).
 
 ## ✅ Setup de Supabase — resuelto (2026-07-03)
@@ -118,7 +119,7 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
 
 ## Milestones
 
-### 1. Auth + Lotes CRUD (primer slice funcional) ✅ código listo, pendiente aplicar migraciones
+### 1. Auth + Lotes CRUD (primer slice funcional) ✅ completo, probado en vivo (2026-07-03)
 - [x] `supabase/migrations/*_schema.sql`: tablas `fincas`, `profiles`, `lotes` (+ todo el resto
       del esquema, adelantado)
 - [x] `supabase/migrations/*_rls.sql`: función `is_admin()`, políticas RLS
@@ -128,7 +129,7 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
 - [x] `app/(app)/layout.tsx` con chequeo de sesión
 - [x] `app/(app)/campo/lotes/page.tsx` + `LotesTable` + `LoteFormDialog` + `actions/lotes.ts`
 
-### 2. Facturas + Storage ✅ código listo, pendiente aplicar migraciones
+### 2. Facturas + Storage ✅ completo, probado en vivo (2026-07-03)
 - [x] Tablas `facturas`, `factura_items` (ya estaban en `0001_schema.sql`)
 - [x] Bucket de Storage `facturas-imgs` + políticas (`0004_storage.sql`, todo usuario
       autenticado puede leer/escribir, mismo criterio que el resto de tablas operativas)
@@ -139,7 +140,7 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
       (reemplazo completo de ítems en cada guardado, borra el objeto de Storage al
       eliminar una factura)
 
-### 3. Trabajos + Costos ✅ código listo, pendiente aplicar migraciones
+### 3. Trabajos + Costos ✅ completo, probado en vivo (2026-07-03)
 - [x] Tablas `trabajos`, `trabajo_insumos`, `app_settings` (ya estaban en `0001_schema.sql`)
 - [x] `lib/costos.ts` (ya portado en milestone 1 — arriendo, costo/kg azúcar, fórmulas
       exactas de `index_10.html:2572-2701`)
@@ -178,25 +179,29 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
   (o pedirle a un admin que lo haga) antes de confiar en el flujo end-to-end completo.
 
 ### 5. Viajes / Listado + detección de brechas ✅ completo, probado en vivo (2026-07-03)
-- [x] `lib/business-rules.ts`: `detectGaps()` — algoritmo global por número de CP sobre
-      todo el dataset ordenado (no por finca/fecha), portado tal cual de
-      `index_10.html:1882-1930`.
+- [x] `lib/reconciliation.ts` ya tenía `detectarBrechas()` y `libretaStatus()` escritos
+      desde milestone 1 (adelantado, igual que `costos.ts`) — **al principio los reescribí
+      sin querer como un `detectGaps()` duplicado en `business-rules.ts` sin revisar si ya
+      existían; los borré y `ViajesTable` usa las funciones originales de
+      `reconciliation.ts`**. Algoritmo global por número de CP sobre todo el dataset
+      ordenado (no por finca/fecha), portado tal cual de `index_10.html:1882-1930`.
 - [x] `components/viajes/viajes-table.tsx` (`ViajesTable`): filtros (fecha, finca, buscar
       CP, orden cp asc/desc/fecha), tiles de resumen (remitos cargados, rango CP,
       mostrando), panel de brechas colapsable (siempre global, independiente de los
       filtros de la tabla — igual que el legacy), fila de "salto" insertada entre CPs no
       consecutivos cuando el orden es CP ascendente, y estado de "Libreta" por fila
-      (✅ En libreta / ⚠ Baja ARCA / ❌ Sin manual) — **ojo**: matchea `cps_campo.cp`
-      contra `infraruts.remito`, no contra `infraruts.cp` (mismo detalle no obvio que en
-      milestone 7, ver `index_10.html:1765`); como Libreta del Campo (milestone 6)
-      todavía no está implementado, hoy siempre da "Sin manual" — es el estado correcto,
-      no un bug.
+      (✅ En libreta / ⚠ Baja ARCA / ❌ Sin manual) vía `libretaStatus()` — **ojo**:
+      matchea `cps_campo.cp` contra `infraruts.remito`, no contra `infraruts.cp` (mismo
+      detalle no obvio que en milestone 7, ver `index_10.html:1765`); como Libreta del
+      Campo (milestone 6) todavía no está implementado, hoy siempre da "Sin manual" — es
+      el estado correcto, no un bug.
 - [x] `app/(app)/viajes/listado/page.tsx` conectado a `infraruts` + `cps_campo` +
       `bajas_arca`.
 - **Probado en vivo**: datos de prueba con 3 brechas intencionales (6 CPs mismo día, 18
   CPs con cambio de día → marcado "⚠ Revisar", 0 CPs) + un `cps_campo` de prueba —
   panel de brechas, filas de salto, colores condicionales (Pureza/Rdto/Trash) y filtro
-  por finca verificados correctos. Datos de prueba borrados después.
+  por finca verificados correctos (antes y después de deduplicar contra
+  `reconciliation.ts`, mismo resultado pixel-a-pixel). Datos de prueba borrados después.
 
 ### 6. Libreta del Campo + migración de datos legacy
 - [ ] `lib/excel/parse-libreta.ts` + `lib/excel/parse-common.ts`
@@ -205,8 +210,12 @@ Preview, a propósito, para no tocar nada de la producción legacy antes de tiem
       hardcodeados en `index_10.html` (arrays `INFRARUTS`, `_LIBRETA_DEFAULT`, `_BAJAS_DEFAULT`)
 
 ### 7. Reconciliación + Bajas ARCA
-- [ ] `lib/reconciliation.ts` — **ojo**: matchea `cps_campo.cp` contra `infraruts.remito`, no
-      contra `infraruts.cp` (detalle exacto de `index_10.html:1765`)
+- [x] `lib/reconciliation.ts`: `detectarBrechas()` y `libretaStatus()` ya se usan desde
+      milestone 5 (`ViajesTable`). Falta la UI de este milestone: pantalla de
+      Reconciliación (usa `reconciliar()`, todavía sin consumidor) + CRUD de `bajas_arca`.
+      **Ojo**: `reconciliar()` matchea `cps_campo.cp` contra `infraruts.remito`, no contra
+      `infraruts.cp` (detalle exacto de `index_10.html:1765`, mismo criterio que
+      `libretaStatus()`).
 
 ### 8. Stock + Recetas
 - [ ] Tablas `productos`, `movimientos_stock`, `recetas`, `receta_lotes`, `receta_items`

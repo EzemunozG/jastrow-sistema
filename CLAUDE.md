@@ -75,21 +75,29 @@ proxy.ts                               # refresh de sesión Supabase (ver arriba
 lib/
   supabase/{server,client,admin}.ts    # admin.ts = service role, SOLO en Server Actions
   business-rules.ts                    # statsFor, avg, sum, META, umbrales
-  reconciliation.ts                    # match cps_campo vs infraruts, detección de brechas
+  reconciliation.ts                    # match cps_campo vs infraruts, detectarBrechas, libretaStatus
   costos.ts                            # arriendo, costo/kg azúcar
   stock.ts                             # saldo/precio_prom (espejo de la view SQL)
   alerts.ts                            # reglas de alertas
+  forms/{lotes,facturas,trabajos,app-settings}.ts  # schemas zod + *_ACTION_IDLE (ver abajo)
   excel/{parse-common,parse-libreta,parse-infraruts}.ts
   database.types.ts                    # generado, no editar a mano
-actions/                               # server actions por dominio
-components/                            # por área: layout/, resumen/, viajes/, campo/, stock/...
+actions/                               # server actions por dominio — SOLO funciones async (ver abajo)
+components/                            # por área: layout/, resumen/, tendencia/, viajes/, campo/, stock/...
   ui/                                  # shadcn — no editar a mano salvo necesidad puntual
 hooks/useRealtimeTable.ts
 store/ui-store.ts
 supabase/
-  migrations/                          # 0001_schema.sql, 0002_rls.sql, 0003_views.sql
+  migrations/                          # 0001_schema.sql, 0002_rls.sql, 0003_views.sql, 0004_storage.sql
 scripts/                                # migrate-jw-storage.ts, seed-legacy-*.ts (correr una vez)
 ```
+
+**`lib/` ya tiene mucho escrito por adelantado** (toda la lógica de negocio se portó de una
+sola vez en milestone 1, antes de que hubiera UI para consumirla — `costos.ts`,
+`reconciliation.ts`, `alerts.ts` fueron escritos ahí, no milestone por milestone). Antes de
+escribir una función de cálculo/algoritmo nueva, **grep `lib/` primero** — pasó al menos una
+vez (milestone 5) que se reescribió `detectarBrechas()` como una función nueva en otro
+archivo sin darse cuenta de que ya existía en `reconciliation.ts`.
 
 ## Convenciones
 
@@ -98,6 +106,15 @@ scripts/                                # migrate-jw-storage.ts, seed-legacy-*.t
 - **Mutaciones = Server Actions**, nunca fetch a una API route hecha a mano. Cada acción valida
   con zod, revisa permisos (no confíes solo en la UI — ver la nota de `infraruts` abajo) y
   llama `revalidatePath()`.
+- **Un archivo `"use server"` solo puede exportar funciones async** — exportar cualquier otra
+  cosa (un schema de zod, un objeto `*_ACTION_IDLE`, un array de opciones) revienta en
+  runtime ("A 'use server' file can only export async functions, found object"), y
+  **`npm run build`/`tsc`/eslint no lo detectan** — el error solo aparece al ejercitar la
+  acción en el navegador (pasó de verdad, en los 4 `actions/*.ts` de milestones 1–3; se
+  arregló moviendo esos schemas/constantes a `lib/forms/<dominio>.ts`). Los componentes
+  importan la función desde `actions/` y las constantes desde `lib/forms/`. Por esto mismo:
+  **no des un cambio en Server Actions por terminado solo porque el build pasa** — probalo
+  en el navegador.
 - **Toda la lógica derivada (no CRUD) vive en `lib/`**, como funciones puras de TypeScript, no
   como vistas/RPC de Postgres — excepción: `stock_saldo` es una vista SQL porque se consulta
   desde varias pantallas. Ver el porqué en `ROADMAP.md`.
@@ -126,13 +143,22 @@ crea uno nuevo, se le agrega el esquema relacional real al lado de la vieja tabl
 
 ## Cómo correr Supabase localmente
 
+Las migraciones ya están aplicadas al proyecto remoto y `.env.local` ya tiene las 4 keys
+(incluida `SUPABASE_SERVICE_ROLE_KEY`) — no hace falta repetir este setup salvo que se
+agregue una migración nueva. Para eso:
+
 ```bash
-npm install -g supabase   # si no está instalado
-supabase login
-supabase link --project-ref izeiiwdhitseqkkwbama
-supabase db push          # aplica supabase/migrations/*.sql al proyecto remoto
-supabase gen types typescript --linked > lib/database.types.ts
+npx supabase login       # abre el navegador para autorizar (interactivo)
+npx supabase link --project-ref izeiiwdhitseqkkwbama
+npx supabase db push     # aplica supabase/migrations/*.sql nuevas al proyecto remoto
 ```
+
+`supabase login` interactivo **no funciona en un shell no-TTY** (como el que usa un agente
+al correr comandos) — en ese caso usar `npx supabase login --token <PAT>` con un Personal
+Access Token de corta duración generado en supabase.com/dashboard/account/tokens y
+revocado después de usarlo. `npx supabase db query --linked "<sql>"` corre SQL suelto sin
+necesidad de abrir el SQL Editor del dashboard (que además tiene un bug conocido: el
+auto-traductor de Chrome llega a traducir el código SQL del editor, no solo la UI).
 
 ## Comandos
 
