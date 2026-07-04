@@ -49,5 +49,11 @@ export async function toggleUserDisabled(userId: string, disabled: boolean) {
   await requireAdmin();
   const admin = createAdminClient();
   await admin.from("profiles").update({ disabled }).eq("id", userId);
+  // El flag en profiles solo lo mira la app (lib/dal.ts) — el ban a nivel de
+  // Supabase Auth es lo que realmente impide emitir tokens nuevos, incluso si
+  // alguien le pega a la API de Supabase directo con la anon key.
+  await admin.auth.admin.updateUserById(userId, {
+    ban_duration: disabled ? "876000h" : "none",
+  });
   revalidatePath("/admin/usuarios");
 }
