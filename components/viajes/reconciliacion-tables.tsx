@@ -1,4 +1,9 @@
-import { reconciliar, type BajaArcaRow, type CpCampoRow } from "@/lib/reconciliation";
+import {
+  libretaStatus,
+  reconciliar,
+  type BajaArcaRow,
+  type CpCampoRow,
+} from "@/lib/reconciliation";
 import type { InfrarutRow } from "@/lib/business-rules";
 
 export function ReconciliacionTables({
@@ -15,6 +20,12 @@ export function ReconciliacionTables({
     infraruts,
     bajas,
   );
+
+  const cpsCampoSet = new Set(cpsCampo.map((x) => x.cp));
+  const bajasSet = new Set(bajas.map((b) => b.cp));
+  const sinManual = infraruts
+    .filter((r) => libretaStatus(r, cpsCampoSet, bajasSet) === "sin_manual")
+    .sort((a, b) => (a.remito ?? Infinity) - (b.remito ?? Infinity));
 
   return (
     <div className="space-y-4">
@@ -44,6 +55,13 @@ export function ReconciliacionTables({
             {bajas.length}
           </div>
           <div className="text-xs text-neutral-400">no deben aparecer</div>
+        </div>
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
+          <div className="text-xs text-neutral-500">❌ Sin manual</div>
+          <div className="text-lg font-semibold text-orange-700">
+            {sinManual.length}
+          </div>
+          <div className="text-xs text-neutral-400">INFRARUT sin libreta</div>
         </div>
       </div>
 
@@ -78,6 +96,51 @@ export function ReconciliacionTables({
                     <td className="py-1.5 pr-3 text-neutral-500">
                       {x.obs || "—"}
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {sinManual.length > 0 && (
+        <div className="space-y-2 rounded-xl border border-l-4 border-l-orange-500 bg-white p-4">
+          <h3 className="text-sm font-semibold text-orange-700">
+            Sin manual — INFRARUT sin registro en libreta ({sinManual.length})
+          </h3>
+          <p className="text-xs text-neutral-500">
+            El ingenio reportó estos viajes pero el remito no está anotado en
+            la libreta del campo. Falta cargar el despacho manual (o el
+            INFRARUT vino sin número de remito).
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-neutral-500">
+                  <th className="py-1 pr-3 font-normal">Remito</th>
+                  <th className="py-1 pr-3 font-normal">CP ingenio</th>
+                  <th className="py-1 pr-3 font-normal">Fecha INFRARUT</th>
+                  <th className="py-1 pr-3 font-normal">Finca</th>
+                  <th className="py-1 pr-3 font-normal">Kg neto</th>
+                  <th className="py-1 pr-3 font-normal">Rdto%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sinManual.map((r) => (
+                  <tr key={r.cp} className="border-t bg-orange-50/40">
+                    <td className="py-1.5 pr-3 text-sm font-bold text-orange-700">
+                      {r.remito ?? "—"}
+                    </td>
+                    <td className="py-1.5 pr-3 text-neutral-500">{r.cp}</td>
+                    <td className="py-1.5 pr-3">{r.fecha.slice(5)}</td>
+                    <td className="py-1.5 pr-3">
+                      {r.finca_id === "LOTE4" ? "LOTE4" : "VIRGINIA"}
+                    </td>
+                    <td className="py-1.5 pr-3">
+                      {(r.kg_neto / 1000).toFixed(1)} t
+                    </td>
+                    <td className="py-1.5 pr-3">{r.rdto.toFixed(2)}%</td>
                   </tr>
                 ))}
               </tbody>
