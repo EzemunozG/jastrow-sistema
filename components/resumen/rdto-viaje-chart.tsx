@@ -62,10 +62,10 @@ export function RdtoViajeChart({ data }: { data: RdtoViajePoint[] }) {
             position: "insideTopRight",
           }}
         />
-        <Bar dataKey="LOTE4" fill={COLOR_LOTE4} radius={[3, 3, 0, 0]} />
+        <Bar dataKey="LOTE4" name="Las 101" fill={COLOR_LOTE4} radius={[3, 3, 0, 0]} />
         <Bar
           dataKey="VIRGINIA"
-          name="LA VIRGINIA"
+          name="Tano"
           fill={COLOR_VIRGINIA}
           radius={[3, 3, 0, 0]}
         />

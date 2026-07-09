@@ -201,8 +201,8 @@ export default async function ResumenPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FincaCard stats={l4tot} nombre="LOTE4" color="#378ADD" />
-            <FincaCard stats={vatot} nombre="LA VIRGINIA" color="#1D9E75" />
+            <FincaCard stats={l4tot} nombre="Las 101" color="#378ADD" />
+            <FincaCard stats={vatot} nombre="Tano" color="#1D9E75" />
           </div>
 
           <div className="rounded-xl border bg-white p-4">
