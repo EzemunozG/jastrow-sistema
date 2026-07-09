@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { InfrarutsImportForm } from "@/components/resumen/infraruts-import-form";
 import {
   RdtoViajeChart,
