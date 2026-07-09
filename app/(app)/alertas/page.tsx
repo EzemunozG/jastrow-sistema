@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { AlertasList } from "@/components/alertas/alertas-list";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { computeAlerts } from "@/lib/alerts";

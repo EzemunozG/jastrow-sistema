@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { AppSettingsForm } from "@/components/campo/app-settings-form";
 import {
   PESO_BOLSA,

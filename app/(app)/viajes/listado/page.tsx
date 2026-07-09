@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { ViajesTable } from "@/components/viajes/viajes-table";
 import type { InfrarutRow } from "@/lib/business-rules";

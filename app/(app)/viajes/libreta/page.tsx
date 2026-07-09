@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { LibretaImportForm } from "@/components/viajes/libreta-import-form";
 import { LibretaTable } from "@/components/viajes/libreta-table";
 import type { InfrarutRow } from "@/lib/business-rules";

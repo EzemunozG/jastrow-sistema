@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { BajasArcaCard } from "@/components/viajes/bajas-arca-card";
 import { ReconciliacionTables } from "@/components/viajes/reconciliacion-tables";
