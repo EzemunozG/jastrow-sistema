@@ -123,7 +123,7 @@ export function LibretaTable({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
-              <SelectItem value="TANO">TANO (Lote4)</SelectItem>
+              <SelectItem value="TANO">TANO (Las 101)</SelectItem>
               <SelectItem value="LAS100">LAS 100</SelectItem>
             </SelectContent>
           </Select>

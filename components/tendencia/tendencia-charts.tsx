@@ -68,6 +68,7 @@ function TrendLineChart({
         <Line
           type="monotone"
           dataKey="LOTE4"
+          name="Las 101"
           stroke={COLOR_LOTE4}
           strokeWidth={2}
           dot={{ r: 4 }}
@@ -76,7 +77,7 @@ function TrendLineChart({
         <Line
           type="monotone"
           dataKey="VIRGINIA"
-          name="LA VIRGINIA"
+          name="Tano"
           stroke={COLOR_VIRGINIA}
           strokeWidth={2}
           dot={{ r: 4 }}

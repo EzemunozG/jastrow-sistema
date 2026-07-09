@@ -18,8 +18,8 @@ export type Alert = {
 };
 
 const FINCAS = [
-  { id: "LOTE4", label: "LOTE4" },
-  { id: "VIRGINIA", label: "LA VIRGINIA" },
+  { id: "LOTE4", label: "Las 101" },
+  { id: "VIRGINIA", label: "Tano" },
 ] as const;
 
 function fmt(fecha: string | null): string {
