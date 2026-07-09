@@ -19,8 +19,8 @@ type FincaRow = {
 };
 
 const FINCAS = [
-  ["LOTE4", "LOTE4"],
-  ["VIRGINIA", "LA VIRGINIA"],
+  ["LOTE4", "Las 101"],
+  ["VIRGINIA", "Tano"],
 ] as const;
 
 export default async function TendenciaPage() {

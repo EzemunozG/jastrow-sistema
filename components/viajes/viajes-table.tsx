@@ -133,8 +133,8 @@ export function ViajesTable({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
-              <SelectItem value="LOTE4">LOTE4</SelectItem>
-              <SelectItem value="VIRGINIA">LA VIRGINIA</SelectItem>
+              <SelectItem value="LOTE4">Las 101</SelectItem>
+              <SelectItem value="VIRGINIA">Tano</SelectItem>
             </SelectContent>
           </Select>
         </div>
