@@ -4,6 +4,15 @@ import { useState, useTransition } from "react";
 import { importInfraruts, type ImportInfrarutsResult } from "@/actions/infraruts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { INGENIOS, type IngenioId } from "@/lib/business-rules";
 import {
   parseInfrarutWorkbook,
   type InfrarutImportRow,
@@ -15,6 +24,7 @@ export function InfrarutsImportForm() {
     null,
   );
   const [filename, setFilename] = useState("");
+  const [ingenioId, setIngenioId] = useState<IngenioId>("concepcion");
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<ImportInfrarutsResult | null>(null);
 
@@ -31,11 +41,14 @@ export function InfrarutsImportForm() {
   function handleImport() {
     if (!parsed || parsed.valid.length === 0) return;
     startTransition(async () => {
-      const res = await importInfraruts(filename, parsed.valid);
+      const res = await importInfraruts(filename, parsed.valid, ingenioId);
       setResult(res);
       if (res.status === "success") setParsed(null);
     });
   }
+
+  const ingenioNombre =
+    INGENIOS.find((i) => i.id === ingenioId)?.nombre ?? ingenioId;
 
   return (
     <div className="space-y-3 rounded-xl border bg-white p-4">
@@ -45,12 +58,34 @@ export function InfrarutsImportForm() {
         kg_neto, kg_trash, kg_azucar, brix, pol, pureza, rdto) — ajustar
         cuando haya un archivo real de exportación del ingenio.
       </p>
-      <Input
-        type="file"
-        accept=".xlsx,.xls,.csv"
-        onChange={handleFile}
-        className="max-w-xs"
-      />
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="ingenio-import" className="text-xs">
+            Ingenio
+          </Label>
+          <Select
+            value={ingenioId}
+            onValueChange={(v) => setIngenioId(v as IngenioId)}
+          >
+            <SelectTrigger id="ingenio-import" className="w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {INGENIOS.map((i) => (
+                <SelectItem key={i.id} value={i.id}>
+                  {i.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Input
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          onChange={handleFile}
+          className="max-w-xs"
+        />
+      </div>
 
       {parsed && (
         <div className="space-y-2 text-sm">
@@ -76,7 +111,9 @@ export function InfrarutsImportForm() {
             disabled={pending || parsed.valid.length === 0}
             size="sm"
           >
-            {pending ? "Importando…" : `Importar ${parsed.valid.length} filas`}
+            {pending
+              ? "Importando…"
+              : `Importar ${parsed.valid.length} filas a ${ingenioNombre}`}
           </Button>
         </div>
       )}

@@ -84,10 +84,15 @@ function FincaCard({
 export default async function ResumenPage() {
   const { profile } = await getCurrentProfile();
   const supabase = await createClient();
-  const { data } = await supabase.from("infraruts").select("*").order("cp");
+  const { data } = await supabase
+    .from("infraruts")
+    .select("*")
+    .eq("ingenio_id", "concepcion")
+    .order("cp");
 
   const infraruts: InfrarutRow[] = (data ?? []).map((r) => ({
     cp: r.cp,
+    ingenio_id: r.ingenio_id,
     remito: r.remito,
     fecha: r.fecha,
     finca_id: r.finca_id,

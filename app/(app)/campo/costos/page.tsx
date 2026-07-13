@@ -42,7 +42,7 @@ export default async function CostosPage() {
     supabase.from("lotes").select("*").order("id"),
     supabase.from("trabajos").select("*"),
     supabase.from("app_settings").select("*").eq("id", 1).single(),
-    supabase.from("infraruts").select("*"),
+    supabase.from("infraruts").select("*").eq("ingenio_id", "concepcion"),
   ]);
 
   const lotesData = lotes ?? [];
@@ -77,6 +77,7 @@ export default async function CostosPage() {
 
   const infrarutsForCosto = infrarutsData.map((r) => ({
     cp: r.cp,
+    ingenio_id: r.ingenio_id,
     remito: r.remito,
     fecha: r.fecha,
     finca_id: r.finca_id,
