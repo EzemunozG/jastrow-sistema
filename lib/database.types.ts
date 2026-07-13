@@ -18,6 +18,8 @@ export type Database = {
     Tables: {
       fincas: Tbl<{ id: string; nombre: string }, { id: string; nombre: string }>;
 
+      ingenios: Tbl<{ id: string; nombre: string }, { id: string; nombre: string }>;
+
       profiles: Tbl<
         {
           id: string;
@@ -272,6 +274,7 @@ export type Database = {
           uploaded_at: string;
           row_count: number | null;
           status: "committed" | "legacy_seed" | "reverted";
+          ingenio_id: string;
         },
         {
           id?: string;
@@ -279,6 +282,7 @@ export type Database = {
           uploaded_by?: string | null;
           row_count?: number | null;
           status?: "committed" | "legacy_seed" | "reverted";
+          ingenio_id?: string;
         }
       >;
 
@@ -300,11 +304,13 @@ export type Database = {
           pureza: number | null;
           rdto: number | null;
           import_batch_id: string | null;
+          ingenio_id: string;
           created_at: string;
         },
         {
           id?: string;
           cp: number;
+          ingenio_id?: string;
           remito?: number | null;
           fecha: string;
           finca_raw: string;

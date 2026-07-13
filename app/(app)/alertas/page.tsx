@@ -11,13 +11,14 @@ export default async function AlertasPage() {
   const supabase = await createClient();
   const [{ data: infrarutsData }, { data: cpsCampo }, { data: bajas }] =
     await Promise.all([
-      supabase.from("infraruts").select("*"),
+      supabase.from("infraruts").select("*").eq("ingenio_id", "concepcion"),
       supabase.from("cps_campo").select("*"),
       supabase.from("bajas_arca").select("*"),
     ]);
 
   const infraruts: InfrarutRow[] = (infrarutsData ?? []).map((r) => ({
     cp: r.cp,
+    ingenio_id: r.ingenio_id,
     remito: r.remito,
     fecha: r.fecha,
     finca_id: r.finca_id,

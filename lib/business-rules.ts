@@ -2,8 +2,18 @@
 // No "mejorar" estos números sin confirmar con el usuario — son reglas de campo, no
 // bugs. Ver ROADMAP.md.
 
+// Catálogo de ingenios (espejo de la tabla `ingenios`). Constante y no query porque
+// agregar un ingenio requiere migración de todos modos (default 'concepcion', FKs).
+export const INGENIOS = [
+  { id: "concepcion", nombre: "Ingenio Concepción" },
+  { id: "trinidad", nombre: "Ingenio Trinidad" },
+] as const;
+
+export type IngenioId = (typeof INGENIOS)[number]["id"];
+
 export type InfrarutRow = {
   cp: number;
+  ingenio_id: string; // 'concepcion' | 'trinidad' — el cp es correlativo POR ingenio
   remito: number | null;
   fecha: string; // YYYY-MM-DD
   finca_id: string | null; // 'LOTE4' | 'VIRGINIA'

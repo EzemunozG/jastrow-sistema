@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
+import { INGENIOS, type IngenioId } from "@/lib/business-rules";
 import type { InfrarutImportRow } from "@/lib/excel/parse-infraruts";
 
 // index_10.html solo distinguía dos fincas comparando substring: `r.finca.includes('LOTE4')`
@@ -19,10 +20,14 @@ export type ImportInfrarutsResult =
 export async function importInfraruts(
   filename: string,
   rows: InfrarutImportRow[],
+  ingenioId: IngenioId,
 ): Promise<ImportInfrarutsResult> {
   const profile = await requireAdmin();
   if (rows.length === 0) {
     return { status: "error", error: "No hay filas válidas para importar." };
+  }
+  if (!INGENIOS.some((i) => i.id === ingenioId)) {
+    return { status: "error", error: `Ingenio desconocido: ${ingenioId}` };
   }
 
   const supabase = await createClient();
@@ -34,15 +39,19 @@ export async function importInfraruts(
       uploaded_by: profile.id,
       row_count: rows.length,
       status: "committed",
+      ingenio_id: ingenioId,
     })
     .select("id")
     .single();
   if (importError) return { status: "error", error: importError.message };
 
-  // upsert por cp: permite reimportar el mismo archivo (o uno corregido) sin duplicar filas.
+  // upsert por (ingenio_id, cp): permite reimportar el mismo archivo (o uno corregido)
+  // sin duplicar filas. El cp es correlativo por ingenio, no global — un import de
+  // Trinidad con un cp repetido no debe pisar la fila de Concepción.
   const { error: rowsError } = await supabase.from("infraruts").upsert(
     rows.map((r) => ({
       cp: r.cp,
+      ingenio_id: ingenioId,
       remito: r.remito,
       fecha: r.fecha,
       finca_raw: r.fincaRaw,
@@ -58,7 +67,7 @@ export async function importInfraruts(
       rdto: r.rdto,
       import_batch_id: importRow.id,
     })),
-    { onConflict: "cp" },
+    { onConflict: "ingenio_id,cp" },
   );
   if (rowsError) return { status: "error", error: rowsError.message };
 

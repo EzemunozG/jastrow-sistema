@@ -9,13 +9,18 @@ export default async function ViajesListadoPage() {
   const supabase = await createClient();
   const [{ data: infrarutsData }, { data: cpsCampo }, { data: bajas }] =
     await Promise.all([
-      supabase.from("infraruts").select("*").order("cp"),
+      supabase
+        .from("infraruts")
+        .select("*")
+        .eq("ingenio_id", "concepcion")
+        .order("cp"),
       supabase.from("cps_campo").select("cp"),
       supabase.from("bajas_arca").select("cp"),
     ]);
 
   const infraruts: InfrarutRow[] = (infrarutsData ?? []).map((r) => ({
     cp: r.cp,
+    ingenio_id: r.ingenio_id,
     remito: r.remito,
     fecha: r.fecha,
     finca_id: r.finca_id,
