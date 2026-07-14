@@ -331,6 +331,7 @@ export type Database = {
       cps_campo: Tbl<
         {
           cp: number;
+          ingenio_id: string;
           fecha: string | null;
           camion: string | null;
           obs: string | null;
@@ -341,6 +342,7 @@ export type Database = {
         },
         {
           cp: number;
+          ingenio_id?: string;
           fecha?: string | null;
           camion?: string | null;
           obs?: string | null;
