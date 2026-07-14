@@ -2,27 +2,18 @@ export const dynamic = "force-dynamic";
 
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { BajasArcaCard } from "@/components/viajes/bajas-arca-card";
-import { IngenioToggle } from "@/components/viajes/ingenio-toggle";
 import { ReconciliacionTables } from "@/components/viajes/reconciliacion-tables";
 import { RegistrarCpsForm } from "@/components/viajes/registrar-cps-form";
-import type { IngenioId, InfrarutRow } from "@/lib/business-rules";
+import { INGENIOS, type IngenioId, type InfrarutRow } from "@/lib/business-rules";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function ViajesReconciliacionPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ ingenio?: string }>;
-}) {
-  const { ingenio } = await searchParams;
-  const ingenioId: IngenioId = ingenio === "trinidad" ? "trinidad" : "concepcion";
+type Supabase = Awaited<ReturnType<typeof createClient>>;
 
-  const supabase = await createClient();
-  const [{ data: cpsCampo }, { data: bajas }, { data: infrarutsData }] =
-    await Promise.all([
-      supabase.from("cps_campo").select("*").order("cp"),
-      supabase.from("bajas_arca").select("*").order("cp"),
-      supabase.from("infraruts").select("*").eq("ingenio_id", ingenioId),
-    ]);
+async function fetchIngenio(supabase: Supabase, ingenioId: IngenioId) {
+  const [{ data: cpsCampo }, { data: infrarutsData }] = await Promise.all([
+    supabase.from("cps_campo").select("*").eq("ingenio_id", ingenioId).order("cp"),
+    supabase.from("infraruts").select("*").eq("ingenio_id", ingenioId),
+  ]);
 
   const infraruts: InfrarutRow[] = (infrarutsData ?? []).map((r) => ({
     cp: r.cp,
@@ -41,16 +32,31 @@ export default async function ViajesReconciliacionPage({
     rdto: r.rdto ?? 0,
   }));
 
+  return { cpsCampo: cpsCampo ?? [], infraruts };
+}
+
+export default async function ViajesReconciliacionPage() {
+  const supabase = await createClient();
+  // Las bajas ARCA no se separan por ingenio: son remitos del talonario del campo
+  // (secuencia única, independiente de a qué ingenio se despachó).
+  const [{ data: bajas }, ...porIngenio] = await Promise.all([
+    supabase.from("bajas_arca").select("*").order("cp"),
+    ...INGENIOS.map((i) => fetchIngenio(supabase, i.id)),
+  ]);
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <RealtimeRefresh tables={["infraruts", "cps_campo", "bajas_arca"]} />
-      <IngenioToggle active={ingenioId} basePath="/viajes/reconciliacion" />
       <RegistrarCpsForm />
-      <ReconciliacionTables
-        cpsCampo={cpsCampo ?? []}
-        infraruts={infraruts}
-        bajas={bajas ?? []}
-      />
+      {INGENIOS.map((ingenio, idx) => (
+        <ReconciliacionTables
+          key={ingenio.id}
+          title={ingenio.nombre}
+          cpsCampo={porIngenio[idx].cpsCampo}
+          infraruts={porIngenio[idx].infraruts}
+          bajas={bajas ?? []}
+        />
+      ))}
       <BajasArcaCard bajas={bajas ?? []} />
     </div>
   );

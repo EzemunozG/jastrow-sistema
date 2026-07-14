@@ -15,6 +15,7 @@ import type { InfrarutRow } from "./business-rules";
 
 export type CpCampoRow = {
   cp: number;
+  ingenio_id: string; // a qué ingenio se despachó el remito ('concepcion' | 'trinidad')
   fecha: string | null;
   camion: string | null;
   obs: string | null;

@@ -7,10 +7,12 @@ import {
 import type { InfrarutRow } from "@/lib/business-rules";
 
 export function ReconciliacionTables({
+  title,
   cpsCampo,
   infraruts,
   bajas,
 }: {
+  title?: string;
   cpsCampo: CpCampoRow[];
   infraruts: InfrarutRow[];
   bajas: BajaArcaRow[];
@@ -29,6 +31,7 @@ export function ReconciliacionTables({
 
   return (
     <div className="space-y-4">
+      {title && <h2 className="text-base font-semibold">{title}</h2>}
       <div className="flex flex-wrap gap-3">
         <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
           <div className="text-xs text-neutral-500">Total libreta</div>
