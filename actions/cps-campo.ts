@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { INGENIOS, type IngenioId } from "@/lib/business-rules";
 import { createClient } from "@/lib/supabase/server";
 import type { BajaCandidata, LibretaRow } from "@/lib/excel/parse-libreta";
 import {
@@ -23,9 +24,13 @@ export type ImportLibretaResult =
 export async function importLibreta(
   rows: LibretaRow[],
   bajasCandidatas: BajaCandidata[],
+  ingenioId: IngenioId,
 ): Promise<ImportLibretaResult> {
   if (rows.length === 0) {
     return { status: "error", error: "No hay filas válidas para importar." };
+  }
+  if (!INGENIOS.some((i) => i.id === ingenioId)) {
+    return { status: "error", error: `Ingenio desconocido: ${ingenioId}` };
   }
 
   const supabase = await createClient();
@@ -35,6 +40,7 @@ export async function importLibreta(
   const { error } = await supabase.from("cps_campo").upsert(
     rows.map((r) => ({
       cp: r.cp,
+      ingenio_id: ingenioId,
       fecha: r.fecha,
       camion: r.camion,
       obs: r.obs,
@@ -83,6 +89,7 @@ export async function addCpsCampo(
 ): Promise<CpsCampoActionState> {
   const parsed = addCpsCampoSchema.safeParse({
     raw: formData.get("raw"),
+    ingenio_id: formData.get("ingenio_id"),
     fecha: emptyToUndefined(formData.get("fecha")),
     camion: emptyToUndefined(formData.get("camion")),
     obs: emptyToUndefined(formData.get("obs")),
@@ -114,6 +121,7 @@ export async function addCpsCampo(
     const { error } = await supabase.from("cps_campo").insert(
       toInsert.map((cp) => ({
         cp,
+        ingenio_id: parsed.data.ingenio_id,
         fecha: parsed.data.fecha || null,
         camion: parsed.data.camion || null,
         obs: parsed.data.obs || null,
@@ -138,6 +146,7 @@ export async function addCpsLista(
 ): Promise<CpsCampoActionState> {
   const parsed = addCpsListaSchema.safeParse({
     raw: formData.get("raw"),
+    ingenio_id: formData.get("ingenio_id"),
     fecha: emptyToUndefined(formData.get("fecha")),
   });
   if (!parsed.success) {
@@ -167,6 +176,7 @@ export async function addCpsLista(
     const { error } = await supabase.from("cps_campo").insert(
       toInsert.map((cp) => ({
         cp,
+        ingenio_id: parsed.data.ingenio_id,
         fecha: parsed.data.fecha || null,
         camion: null,
         obs: "Cargado por lista",
