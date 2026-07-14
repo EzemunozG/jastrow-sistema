@@ -2,9 +2,15 @@
 // actions/cps-campo.ts porque un archivo "use server" solo puede exportar funciones
 // async — ver CLAUDE.md.
 import { z } from "zod";
+import { INGENIOS, type IngenioId } from "@/lib/business-rules";
+
+export const ingenioIdSchema = z.enum(
+  INGENIOS.map((i) => i.id) as [IngenioId, ...IngenioId[]],
+);
 
 export const addCpsCampoSchema = z.object({
   raw: z.string().min(1, "Ingresá un remito o rango"),
+  ingenio_id: ingenioIdSchema,
   fecha: z.string().optional(),
   camion: z.string().optional(),
   obs: z.string().optional(),
@@ -12,6 +18,7 @@ export const addCpsCampoSchema = z.object({
 
 export const addCpsListaSchema = z.object({
   raw: z.string().min(1, "Pegá una lista de remitos"),
+  ingenio_id: ingenioIdSchema,
   fecha: z.string().optional(),
 });
 

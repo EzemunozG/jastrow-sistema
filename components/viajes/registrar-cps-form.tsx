@@ -4,11 +4,43 @@ import { useActionState, useEffect } from "react";
 import { addCpsCampo, addCpsLista } from "@/actions/cps-campo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { INGENIOS } from "@/lib/business-rules";
 import {
   CPS_CAMPO_ACTION_IDLE,
   type CpsCampoActionState,
 } from "@/lib/forms/cps-campo";
+
+// Radix Select arma un <select> nativo oculto con `name`, así que el valor viaja
+// en el FormData del <form action> igual que un campo común.
+function IngenioSelect({ id }: { id: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs text-neutral-500" htmlFor={id}>
+        Ingenio
+      </label>
+      <Select name="ingenio_id" defaultValue="concepcion">
+        <SelectTrigger id={id} className="w-48">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {INGENIOS.map((i) => (
+            <SelectItem key={i.id} value={i.id}>
+              {i.nombre}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 function ResultMessage({ state }: { state: CpsCampoActionState }) {
   if (state.status === "error") {
@@ -79,6 +111,7 @@ export function RegistrarCpsForm() {
             className="w-52"
           />
         </div>
+        <IngenioSelect id="inp-cp-ingenio" />
         <div className="space-y-1.5">
           <label className="text-xs text-neutral-500" htmlFor="inp-cp-fecha">
             Fecha de salida
@@ -125,6 +158,7 @@ export function RegistrarCpsForm() {
             placeholder={"Ej:\n4350\n4351\n4352..."}
             className="h-20 w-52"
           />
+          <IngenioSelect id="inp-lista-ingenio" />
           <div className="space-y-1.5">
             <label
               className="text-xs text-neutral-500"

@@ -4,6 +4,15 @@ import { useState, useTransition } from "react";
 import { importLibreta, type ImportLibretaResult } from "@/actions/cps-campo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { INGENIOS, type IngenioId } from "@/lib/business-rules";
 import {
   parseLibretaWorkbook,
   type BajaCandidata,
@@ -16,6 +25,7 @@ export function LibretaImportForm() {
     libreta: ParseResult<LibretaRow>;
     bajasCandidatas: BajaCandidata[];
   } | null>(null);
+  const [ingenioId, setIngenioId] = useState<IngenioId>("concepcion");
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<ImportLibretaResult | null>(null);
 
@@ -31,7 +41,11 @@ export function LibretaImportForm() {
   function handleImport() {
     if (!parsed || parsed.libreta.valid.length === 0) return;
     startTransition(async () => {
-      const res = await importLibreta(parsed.libreta.valid, parsed.bajasCandidatas);
+      const res = await importLibreta(
+        parsed.libreta.valid,
+        parsed.bajasCandidatas,
+        ingenioId,
+      );
       setResult(res);
       if (res.status === "success") setParsed(null);
     });
@@ -40,12 +54,34 @@ export function LibretaImportForm() {
   return (
     <div className="space-y-3 rounded-xl border bg-white p-4">
       <h2 className="text-sm font-semibold">Subir libreta del campo (Excel)</h2>
-      <Input
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={handleFile}
-        className="max-w-xs"
-      />
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="ingenio-libreta" className="text-xs">
+            Ingenio
+          </Label>
+          <Select
+            value={ingenioId}
+            onValueChange={(v) => setIngenioId(v as IngenioId)}
+          >
+            <SelectTrigger id="ingenio-libreta" className="w-56">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {INGENIOS.map((i) => (
+                <SelectItem key={i.id} value={i.id}>
+                  {i.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Input
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleFile}
+          className="max-w-xs"
+        />
+      </div>
 
       {parsed && (
         <div className="space-y-2 text-sm">
@@ -78,7 +114,9 @@ export function LibretaImportForm() {
           >
             {pending
               ? "Importando…"
-              : `Importar ${parsed.libreta.valid.length} despachos`}
+              : `Importar ${parsed.libreta.valid.length} despachos a ${
+                  INGENIOS.find((i) => i.id === ingenioId)?.nombre ?? ingenioId
+                }`}
           </Button>
         </div>
       )}
