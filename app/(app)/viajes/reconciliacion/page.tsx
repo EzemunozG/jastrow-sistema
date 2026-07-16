@@ -5,6 +5,7 @@ import { BajasArcaCard } from "@/components/viajes/bajas-arca-card";
 import { ReconciliacionTables } from "@/components/viajes/reconciliacion-tables";
 import { RegistrarCpsForm } from "@/components/viajes/registrar-cps-form";
 import { INGENIOS, type IngenioId, type InfrarutRow } from "@/lib/business-rules";
+import { reconciliarPorLote } from "@/lib/reconciliation";
 import { createClient } from "@/lib/supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
@@ -55,6 +56,11 @@ export default async function ViajesReconciliacionPage() {
           cpsCampo={porIngenio[idx].cpsCampo}
           infraruts={porIngenio[idx].infraruts}
           bajas={bajas ?? []}
+          porLote={reconciliarPorLote(
+            porIngenio[idx].cpsCampo,
+            porIngenio[idx].infraruts,
+            bajas ?? [],
+          )}
         />
       ))}
       <BajasArcaCard bajas={bajas ?? []} />
