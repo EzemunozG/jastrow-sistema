@@ -3,19 +3,44 @@ import {
   reconciliar,
   type BajaArcaRow,
   type CpCampoRow,
+  type LoteBreakdown,
 } from "@/lib/reconciliation";
 import type { InfrarutRow } from "@/lib/business-rules";
+
+function RemitoList({
+  label,
+  remitos,
+  className,
+}: {
+  label: string;
+  remitos: (number | null)[];
+  className: string;
+}) {
+  if (remitos.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-baseline gap-1.5">
+      <span className="text-neutral-500">{label}:</span>
+      {remitos.map((r, i) => (
+        <span key={r ?? `sin-remito-${i}`} className={`rounded px-1.5 py-0.5 font-medium ${className}`}>
+          {r ?? "s/rem"}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export function ReconciliacionTables({
   title,
   cpsCampo,
   infraruts,
   bajas,
+  porLote,
 }: {
   title?: string;
   cpsCampo: CpCampoRow[];
   infraruts: InfrarutRow[];
   bajas: BajaArcaRow[];
+  porLote: LoteBreakdown[];
 }) {
   const { reconciliados, pendientes, infrarutPorRemito } = reconciliar(
     cpsCampo,
@@ -67,6 +92,57 @@ export function ReconciliacionTables({
           <div className="text-xs text-neutral-400">INFRARUT sin libreta</div>
         </div>
       </div>
+
+      {porLote.length > 0 && (
+        <div className="space-y-2 rounded-xl border bg-white p-4">
+          <h3 className="text-sm font-semibold">Desglose por lote</h3>
+          <p className="text-xs text-neutral-500">
+            Según el lote de origen anotado en la libreta. Los INFRARUT sin
+            registro manual no tienen lote asignable y van a “Sin lote”.
+          </p>
+          <div className="space-y-2">
+            {porLote.map((g) => (
+              <details key={g.lote} className="rounded-lg border">
+                <summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+                  <span className="text-sm font-semibold">{g.lote}</span>
+                  <span className="text-xs text-emerald-700">
+                    ✅ {g.reconciliados.length} reconciliados
+                  </span>
+                  <span className="text-xs text-red-700">
+                    ❌ {g.reclamo.length} reclamo
+                  </span>
+                  <span className="text-xs text-orange-700">
+                    ⚠ {g.sinManual.length} sin manual
+                  </span>
+                </summary>
+                <div className="space-y-2 border-t px-3 py-2 text-xs">
+                  <RemitoList
+                    label="Reconciliados"
+                    remitos={g.reconciliados.map((x) => x.cp)}
+                    className="bg-emerald-50 text-emerald-700"
+                  />
+                  <RemitoList
+                    label="Reclamo (sin reconciliar)"
+                    remitos={g.reclamo.map((x) => x.cp)}
+                    className="bg-red-50 text-red-700"
+                  />
+                  <RemitoList
+                    label="Sin manual (INFRARUT sin libreta)"
+                    remitos={g.sinManual.map((r) => r.remito)}
+                    className="bg-orange-50 text-orange-700"
+                  />
+                  {g.reconciliados.length +
+                    g.reclamo.length +
+                    g.sinManual.length ===
+                    0 && (
+                    <p className="text-neutral-400">Sin viajes en este lote.</p>
+                  )}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      )}
 
       {pendientes.length > 0 && (
         <div className="space-y-2 rounded-xl border border-l-4 border-l-red-500 bg-white p-4">

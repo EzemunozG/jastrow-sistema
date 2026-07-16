@@ -19,6 +19,7 @@ export type CpCampoRow = {
   fecha: string | null;
   camion: string | null;
   obs: string | null;
+  lote: string | null; // lote de origen del despacho; null = sin asignar
 };
 
 export type BajaArcaRow = {
@@ -49,6 +50,53 @@ export function reconciliar(
   );
 
   return { reconciliados, pendientes, infrarutPorRemito };
+}
+
+export const SIN_LOTE = "Sin lote";
+
+export type LoteBreakdown = {
+  lote: string; // nombre del lote, o SIN_LOTE
+  reconciliados: CpCampoRow[];
+  reclamo: CpCampoRow[]; // sin reconciliar: salieron del campo y el ingenio no los reportó
+  sinManual: InfrarutRow[];
+};
+
+// Desglose de la reconciliación por lote de origen. El lote vive en cps_campo,
+// así que los INFRARUT "sin manual" (sin registro en libreta) no tienen lote
+// asignable — van todos al grupo SIN_LOTE.
+export function reconciliarPorLote(
+  cpsCampo: CpCampoRow[],
+  infraruts: InfrarutRow[],
+  bajas: BajaArcaRow[],
+): LoteBreakdown[] {
+  const { reconciliados, pendientes } = reconciliar(cpsCampo, infraruts, bajas);
+  const cpsCampoSet = new Set(cpsCampo.map((x) => x.cp));
+  const bajasSet = new Set(bajas.map((b) => b.cp));
+  const sinManual = infraruts
+    .filter((r) => libretaStatus(r, cpsCampoSet, bajasSet) === "sin_manual")
+    .sort((a, b) => (a.remito ?? Infinity) - (b.remito ?? Infinity));
+
+  const grupos = new Map<string, LoteBreakdown>();
+  const grupo = (lote: string) => {
+    let g = grupos.get(lote);
+    if (!g) {
+      g = { lote, reconciliados: [], reclamo: [], sinManual: [] };
+      grupos.set(lote, g);
+    }
+    return g;
+  };
+  for (const x of reconciliados) grupo(x.lote ?? SIN_LOTE).reconciliados.push(x);
+  for (const x of pendientes) grupo(x.lote ?? SIN_LOTE).reclamo.push(x);
+  for (const r of sinManual) grupo(SIN_LOTE).sinManual.push(r);
+
+  // Lotes con más viajes primero; "Sin lote" siempre al final.
+  return [...grupos.values()].sort((a, b) => {
+    if (a.lote === SIN_LOTE) return 1;
+    if (b.lote === SIN_LOTE) return -1;
+    const totalA = a.reconciliados.length + a.reclamo.length;
+    const totalB = b.reconciliados.length + b.reclamo.length;
+    return totalB - totalA || a.lote.localeCompare(b.lote);
+  });
 }
 
 // Estado a mostrar en la columna "Libreta" del listado de Viajes (index_10.html:1935-1962)

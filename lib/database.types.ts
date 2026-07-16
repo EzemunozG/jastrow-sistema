@@ -335,6 +335,7 @@ export type Database = {
           fecha: string | null;
           camion: string | null;
           obs: string | null;
+          lote: string | null;
           finca_id: string | null;
           created_by: string | null;
           source: "manual" | "excel_import" | "legacy_seed";
@@ -346,6 +347,7 @@ export type Database = {
           fecha?: string | null;
           camion?: string | null;
           obs?: string | null;
+          lote?: string | null;
           finca_id?: string | null;
           created_by?: string | null;
           source?: "manual" | "excel_import" | "legacy_seed";
