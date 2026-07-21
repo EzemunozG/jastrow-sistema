@@ -4,6 +4,7 @@ import {
   type BajaArcaRow,
   type CpCampoRow,
   type LoteBreakdown,
+  type RendimientoLote,
 } from "@/lib/reconciliation";
 import type { InfrarutRow } from "@/lib/business-rules";
 
@@ -35,12 +36,14 @@ export function ReconciliacionTables({
   infraruts,
   bajas,
   porLote,
+  rendimientoPorLote,
 }: {
   title?: string;
   cpsCampo: CpCampoRow[];
   infraruts: InfrarutRow[];
   bajas: BajaArcaRow[];
   porLote: LoteBreakdown[];
+  rendimientoPorLote: RendimientoLote[];
 }) {
   const { reconciliados, pendientes, infrarutPorRemito } = reconciliar(
     cpsCampo,
@@ -140,6 +143,61 @@ export function ReconciliacionTables({
                 </div>
               </details>
             ))}
+          </div>
+        </div>
+      )}
+
+      {rendimientoPorLote.length > 0 && (
+        <div className="space-y-2 rounded-xl border bg-white p-4">
+          <h3 className="text-sm font-semibold">Rendimiento por lote</h3>
+          <p className="text-xs text-neutral-500">
+            Kg neto y Rdto% medidos por el ingenio en los viajes reconciliados de
+            cada lote, contra su hectareaje. Solo lotes con hectareaje cargado y al
+            menos un viaje reconciliado.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-neutral-500">
+                  <th className="py-1 pr-3 font-normal">Lote</th>
+                  <th className="py-1 pr-3 font-normal">Ha</th>
+                  <th className="py-1 pr-3 font-normal">Surcos</th>
+                  <th className="py-1 pr-3 font-normal">Viajes</th>
+                  <th className="py-1 pr-3 font-normal">Kg neto</th>
+                  <th className="py-1 pr-3 font-normal">Tn/ha</th>
+                  <th className="py-1 pr-3 font-normal">Kg/surco</th>
+                  <th className="py-1 pr-3 font-normal">Rdto%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rendimientoPorLote.map((r) => (
+                  <tr key={r.lote_key} className="border-t">
+                    <td className="py-1.5 pr-3 font-semibold">{r.nombre}</td>
+                    <td className="py-1.5 pr-3">{r.ha.toLocaleString("es-AR")}</td>
+                    <td className="py-1.5 pr-3">
+                      {Math.round(r.ha * r.surcos_por_ha).toLocaleString("es-AR")}
+                    </td>
+                    <td className="py-1.5 pr-3">{r.n}</td>
+                    <td className="py-1.5 pr-3">
+                      {r.kg_neto_total.toLocaleString("es-AR")}
+                    </td>
+                    <td className="py-1.5 pr-3">{r.tn_ha.toFixed(2)}</td>
+                    <td className="py-1.5 pr-3">{r.kg_surco.toFixed(2)}</td>
+                    <td className="py-1.5 pr-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 font-medium ${
+                          r.rdto_promedio >= 10
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {r.rdto_promedio.toFixed(2)}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
