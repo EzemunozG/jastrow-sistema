@@ -5,7 +5,14 @@ import {
   RdtoViajeChart,
   type RdtoViajePoint,
 } from "@/components/resumen/rdto-viaje-chart";
-import { META, avg, statsFor, sum, type InfrarutRow } from "@/lib/business-rules";
+import {
+  INGENIOS,
+  META,
+  avg,
+  statsFor,
+  sum,
+  type InfrarutRow,
+} from "@/lib/business-rules";
 import { getCurrentProfile } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 
@@ -87,7 +94,6 @@ export default async function ResumenPage() {
   const { data } = await supabase
     .from("infraruts")
     .select("*")
-    .eq("ingenio_id", "concepcion")
     .order("cp");
 
   const infraruts: InfrarutRow[] = (data ?? []).map((r) => ({
@@ -110,8 +116,15 @@ export default async function ResumenPage() {
   const fechas = [...new Set(infraruts.map((r) => r.fecha))].sort();
   const lastFecha = fechas[fechas.length - 1];
 
-  const l4tot = statsFor(infraruts.filter((r) => r.finca_id === "LOTE4"));
-  const vatot = statsFor(infraruts.filter((r) => r.finca_id !== "LOTE4"));
+  // Combinado por ingenio: en INFRARUT, finca_id ('LOTE4'/'VIRGINIA') solo distingue
+  // fincas dentro de Concepción — Trinidad usa 'VIRGINIA' como placeholder genérico
+  // (sus lotes reales, FRAU/PILOT/CASA FRAU/TALA POSO 1, se registran a nivel de
+  // libreta en cps_campo.lote, no acá). Por eso el desglose de esta página agrupa
+  // por ingenio_id, no por finca_id.
+  const porIngenio = INGENIOS.map((ing) => ({
+    ingenio: ing,
+    stats: statsFor(infraruts.filter((r) => r.ingenio_id === ing.id)),
+  }));
 
   // index_10.html:1189-1208 (drawRdto) — barras por viaje del último día, orden por CP.
   const rdtoViaje: RdtoViajePoint[] = infraruts
@@ -119,8 +132,8 @@ export default async function ResumenPage() {
     .sort((a, b) => a.cp - b.cp)
     .map((r) => ({
       cp: String(r.cp),
-      LOTE4: r.finca_id === "LOTE4" ? r.rdto : null,
-      VIRGINIA: r.finca_id !== "LOTE4" ? r.rdto : null,
+      CONCEPCION: r.ingenio_id === "concepcion" ? r.rdto : null,
+      TRINIDAD: r.ingenio_id === "trinidad" ? r.rdto : null,
     }));
 
   const rdtoTot = avg(infraruts, (r) => r.rdto);
@@ -205,9 +218,60 @@ export default async function ResumenPage() {
             ))}
           </div>
 
+          <div className="rounded-xl border bg-white p-4">
+            <h3 className="mb-3 text-sm font-medium">Totales por ingenio</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {porIngenio.map(({ ingenio, stats }) => (
+                <div
+                  key={ingenio.id}
+                  className="flex flex-wrap gap-3 rounded-lg border p-3"
+                >
+                  <div className="min-w-[120px]">
+                    <div className="text-xs text-neutral-500">Ingenio</div>
+                    <div className="text-sm font-semibold">{ingenio.nombre}</div>
+                  </div>
+                  <div className="min-w-[90px]">
+                    <div className="text-xs text-neutral-500">Kg neto</div>
+                    <div className="text-sm font-medium">
+                      {(stats?.kg_neto ?? 0).toLocaleString("es-AR")}
+                    </div>
+                  </div>
+                  <div className="min-w-[90px]">
+                    <div className="text-xs text-neutral-500">Kg azúcar</div>
+                    <div className="text-sm font-medium">
+                      {(stats?.kg_azucar ?? 0).toLocaleString("es-AR")}
+                    </div>
+                  </div>
+                  <div className="min-w-[80px]">
+                    <div className="text-xs text-neutral-500">Viajes</div>
+                    <div className="text-sm font-medium">{stats?.n ?? 0}</div>
+                  </div>
+                  <div className="min-w-[90px]">
+                    <div className="text-xs text-neutral-500">Rdto% prom.</div>
+                    <div
+                      className={`text-sm font-medium ${
+                        stats && stats.rdto >= META
+                          ? "text-emerald-700"
+                          : "text-red-700"
+                      }`}
+                    >
+                      {stats ? `${stats.rdto.toFixed(2)}%` : "—"}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FincaCard stats={l4tot} nombre="Las 101" color="#378ADD" />
-            <FincaCard stats={vatot} nombre="Tano" color="#1D9E75" />
+            {porIngenio.map(({ ingenio, stats }, i) => (
+              <FincaCard
+                key={ingenio.id}
+                stats={stats}
+                nombre={ingenio.nombre}
+                color={i === 0 ? "#378ADD" : "#1D9E75"}
+              />
+            ))}
           </div>
 
           <div className="rounded-xl border bg-white p-4">

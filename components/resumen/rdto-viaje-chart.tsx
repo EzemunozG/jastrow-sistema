@@ -14,16 +14,19 @@ import {
 import { META } from "@/lib/business-rules";
 
 // Port de drawRdto() de index_10.html:1189-1208: barras de Rdto% por viaje del
-// último día cargado, ordenadas por CP, coloreadas por finca, con la meta como
-// línea punteada. Mismos colores que tendencia-charts.tsx (validados dataviz).
-const COLOR_LOTE4 = "#378ADD";
-const COLOR_VIRGINIA = "#1D9E75";
+// último día cargado, ordenadas por CP, con la meta como línea punteada. Coloreadas
+// por ingenio (no por finca_id) porque desde el soporte multi-ingenio ese campo ya
+// no distingue de forma unívoca entre ingenios — INFRARUT de Trinidad usa
+// 'VIRGINIA' como placeholder genérico, no la finca "Tano" de Concepción. Mismos
+// colores que tendencia-charts.tsx (validados dataviz).
+const COLOR_CONCEPCION = "#378ADD";
+const COLOR_TRINIDAD = "#1D9E75";
 const COLOR_REF = "#BA7517";
 
 export type RdtoViajePoint = {
   cp: string;
-  LOTE4: number | null;
-  VIRGINIA: number | null;
+  CONCEPCION: number | null;
+  TRINIDAD: number | null;
 };
 
 export function RdtoViajeChart({ data }: { data: RdtoViajePoint[] }) {
@@ -62,11 +65,16 @@ export function RdtoViajeChart({ data }: { data: RdtoViajePoint[] }) {
             position: "insideTopRight",
           }}
         />
-        <Bar dataKey="LOTE4" name="Las 101" fill={COLOR_LOTE4} radius={[3, 3, 0, 0]} />
         <Bar
-          dataKey="VIRGINIA"
-          name="Tano"
-          fill={COLOR_VIRGINIA}
+          dataKey="CONCEPCION"
+          name="Concepción"
+          fill={COLOR_CONCEPCION}
+          radius={[3, 3, 0, 0]}
+        />
+        <Bar
+          dataKey="TRINIDAD"
+          name="Trinidad"
+          fill={COLOR_TRINIDAD}
           radius={[3, 3, 0, 0]}
         />
       </BarChart>
