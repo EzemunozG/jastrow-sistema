@@ -123,8 +123,9 @@ export type RendimientoLote = {
 // Rendimiento por lote: para cada lote con metadata (ha, surcos/ha), toma los viajes
 // reconciliados (cps_campo cruzado con su INFRARUT por remito) cuyo `lote` matchea
 // `lote_key`, y agrega kg neto / tn/ha / kg/surco / rdto% promedio medidos por el
-// ingenio. Solo devuelve lotes con al menos un viaje reconciliado — un lote con
-// metadata pero sin INFRARUT todavía no tiene rendimiento que mostrar.
+// ingenio. Devuelve una fila por cada lote en `lotesIngenio`, incluidos los que
+// todavía no tienen ningún viaje reconciliado (n: 0) — quien consuma esto decide si
+// los oculta o los muestra en gris (ver /rendimiento vs. la card de Reconciliación).
 export function rendimientoPorLote(
   cpsCampo: CpCampoRow[],
   infraruts: InfrarutRow[],
@@ -142,13 +143,11 @@ export function rendimientoPorLote(
     porLoteKey.get(x.lote)!.push(inf);
   }
 
-  const result: RendimientoLote[] = [];
-  for (const meta of lotesIngenio) {
-    const rows = porLoteKey.get(meta.lote_key);
-    if (!rows || rows.length === 0) continue;
+  const result: RendimientoLote[] = lotesIngenio.map((meta) => {
+    const rows = porLoteKey.get(meta.lote_key) ?? [];
     const kgNetoTotal = sum(rows, (r) => r.kg_neto);
     const surcosTotal = meta.ha * meta.surcos_por_ha;
-    result.push({
+    return {
       lote_key: meta.lote_key,
       nombre: meta.nombre,
       ha: meta.ha,
@@ -158,9 +157,41 @@ export function rendimientoPorLote(
       tn_ha: meta.ha > 0 ? kgNetoTotal / 1000 / meta.ha : 0,
       kg_surco: surcosTotal > 0 ? kgNetoTotal / surcosTotal : 0,
       rdto_promedio: avg(rows, (r) => r.rdto),
-    });
-  }
+    };
+  });
   return result.sort((a, b) => b.kg_neto_total - a.kg_neto_total);
+}
+
+export type RendimientoTotal = {
+  n: number;
+  kg_neto_total: number;
+  ha: number;
+  surcos_totales: number;
+  tn_ha: number;
+  kg_surco: number;
+  rdto_promedio: number;
+};
+
+// Totaliza un conjunto de RendimientoLote (un ingenio, o ambos combinados) — solo
+// sobre los lotes con al menos un viaje reconciliado, para no diluir el tn/ha con
+// hectáreas de lotes que todavía no cosecharon nada. rdto_promedio se reconstruye
+// ponderado por cantidad de viajes (no es el promedio simple de los promedios por
+// lote, que sesgaría el resultado hacia lotes con pocos viajes).
+export function totalizarRendimiento(lotes: RendimientoLote[]): RendimientoTotal {
+  const conDatos = lotes.filter((l) => l.n > 0);
+  const n = sum(conDatos, (l) => l.n);
+  const kgNetoTotal = sum(conDatos, (l) => l.kg_neto_total);
+  const ha = sum(conDatos, (l) => l.ha);
+  const surcosTotales = sum(conDatos, (l) => l.ha * l.surcos_por_ha);
+  return {
+    n,
+    kg_neto_total: kgNetoTotal,
+    ha,
+    surcos_totales: surcosTotales,
+    tn_ha: ha > 0 ? kgNetoTotal / 1000 / ha : 0,
+    kg_surco: surcosTotales > 0 ? kgNetoTotal / surcosTotales : 0,
+    rdto_promedio: n > 0 ? sum(conDatos, (l) => l.rdto_promedio * l.n) / n : 0,
+  };
 }
 
 // Estado a mostrar en la columna "Libreta" del listado de Viajes (index_10.html:1935-1962)

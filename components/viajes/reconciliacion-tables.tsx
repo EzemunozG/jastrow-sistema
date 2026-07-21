@@ -51,6 +51,11 @@ export function ReconciliacionTables({
     bajas,
   );
 
+  // rendimientoPorLote trae una fila por cada lote con metadata, incluidos los sin
+  // viajes reconciliados todavía (ver lib/reconciliation.ts) — acá solo interesan los
+  // que ya tienen datos que mostrar.
+  const rendimientoConDatos = rendimientoPorLote.filter((r) => r.n > 0);
+
   const cpsCampoSet = new Set(cpsCampo.map((x) => x.cp));
   const bajasSet = new Set(bajas.map((b) => b.cp));
   const sinManual = infraruts
@@ -147,7 +152,7 @@ export function ReconciliacionTables({
         </div>
       )}
 
-      {rendimientoPorLote.length > 0 && (
+      {rendimientoConDatos.length > 0 && (
         <div className="space-y-2 rounded-xl border bg-white p-4">
           <h3 className="text-sm font-semibold">Rendimiento por lote</h3>
           <p className="text-xs text-neutral-500">
@@ -170,7 +175,7 @@ export function ReconciliacionTables({
                 </tr>
               </thead>
               <tbody>
-                {rendimientoPorLote.map((r) => (
+                {rendimientoConDatos.map((r) => (
                   <tr key={r.lote_key} className="border-t">
                     <td className="py-1.5 pr-3 font-semibold">{r.nombre}</td>
                     <td className="py-1.5 pr-3">{r.ha.toLocaleString("es-AR")}</td>
