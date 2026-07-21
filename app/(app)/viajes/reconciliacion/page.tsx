@@ -5,16 +5,18 @@ import { BajasArcaCard } from "@/components/viajes/bajas-arca-card";
 import { ReconciliacionTables } from "@/components/viajes/reconciliacion-tables";
 import { RegistrarCpsForm } from "@/components/viajes/registrar-cps-form";
 import { INGENIOS, type IngenioId, type InfrarutRow } from "@/lib/business-rules";
-import { reconciliarPorLote } from "@/lib/reconciliation";
+import { reconciliarPorLote, rendimientoPorLote } from "@/lib/reconciliation";
 import { createClient } from "@/lib/supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
 async function fetchIngenio(supabase: Supabase, ingenioId: IngenioId) {
-  const [{ data: cpsCampo }, { data: infrarutsData }] = await Promise.all([
-    supabase.from("cps_campo").select("*").eq("ingenio_id", ingenioId).order("cp"),
-    supabase.from("infraruts").select("*").eq("ingenio_id", ingenioId),
-  ]);
+  const [{ data: cpsCampo }, { data: infrarutsData }, { data: lotesIngenio }] =
+    await Promise.all([
+      supabase.from("cps_campo").select("*").eq("ingenio_id", ingenioId).order("cp"),
+      supabase.from("infraruts").select("*").eq("ingenio_id", ingenioId),
+      supabase.from("lotes_ingenio").select("*").eq("ingenio_id", ingenioId),
+    ]);
 
   const infraruts: InfrarutRow[] = (infrarutsData ?? []).map((r) => ({
     cp: r.cp,
@@ -33,7 +35,7 @@ async function fetchIngenio(supabase: Supabase, ingenioId: IngenioId) {
     rdto: r.rdto ?? 0,
   }));
 
-  return { cpsCampo: cpsCampo ?? [], infraruts };
+  return { cpsCampo: cpsCampo ?? [], infraruts, lotesIngenio: lotesIngenio ?? [] };
 }
 
 export default async function ViajesReconciliacionPage() {
@@ -60,6 +62,12 @@ export default async function ViajesReconciliacionPage() {
             porIngenio[idx].cpsCampo,
             porIngenio[idx].infraruts,
             bajas ?? [],
+          )}
+          rendimientoPorLote={rendimientoPorLote(
+            porIngenio[idx].cpsCampo,
+            porIngenio[idx].infraruts,
+            bajas ?? [],
+            porIngenio[idx].lotesIngenio,
           )}
         />
       ))}

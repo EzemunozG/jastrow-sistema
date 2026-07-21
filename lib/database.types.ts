@@ -82,6 +82,33 @@ export type Database = {
         }
       >;
 
+      // Metadata de lotes (ha, surcos/ha) para rendimiento por lote en Reconciliación —
+      // distinta de `lotes` (parcelas físicas de arriendo/costos). lote_key matchea
+      // cps_campo.lote. Ver supabase/migrations/20260721000000_lotes_ingenio.sql.
+      lotes_ingenio: Tbl<
+        {
+          id: string;
+          nombre: string;
+          ingenio_id: string;
+          lote_key: string;
+          ha: number;
+          surcos_por_ha: number;
+          propietario: string | null;
+          obs: string | null;
+          created_at: string;
+        },
+        {
+          id: string;
+          nombre: string;
+          ingenio_id: string;
+          lote_key: string;
+          ha: number;
+          surcos_por_ha?: number;
+          propietario?: string | null;
+          obs?: string | null;
+        }
+      >;
+
       trabajos: Tbl<
         {
           id: string;

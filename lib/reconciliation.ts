@@ -11,7 +11,7 @@
 //   "cp" por herencia del legacy viejo, que confundía los términos).
 // Todo cruce libreta↔INFRARUT y toda detección de brechas va por remito.
 
-import type { InfrarutRow } from "./business-rules";
+import { avg, sum, type InfrarutRow } from "./business-rules";
 
 export type CpCampoRow = {
   cp: number;
@@ -97,6 +97,70 @@ export function reconciliarPorLote(
     const totalB = b.reconciliados.length + b.reclamo.length;
     return totalB - totalA || a.lote.localeCompare(b.lote);
   });
+}
+
+export type LoteIngenioRow = {
+  id: string;
+  nombre: string;
+  ingenio_id: string;
+  lote_key: string; // matchea CpCampoRow.lote
+  ha: number;
+  surcos_por_ha: number;
+};
+
+export type RendimientoLote = {
+  lote_key: string;
+  nombre: string;
+  ha: number;
+  surcos_por_ha: number;
+  n: number;
+  kg_neto_total: number;
+  tn_ha: number;
+  kg_surco: number;
+  rdto_promedio: number;
+};
+
+// Rendimiento por lote: para cada lote con metadata (ha, surcos/ha), toma los viajes
+// reconciliados (cps_campo cruzado con su INFRARUT por remito) cuyo `lote` matchea
+// `lote_key`, y agrega kg neto / tn/ha / kg/surco / rdto% promedio medidos por el
+// ingenio. Solo devuelve lotes con al menos un viaje reconciliado — un lote con
+// metadata pero sin INFRARUT todavía no tiene rendimiento que mostrar.
+export function rendimientoPorLote(
+  cpsCampo: CpCampoRow[],
+  infraruts: InfrarutRow[],
+  bajas: BajaArcaRow[],
+  lotesIngenio: LoteIngenioRow[],
+): RendimientoLote[] {
+  const { reconciliados, infrarutPorRemito } = reconciliar(cpsCampo, infraruts, bajas);
+
+  const porLoteKey = new Map<string, InfrarutRow[]>();
+  for (const x of reconciliados) {
+    if (!x.lote) continue;
+    const inf = infrarutPorRemito.get(x.cp);
+    if (!inf) continue;
+    if (!porLoteKey.has(x.lote)) porLoteKey.set(x.lote, []);
+    porLoteKey.get(x.lote)!.push(inf);
+  }
+
+  const result: RendimientoLote[] = [];
+  for (const meta of lotesIngenio) {
+    const rows = porLoteKey.get(meta.lote_key);
+    if (!rows || rows.length === 0) continue;
+    const kgNetoTotal = sum(rows, (r) => r.kg_neto);
+    const surcosTotal = meta.ha * meta.surcos_por_ha;
+    result.push({
+      lote_key: meta.lote_key,
+      nombre: meta.nombre,
+      ha: meta.ha,
+      surcos_por_ha: meta.surcos_por_ha,
+      n: rows.length,
+      kg_neto_total: kgNetoTotal,
+      tn_ha: meta.ha > 0 ? kgNetoTotal / 1000 / meta.ha : 0,
+      kg_surco: surcosTotal > 0 ? kgNetoTotal / surcosTotal : 0,
+      rdto_promedio: avg(rows, (r) => r.rdto),
+    });
+  }
+  return result.sort((a, b) => b.kg_neto_total - a.kg_neto_total);
 }
 
 // Estado a mostrar en la columna "Libreta" del listado de Viajes (index_10.html:1935-1962)
