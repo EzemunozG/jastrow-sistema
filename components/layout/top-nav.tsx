@@ -8,6 +8,7 @@ const TABS = [
   { href: "/resumen", label: "Resumen" },
   { href: "/tendencia", label: "Tendencia" },
   { href: "/viajes", label: "Viajes" },
+  { href: "/rendimiento", label: "Rendimiento" },
   { href: "/campo", label: "Campo" },
   { href: "/stock", label: "Stock & Recetas" },
   { href: "/alertas", label: "Alertas" },

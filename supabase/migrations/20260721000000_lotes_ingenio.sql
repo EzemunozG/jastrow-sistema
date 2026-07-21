@@ -27,29 +27,23 @@ create policy "admin_update_lotes_ingenio" on lotes_ingenio
 create policy "admin_delete_lotes_ingenio" on lotes_ingenio
   for delete using (is_admin());
 
--- Trinidad: los 5 lotes de Néstor Edgardo Frau (hectáreas dadas por el usuario,
--- 2026-07-21). Falta 'PILOT' (lote_key con datos reales en cps_campo — 23 despachos
--- reconciliados a la fecha) porque no se recibió su hectareaje; agregar en una
--- migración de seguimiento cuando esté confirmado.
+-- Hectareajes confirmados por el usuario (2026-07-21) — reemplaza un primer intento de
+-- esta migración que solo tenía 6 de los 11 lotes (a 'PILOT' y a los 4 de Concepción
+-- distintos de 'LAS 101' les faltaba hectareaje real; 'LAS 101' se había estimado por
+-- suma de parcelas físicas de la tabla `lotes`, ver git history de este archivo). El
+-- usuario terminó cargando los 11 directamente por el SQL editor del dashboard con
+-- estos mismos ids/valores — este archivo se corrige acá para que coincida con lo que
+-- ya está en la base y quede como fuente de verdad reproducible.
 insert into lotes_ingenio (id, nombre, ingenio_id, lote_key, ha, propietario) values
-  ('TRD-FRAU',     'Lote Néstor Frau', 'trinidad', 'FRAU',        46, 'Néstor Edgardo Frau'),
-  ('TRD-CASAFRAU', 'Lote Casa Frau',   'trinidad', 'CASA FRAU',   50, 'Néstor Edgardo Frau'),
-  ('TRD-TP1',      'Tala Poso 1',      'trinidad', 'TALA POSO 1', 60, 'Néstor Edgardo Frau'),
-  ('TRD-TP2',      'Tala Poso 2',      'trinidad', 'TALA POSO 2', 30, 'Néstor Edgardo Frau'),
-  ('TRD-TP3',      'Tala Poso 3',      'trinidad', 'TALA POSO 3', 30, 'Néstor Edgardo Frau')
-on conflict (id) do nothing;
-
--- Concepción: 'LAS 101' es el catch-all de cps_campo.lote para todos los despachos de
--- finca_id='LOTE4' (ver 20260716000000_cps_campo_lote.sql) — equivale a la finca LOTE4
--- completa, no a una parcela suelta. Hectareaje ESTIMADO por suma de las 5 parcelas
--- físicas de esa finca en la tabla `lotes` (L4-100 71 + L4-LUCHO 50 + L4-PILOT 0,
--- "pendiente de confirmar" + L4-TP2 39.8 + L4-TP3 95.8 = 256.6 ha) — confirmar antes de
--- confiar en el tn/ha que se muestre para este lote. 'TANO' y 'PACO' (sub-lotes de la
--- finca VIRGINIA, con datos reales: 59 y 12 despachos respectivamente) y 'LOTE 3'
--- (definido en el backfill pero sin despachos aún) quedan afuera: no hay forma de
--- derivar cuánto de los 433.5 ha totales de VIRGINIA corresponde a cada uno sin que el
--- usuario lo confirme.
-insert into lotes_ingenio (id, nombre, ingenio_id, lote_key, ha, propietario, obs) values
-  ('CNC-LAS101', 'Las 101', 'concepcion', 'LAS 101', 256.6, 'JASTROW INVER GROUP S.A.',
-   'Ha estimada = suma de lotes L4-100+L4-LUCHO+L4-PILOT+L4-TP2+L4-TP3 en la tabla lotes — confirmar')
+  ('TRD-FRAU',     'Lote Néstor Frau', 'trinidad',   'FRAU',        46,  'Néstor Edgardo Frau'),
+  ('TRD-CASAFRAU', 'Casa Frau',        'trinidad',   'CASA FRAU',   50,  'Néstor Edgardo Frau'),
+  ('TRD-PILOT',    'Pilot',            'trinidad',   'PILOT',       17,  'Jastrow'),
+  ('TRD-TP1',      'Tala Poso 1',      'trinidad',   'TALA POSO 1', 60,  'Néstor Edgardo Frau'),
+  ('TRD-TP2',      'Tala Poso 2',      'trinidad',   'TALA POSO 2', 30,  'Néstor Edgardo Frau'),
+  ('TRD-TP3',      'Tala Poso 3',      'trinidad',   'TALA POSO 3', 30,  'Néstor Edgardo Frau'),
+  ('CON-101',      'Lote 101',         'concepcion', 'LAS 101',     101, 'Jastrow'),
+  ('CON-TANO',     'Tano',             'concepcion', 'TANO',        30,  'Jastrow'),
+  ('CON-PACO',     'Paco',             'concepcion', 'PACO',        45,  'Jastrow'),
+  ('CON-LUCHO',    'Lucho',            'concepcion', 'LUCHO',       140, 'Jastrow'),
+  ('CON-PAQUITO',  'Paquito',          'concepcion', 'PAQUITO',     60,  'Jastrow')
 on conflict (id) do nothing;
