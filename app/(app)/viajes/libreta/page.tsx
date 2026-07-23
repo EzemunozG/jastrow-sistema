@@ -11,7 +11,7 @@ export default async function ViajesLibretaPage() {
     await Promise.all([
       supabase.from("cps_campo").select("*").order("cp"),
       supabase.from("bajas_arca").select("*"),
-      supabase.from("infraruts").select("*").eq("ingenio_id", "concepcion"),
+      supabase.from("infraruts").select("*"),
     ]);
 
   const infraruts: InfrarutRow[] = (infrarutsData ?? []).map((r) => ({

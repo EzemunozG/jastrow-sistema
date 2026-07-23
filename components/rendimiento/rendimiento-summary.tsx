@@ -1,4 +1,5 @@
 import { META } from "@/lib/business-rules";
+import { formatKg, formatNumber, formatPercent } from "@/lib/format";
 import type { RendimientoTotal } from "@/lib/reconciliation";
 
 export function RendimientoSummary({
@@ -11,10 +12,10 @@ export function RendimientoSummary({
   total: RendimientoTotal;
 }) {
   const items: { lbl: string; val: string }[] = [
-    { lbl: "Kg neto", val: total.kg_neto_total.toLocaleString("es-AR") },
-    { lbl: "Tn/ha", val: total.tn_ha.toFixed(2) },
-    { lbl: "Kg/surco", val: total.kg_surco.toFixed(2) },
-    { lbl: "Rdto% promedio", val: `${total.rdto_promedio.toFixed(2)}%` },
+    { lbl: "Kg neto", val: formatKg(total.kg_neto_total) },
+    { lbl: "Tn/ha", val: formatNumber(total.tn_ha, 2) },
+    { lbl: "Kg/surco", val: formatNumber(total.kg_surco, 2) },
+    { lbl: "Rdto% promedio", val: formatPercent(total.rdto_promedio) },
   ];
 
   return (

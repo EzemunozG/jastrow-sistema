@@ -1,3 +1,4 @@
+import { FileSearch } from "lucide-react";
 import {
   libretaStatus,
   reconciliar,
@@ -6,7 +7,9 @@ import {
   type LoteBreakdown,
   type RendimientoLote,
 } from "@/lib/reconciliation";
-import type { InfrarutRow } from "@/lib/business-rules";
+import { META, fincaNombre, type InfrarutRow } from "@/lib/business-rules";
+import { formatKg, formatNumber, formatPercent, formatTn } from "@/lib/format";
+import { EmptyState } from "@/components/ui/empty-state";
 
 function RemitoList({
   label,
@@ -33,6 +36,7 @@ function RemitoList({
 export function ReconciliacionTables({
   title,
   cpsCampo,
+  cpsCampoCompleto = cpsCampo,
   infraruts,
   bajas,
   porLote,
@@ -40,6 +44,12 @@ export function ReconciliacionTables({
 }: {
   title?: string;
   cpsCampo: CpCampoRow[];
+  // Libreta completa del ingenio, SIN el filtro de lote — solo para decidir "sin
+  // manual" (un INFRARUT sin lote asignable no puede atribuirse a ningún lote, así
+  // que filtrar por lote no debe hacer que remitos de OTROS lotes aparezcan acá como
+  // si no estuvieran en la libreta). Si no se pasa, se asume que `cpsCampo` ya viene
+  // completo (caso sin filtro de lote).
+  cpsCampoCompleto?: CpCampoRow[];
   infraruts: InfrarutRow[];
   bajas: BajaArcaRow[];
   porLote: LoteBreakdown[];
@@ -56,11 +66,24 @@ export function ReconciliacionTables({
   // que ya tienen datos que mostrar.
   const rendimientoConDatos = rendimientoPorLote.filter((r) => r.n > 0);
 
-  const cpsCampoSet = new Set(cpsCampo.map((x) => x.cp));
+  const cpsCampoSet = new Set(cpsCampoCompleto.map((x) => x.cp));
   const bajasSet = new Set(bajas.map((b) => b.cp));
   const sinManual = infraruts
     .filter((r) => libretaStatus(r, cpsCampoSet, bajasSet) === "sin_manual")
     .sort((a, b) => (a.remito ?? Infinity) - (b.remito ?? Infinity));
+
+  if (cpsCampo.length === 0 && sinManual.length === 0) {
+    return (
+      <div className="space-y-4">
+        {title && <h2 className="text-base font-semibold">{title}</h2>}
+        <EmptyState
+          icon={FileSearch}
+          title="No hay viajes que coincidan con estos filtros"
+          description="Probá ampliar el rango de fechas o cambiar el lote seleccionado."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -176,27 +199,30 @@ export function ReconciliacionTables({
               </thead>
               <tbody>
                 {rendimientoConDatos.map((r) => (
-                  <tr key={r.lote_key} className="border-t">
+                  <tr
+                    key={r.lote_key}
+                    className="border-t transition-colors hover:bg-neutral-50"
+                  >
                     <td className="py-1.5 pr-3 font-semibold">{r.nombre}</td>
-                    <td className="py-1.5 pr-3">{r.ha.toLocaleString("es-AR")}</td>
                     <td className="py-1.5 pr-3">
-                      {Math.round(r.ha * r.surcos_por_ha).toLocaleString("es-AR")}
+                      {formatNumber(r.ha, r.ha % 1 ? 1 : 0)}
+                    </td>
+                    <td className="py-1.5 pr-3">
+                      {formatNumber(Math.round(r.ha * r.surcos_por_ha))}
                     </td>
                     <td className="py-1.5 pr-3">{r.n}</td>
-                    <td className="py-1.5 pr-3">
-                      {r.kg_neto_total.toLocaleString("es-AR")}
-                    </td>
-                    <td className="py-1.5 pr-3">{r.tn_ha.toFixed(2)}</td>
-                    <td className="py-1.5 pr-3">{r.kg_surco.toFixed(2)}</td>
+                    <td className="py-1.5 pr-3">{formatKg(r.kg_neto_total)}</td>
+                    <td className="py-1.5 pr-3">{formatNumber(r.tn_ha, 2)}</td>
+                    <td className="py-1.5 pr-3">{formatNumber(r.kg_surco, 2)}</td>
                     <td className="py-1.5 pr-3">
                       <span
                         className={`rounded-full px-2 py-0.5 font-medium ${
-                          r.rdto_promedio >= 10
+                          r.rdto_promedio >= META
                             ? "bg-emerald-50 text-emerald-700"
                             : "bg-amber-50 text-amber-700"
                         }`}
                       >
-                        {r.rdto_promedio.toFixed(2)}%
+                        {formatPercent(r.rdto_promedio)}
                       </span>
                     </td>
                   </tr>
@@ -229,7 +255,10 @@ export function ReconciliacionTables({
               </thead>
               <tbody>
                 {pendientes.map((x) => (
-                  <tr key={x.cp} className="border-t bg-red-50/40">
+                  <tr
+                    key={x.cp}
+                    className="border-t bg-red-50/40 transition-colors hover:bg-red-50"
+                  >
                     <td className="py-1.5 pr-3 text-sm font-bold text-red-700">
                       {x.cp}
                     </td>
@@ -270,19 +299,18 @@ export function ReconciliacionTables({
               </thead>
               <tbody>
                 {sinManual.map((r) => (
-                  <tr key={r.cp} className="border-t bg-orange-50/40">
+                  <tr
+                    key={r.cp}
+                    className="border-t bg-orange-50/40 transition-colors hover:bg-orange-50"
+                  >
                     <td className="py-1.5 pr-3 text-sm font-bold text-orange-700">
                       {r.remito ?? "—"}
                     </td>
                     <td className="py-1.5 pr-3 text-neutral-500">{r.cp}</td>
                     <td className="py-1.5 pr-3">{r.fecha.slice(5)}</td>
-                    <td className="py-1.5 pr-3">
-                      {r.finca_id === "LOTE4" ? "LOTE4" : "VIRGINIA"}
-                    </td>
-                    <td className="py-1.5 pr-3">
-                      {(r.kg_neto / 1000).toFixed(1)} t
-                    </td>
-                    <td className="py-1.5 pr-3">{r.rdto.toFixed(2)}%</td>
+                    <td className="py-1.5 pr-3">{fincaNombre(r.finca_id)}</td>
+                    <td className="py-1.5 pr-3">{formatTn(r.kg_neto / 1000)}</td>
+                    <td className="py-1.5 pr-3">{formatPercent(r.rdto)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -313,7 +341,10 @@ export function ReconciliacionTables({
                 {reconciliados.map((x) => {
                   const inf = infrarutPorRemito.get(x.cp);
                   return (
-                    <tr key={x.cp} className="border-t">
+                    <tr
+                      key={x.cp}
+                      className="border-t transition-colors hover:bg-neutral-50"
+                    >
                       <td className="py-1.5 pr-3 font-semibold text-emerald-700">
                         {x.cp}
                       </td>
@@ -322,28 +353,28 @@ export function ReconciliacionTables({
                         {inf?.fecha?.slice(5) || "—"}
                       </td>
                       <td className="py-1.5 pr-3">
-                        {inf ? (inf.finca_id === "LOTE4" ? "LOTE4" : "VIRGINIA") : "—"}
+                        {inf ? fincaNombre(inf.finca_id) : "—"}
                       </td>
                       <td className="py-1.5 pr-3">
                         {inf ? (
                           <span
                             className={`rounded-full px-2 py-0.5 font-medium ${
-                              inf.rdto >= 10
+                              inf.rdto >= META
                                 ? "bg-emerald-50 text-emerald-700"
                                 : "bg-amber-50 text-amber-700"
                             }`}
                           >
-                            {inf.rdto.toFixed(2)}%
+                            {formatPercent(inf.rdto)}
                           </span>
                         ) : (
                           "—"
                         )}
                       </td>
                       <td className="py-1.5 pr-3">
-                        {inf ? `${(inf.kg_neto / 1000).toFixed(1)} t` : "—"}
+                        {inf ? formatTn(inf.kg_neto / 1000) : "—"}
                       </td>
                       <td className="py-1.5 pr-3">
-                        {inf ? inf.kg_azucar.toLocaleString("es-AR") : "—"} kg
+                        {inf ? formatKg(inf.kg_azucar) : "—"}
                       </td>
                     </tr>
                   );

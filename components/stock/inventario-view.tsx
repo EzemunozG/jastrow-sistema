@@ -13,16 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Database } from "@/lib/database.types";
+import { formatMoney as fmtMonto } from "@/lib/format";
 import { calcStock } from "@/lib/stock";
 import { EntradaStockDialog } from "./entrada-stock-dialog";
 
 type Producto = Database["public"]["Tables"]["productos"]["Row"];
 type Movimiento = Database["public"]["Tables"]["movimientos_stock"]["Row"];
 type Factura = Database["public"]["Tables"]["facturas"]["Row"];
-
-function fmtMonto(n: number) {
-  return `$${n.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
-}
 
 const CAT_COLOR: Record<string, string> = {
   Herbicida: "text-red-700",

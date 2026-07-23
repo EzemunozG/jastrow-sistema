@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Database } from "@/lib/database.types";
+import { formatMoney as fmtMonto } from "@/lib/format";
 import { RECETA_ACTION_IDLE, RECETA_TIPOS } from "@/lib/forms/recetas";
 
 type Lote = Database["public"]["Tables"]["lotes"]["Row"];
@@ -33,10 +34,6 @@ const EMPTY_ITEM: ItemRow = { producto_id: "", dosis: 0 };
 
 const selectNativeClass =
   "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
-
-function fmtMonto(n: number) {
-  return `$${n.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
-}
 
 export function RecetaFormDialog({
   lotes,

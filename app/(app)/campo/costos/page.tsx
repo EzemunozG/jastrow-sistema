@@ -8,10 +8,7 @@ import {
   costoPorLote,
 } from "@/lib/costos";
 import { createClient } from "@/lib/supabase/server";
-
-function fmtMonto(n: number) {
-  return `$${n.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
-}
+import { formatMoney as fmtMonto } from "@/lib/format";
 
 function StatTile({
   label,
