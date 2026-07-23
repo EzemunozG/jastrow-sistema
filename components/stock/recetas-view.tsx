@@ -5,16 +5,13 @@ import { IconPlus } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/lib/database.types";
+import { formatMoney as fmtMonto } from "@/lib/format";
 import { RecetaFormDialog } from "./receta-form-dialog";
 
 type Receta = Database["public"]["Tables"]["recetas"]["Row"];
 type RecetaItem = Database["public"]["Tables"]["receta_items"]["Row"];
 type Lote = Database["public"]["Tables"]["lotes"]["Row"];
 type Producto = Database["public"]["Tables"]["productos"]["Row"];
-
-function fmtMonto(n: number) {
-  return `$${n.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
-}
 
 export function RecetasView({
   recetas,

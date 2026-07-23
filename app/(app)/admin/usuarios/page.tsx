@@ -34,7 +34,7 @@ export default async function UsuariosAdminPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border bg-white p-5">
+      <div className="rounded-xl border bg-white p-4">
         <h2 className="mb-4 text-sm font-medium">Usuarios</h2>
         <Table>
           <TableHeader>
@@ -76,7 +76,7 @@ export default async function UsuariosAdminPage() {
         </Table>
       </div>
 
-      <div className="rounded-xl border bg-white p-5">
+      <div className="rounded-xl border bg-white p-4">
         <h2 className="mb-4 text-sm font-medium">Nuevo usuario</h2>
         <form action={createUser} className="grid max-w-md gap-3">
           <div className="space-y-1.5">

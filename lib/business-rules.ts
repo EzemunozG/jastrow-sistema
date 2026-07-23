@@ -11,6 +11,18 @@ export const INGENIOS = [
 
 export type IngenioId = (typeof INGENIOS)[number]["id"];
 
+// Nombres de finca_id de INFRARUT, centralizados — antes cada pantalla mostraba una
+// variante distinta del mismo código ("LOTE4" crudo, "LA VIRGINIA", "VIRGINIA", "Las
+// 101"/"Tano"). Mismos colores que ya usaban resumen/tendencia (validados dataviz).
+export const FINCAS = [
+  { id: "LOTE4", nombre: "Las 101", color: "#378ADD" },
+  { id: "VIRGINIA", nombre: "Tano", color: "#1D9E75" },
+] as const;
+
+export function fincaNombre(fincaId: string | null): string {
+  return FINCAS.find((f) => f.id === fincaId)?.nombre ?? fincaId ?? "—";
+}
+
 export type InfrarutRow = {
   cp: number;
   ingenio_id: string; // 'concepcion' | 'trinidad' — el cp es correlativo POR ingenio

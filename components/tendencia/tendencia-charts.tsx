@@ -12,14 +12,14 @@ import {
   YAxis,
 } from "recharts";
 
-// Mismos colores que index_10.html (Chart.js): LOTE4 azul, LA VIRGINIA verde,
-// línea de referencia (meta / mínimo) en ámbar punteado. Validados con
-// scripts/validate_palette.js de la skill dataviz (light mode, categorical, PASS).
-const COLOR_LOTE4 = "#378ADD";
-const COLOR_VIRGINIA = "#1D9E75";
+// Coloreado por ingenio (no por finca_id): desde el soporte multi-ingenio ese campo ya
+// no distingue de forma unívoca entre ingenios — ver rdto-viaje-chart.tsx, mismo
+// razonamiento y mismos colores (validados dataviz).
+const COLOR_CONCEPCION = "#378ADD";
+const COLOR_TRINIDAD = "#1D9E75";
 const COLOR_REF = "#BA7517";
 
-type SeriePoint = { fecha: string; LOTE4: number | null; VIRGINIA: number | null };
+type SeriePoint = { fecha: string; CONCEPCION: number | null; TRINIDAD: number | null };
 
 function TrendLineChart({
   data,
@@ -67,18 +67,18 @@ function TrendLineChart({
         )}
         <Line
           type="monotone"
-          dataKey="LOTE4"
-          name="Las 101"
-          stroke={COLOR_LOTE4}
+          dataKey="CONCEPCION"
+          name="Concepción"
+          stroke={COLOR_CONCEPCION}
           strokeWidth={2}
           dot={{ r: 4 }}
           connectNulls
         />
         <Line
           type="monotone"
-          dataKey="VIRGINIA"
-          name="Tano"
-          stroke={COLOR_VIRGINIA}
+          dataKey="TRINIDAD"
+          name="Trinidad"
+          stroke={COLOR_TRINIDAD}
           strokeWidth={2}
           dot={{ r: 4 }}
           connectNulls

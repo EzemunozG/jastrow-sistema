@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Database } from "@/lib/database.types";
+import { formatMoney as fmtMonto } from "@/lib/format";
 import { TrabajoFormDialog } from "./trabajo-form-dialog";
 
 type Lote = Database["public"]["Tables"]["lotes"]["Row"];
@@ -28,10 +29,6 @@ type TrabajoInsumo = Database["public"]["Tables"]["trabajo_insumos"]["Row"];
 type Trabajo = Database["public"]["Tables"]["trabajos"]["Row"] & {
   insumos: TrabajoInsumo[];
 };
-
-function fmtMonto(n: number) {
-  return `$${n.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
-}
 
 export function TrabajosDialog({
   lote,

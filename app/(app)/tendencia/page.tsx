@@ -2,34 +2,26 @@ export const dynamic = "force-dynamic";
 
 import { TendenciaCharts } from "@/components/tendencia/tendencia-charts";
 import {
+  INGENIOS,
   META,
   fechasUnicas,
-  porFincaFecha,
   statsFor,
   type InfrarutRow,
   type Stats,
 } from "@/lib/business-rules";
+import { formatKg, formatNumber, formatPercent, formatTn } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 
-type FincaRow = {
+type IngenioRow = {
   fecha: string;
-  finca: "LOTE4" | "VIRGINIA";
+  ingenioId: string;
   label: string;
   stats: Stats;
 };
 
-const FINCAS = [
-  ["LOTE4", "Las 101"],
-  ["VIRGINIA", "Tano"],
-] as const;
-
 export default async function TendenciaPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("infraruts")
-    .select("*")
-    .eq("ingenio_id", "concepcion")
-    .order("cp");
+  const { data } = await supabase.from("infraruts").select("*").order("cp");
 
   const infraruts: InfrarutRow[] = (data ?? []).map((r) => ({
     cp: r.cp,
@@ -58,37 +50,39 @@ export default async function TendenciaPage() {
 
   const fechas = fechasUnicas(infraruts);
 
-  const rows: FincaRow[] = [];
+  // Agrupado por ingenio_id, no por finca_id — ver rdto-viaje-chart.tsx (misma razón:
+  // finca_id no distingue Trinidad de Concepción de forma unívoca).
+  const rows: IngenioRow[] = [];
   for (const f of fechas) {
-    for (const [clave, label] of FINCAS) {
-      const v = porFincaFecha(infraruts, f, clave);
+    for (const ingenio of INGENIOS) {
+      const v = infraruts.filter((r) => r.fecha === f && r.ingenio_id === ingenio.id);
       if (!v.length) continue;
       const s = statsFor(v);
-      if (s) rows.push({ fecha: f, finca: clave, label, stats: s });
+      if (s) rows.push({ fecha: f, ingenioId: ingenio.id, label: ingenio.nombre, stats: s });
     }
   }
 
-  const l4map = new Map(
-    rows.filter((r) => r.finca === "LOTE4").map((r) => [r.fecha, r.stats]),
+  const concMap = new Map(
+    rows.filter((r) => r.ingenioId === "concepcion").map((r) => [r.fecha, r.stats]),
   );
-  const vamap = new Map(
-    rows.filter((r) => r.finca === "VIRGINIA").map((r) => [r.fecha, r.stats]),
+  const trinMap = new Map(
+    rows.filter((r) => r.ingenioId === "trinidad").map((r) => [r.fecha, r.stats]),
   );
 
   const rdtoData = fechas.map((f) => ({
     fecha: f.slice(5),
-    LOTE4: l4map.get(f)?.rdto ?? null,
-    VIRGINIA: vamap.get(f)?.rdto ?? null,
+    CONCEPCION: concMap.get(f)?.rdto ?? null,
+    TRINIDAD: trinMap.get(f)?.rdto ?? null,
   }));
   const polData = fechas.map((f) => ({
     fecha: f.slice(5),
-    LOTE4: l4map.get(f)?.pol ?? null,
-    VIRGINIA: vamap.get(f)?.pol ?? null,
+    CONCEPCION: concMap.get(f)?.pol ?? null,
+    TRINIDAD: trinMap.get(f)?.pol ?? null,
   }));
   const purezaData = fechas.map((f) => ({
     fecha: f.slice(5),
-    LOTE4: l4map.get(f)?.pureza ?? null,
-    VIRGINIA: vamap.get(f)?.pureza ?? null,
+    CONCEPCION: concMap.get(f)?.pureza ?? null,
+    TRINIDAD: trinMap.get(f)?.pureza ?? null,
   }));
 
   // index_10.html:1240-1241 — escala dinámica para que ningún punto quede fuera del gráfico
@@ -98,7 +92,11 @@ export default async function TendenciaPage() {
     Math.ceil(Math.max(...rdtos, META) * 2) / 2 + 0.5,
   ];
 
-  const prevByFinca = new Map<string, Stats>();
+  const prevByIngenio = new Map<string, Stats>();
+  const colorByIngenio: Record<string, string> = {
+    concepcion: "#378ADD",
+    trinidad: "#1D9E75",
+  };
 
   return (
     <div className="space-y-6">
@@ -114,7 +112,7 @@ export default async function TendenciaPage() {
           <thead>
             <tr className="border-b text-left text-xs text-neutral-500">
               <th className="p-2 font-normal">Fecha</th>
-              <th className="p-2 font-normal">Finca</th>
+              <th className="p-2 font-normal">Ingenio</th>
               <th className="p-2 font-normal">Viajes</th>
               <th className="p-2 font-normal">Tn netas</th>
               <th className="p-2 font-normal">Brix%</th>
@@ -128,27 +126,27 @@ export default async function TendenciaPage() {
           </thead>
           <tbody>
             {rows.map((r) => {
-              const prev = prevByFinca.get(r.finca);
+              const prev = prevByIngenio.get(r.ingenioId);
               const delta = prev ? r.stats.rdto - prev.rdto : null;
-              prevByFinca.set(r.finca, r.stats);
+              prevByIngenio.set(r.ingenioId, r.stats);
               return (
-                <tr key={`${r.fecha}-${r.finca}`} className="border-b last:border-0">
+                <tr
+                  key={`${r.fecha}-${r.ingenioId}`}
+                  className="border-b transition-colors last:border-0 hover:bg-neutral-50"
+                >
                   <td className="p-2">{r.fecha.slice(5)}</td>
                   <td className="p-2">
                     <span
                       className="mr-1.5 inline-block size-2 rounded-full"
-                      style={{
-                        backgroundColor:
-                          r.finca === "LOTE4" ? "#378ADD" : "#1D9E75",
-                      }}
+                      style={{ backgroundColor: colorByIngenio[r.ingenioId] }}
                     />
                     {r.label}
                   </td>
                   <td className="p-2">{r.stats.n}</td>
-                  <td className="p-2">{(r.stats.kg_neto / 1000).toFixed(1)}</td>
-                  <td className="p-2">{r.stats.brix.toFixed(2)}</td>
-                  <td className="p-2">{r.stats.pol.toFixed(2)}</td>
-                  <td className="p-2">{r.stats.pureza.toFixed(2)}</td>
+                  <td className="p-2">{formatTn(r.stats.kg_neto / 1000)}</td>
+                  <td className="p-2">{formatNumber(r.stats.brix, 2)}</td>
+                  <td className="p-2">{formatNumber(r.stats.pol, 2)}</td>
+                  <td className="p-2">{formatNumber(r.stats.pureza, 2)}</td>
                   <td className="p-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -159,13 +157,11 @@ export default async function TendenciaPage() {
                             : "bg-red-50 text-red-700"
                       }`}
                     >
-                      {r.stats.rdto.toFixed(2)}%
+                      {formatPercent(r.stats.rdto)}
                     </span>
                   </td>
-                  <td className="p-2">{r.stats.trash_pct.toFixed(2)}%</td>
-                  <td className="p-2">
-                    {r.stats.kg_azucar.toLocaleString("es-AR")}
-                  </td>
+                  <td className="p-2">{formatPercent(r.stats.trash_pct)}</td>
+                  <td className="p-2">{formatKg(r.stats.kg_azucar)}</td>
                   <td className="p-2">
                     {delta !== null ? (
                       <span
@@ -176,7 +172,7 @@ export default async function TendenciaPage() {
                         }`}
                       >
                         {delta >= 0 ? "+" : ""}
-                        {delta.toFixed(2)}pp
+                        {formatNumber(delta, 2)}pp
                       </span>
                     ) : (
                       "—"

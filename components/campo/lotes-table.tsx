@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Database } from "@/lib/database.types";
+import { formatMoney as fmtMonto } from "@/lib/format";
 import { LoteFormDialog } from "./lote-form-dialog";
 import { TrabajosDialog } from "./trabajos-dialog";
 
@@ -30,10 +31,6 @@ const ESTADO_VARIANT = {
   "En cosecha": "default",
   Cosechado: "outline",
 } as const;
-
-function fmtMonto(n: number) {
-  return `$${n.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
-}
 
 export function LotesTable({
   lotes,

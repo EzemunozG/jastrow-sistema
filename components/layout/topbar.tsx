@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IconLogout, IconPlant, IconUsers } from "@tabler/icons-react";
 import { logout } from "@/actions/auth";
+import { MobileNav } from "@/components/layout/sidebar";
 
 export function Topbar({
   username,
@@ -10,8 +11,9 @@ export function Topbar({
   isAdmin: boolean;
 }) {
   return (
-    <header className="flex h-13 items-center justify-between bg-[#0F4C2B] px-6 text-white">
+    <header className="flex h-13 items-center justify-between bg-[#0F4C2B] px-4 text-white sm:px-6">
       <div className="flex items-center gap-3.5">
+        <MobileNav isAdmin={isAdmin} />
         <div className="flex items-center gap-1.5 text-[15px] font-bold tracking-wide">
           <IconPlant size={15} /> JASTROW
         </div>

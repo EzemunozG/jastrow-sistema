@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { Database } from "@/lib/database.types";
+import { formatMoney as fmtMonto } from "@/lib/format";
 import { FacturaFormDialog } from "./factura-form-dialog";
 
 type FacturaItem = Database["public"]["Tables"]["factura_items"]["Row"];
@@ -21,10 +22,6 @@ type Factura = Database["public"]["Tables"]["facturas"]["Row"] & {
   items: FacturaItem[];
   imgUrl: string | null;
 };
-
-function fmtMonto(n: number) {
-  return `$${n.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
-}
 
 export function FacturasTable({ facturas }: { facturas: Factura[] }) {
   const [selected, setSelected] = useState<Factura | null>(null);
