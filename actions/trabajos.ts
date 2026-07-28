@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireWriter } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { trabajoSchema, type TrabajoActionState } from "@/lib/forms/trabajos";
 
@@ -34,6 +35,8 @@ export async function saveTrabajo(
   _prevState: TrabajoActionState,
   formData: FormData,
 ): Promise<TrabajoActionState> {
+  await requireWriter();
+
   const parsed = trabajoSchema.safeParse({
     lote_id: formData.get("lote_id"),
     fecha: formData.get("fecha"),
@@ -97,6 +100,7 @@ export async function saveTrabajo(
 }
 
 export async function deleteTrabajo(id: string) {
+  await requireWriter();
   const supabase = await createClient();
   await supabase.from("trabajos").delete().eq("id", id);
   revalidatePath("/campo/lotes");

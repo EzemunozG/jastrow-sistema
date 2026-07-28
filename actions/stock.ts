@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireWriter } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import {
   entradaStockSchema,
@@ -17,6 +18,8 @@ export async function addEntradaStock(
   _prevState: EntradaStockActionState,
   formData: FormData,
 ): Promise<EntradaStockActionState> {
+  await requireWriter();
+
   const parsed = entradaStockSchema.safeParse({
     nombre: formData.get("nombre"),
     categoria: formData.get("categoria"),

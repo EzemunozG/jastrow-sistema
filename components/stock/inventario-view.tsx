@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,7 @@ export function InventarioView({
   movimientos: Movimiento[];
   facturas: Factura[];
 }) {
+  const canWrite = useCanWrite();
   const [selected, setSelected] = useState<Producto | null>(null);
   const [open, setOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
@@ -122,11 +124,13 @@ export function InventarioView({
         )}
       </div>
 
-      <div className="flex justify-end">
-        <Button size="sm" onClick={openNew}>
-          <IconPlus size={14} /> Nueva entrada
-        </Button>
-      </div>
+      {canWrite && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={openNew}>
+            <IconPlus size={14} /> Nueva entrada
+          </Button>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-xl border bg-white">
         <Table>
@@ -185,13 +189,15 @@ export function InventarioView({
                   {s.valor_stock > 0 ? fmtMonto(s.valor_stock) : "—"}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEntradaFor(s.producto)}
-                  >
-                    + Entrada
-                  </Button>
+                  {canWrite && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEntradaFor(s.producto)}
+                    >
+                      + Entrada
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

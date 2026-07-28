@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireWriter } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { loteSchema, type LoteActionState } from "@/lib/forms/lotes";
 
@@ -35,6 +36,8 @@ export async function saveLote(
   _prevState: LoteActionState,
   formData: FormData,
 ): Promise<LoteActionState> {
+  await requireWriter();
+
   const parsed = parseLoteForm(formData);
   if (!parsed.success) {
     return {
@@ -71,6 +74,7 @@ export async function saveLote(
 }
 
 export async function deleteLote(id: string) {
+  await requireWriter();
   const supabase = await createClient();
   await supabase.from("lotes").delete().eq("id", id);
   revalidatePath("/campo/lotes");

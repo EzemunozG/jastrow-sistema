@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IconPhoto, IconPlus } from "@tabler/icons-react";
 import { deleteFactura } from "@/actions/facturas";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ type Factura = Database["public"]["Tables"]["facturas"]["Row"] & {
 };
 
 export function FacturasTable({ facturas }: { facturas: Factura[] }) {
+  const canWrite = useCanWrite();
   const [selected, setSelected] = useState<Factura | null>(null);
   const [open, setOpen] = useState(false);
   // Fuerza un remount del diálogo (y de su estado de form interno) en cada apertura, para
@@ -79,11 +81,13 @@ export function FacturasTable({ facturas }: { facturas: Factura[] }) {
         ))}
       </div>
 
-      <div className="flex justify-end">
-        <Button size="sm" onClick={openNew}>
-          <IconPlus size={14} /> Nueva factura
-        </Button>
-      </div>
+      {canWrite && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={openNew}>
+            <IconPlus size={14} /> Nueva factura
+          </Button>
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-xl border bg-white">
         <Table>
@@ -125,20 +129,24 @@ export function FacturasTable({ facturas }: { facturas: Factura[] }) {
                       </a>
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEdit(f)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => deleteFactura(f.id, f.img_path)}
-                  >
-                    Eliminar
-                  </Button>
+                  {canWrite && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEdit(f)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteFactura(f.id, f.img_path)}
+                      >
+                        Eliminar
+                      </Button>
+                    </>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

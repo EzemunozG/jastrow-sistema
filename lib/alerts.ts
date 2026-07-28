@@ -1,15 +1,17 @@
-// Reglas de alerta portadas literalmente de index_10.html:3113-3190 (renderAlertas).
-// Mismos umbrales exactos — no ajustar sin confirmar con el usuario.
+// Reglas de alerta portadas de index_10.html:3113-3190 (renderAlertas), generalizadas
+// de "2 fincas hardcodeadas" a N lotes por ingenio (decisión confirmada por el
+// usuario, 2026-07-28): la meta de Rdto% (10,0%) es la misma para todos los lotes de
+// ambos ingenios, y cada regla se evalúa por lote — computeAlerts() se llama una vez
+// por ingenio (mismo patrón que rendimientoPorLote en las páginas de Rendimiento y
+// Reconciliación), no agrupa por ingenio acá adentro; eso lo hace la página.
+import { META, UMBRALES, avg, statsFor, type InfrarutRow } from "./business-rules";
+import { formatNumber, formatPercent } from "./format";
 import {
-  type InfrarutRow,
-  META,
-  UMBRALES,
-  avg,
-  fechasUnicas,
-  porFincaFecha,
-  statsFor,
-} from "./business-rules";
-import type { BajaArcaRow, CpCampoRow } from "./reconciliation";
+  reconciliar,
+  type BajaArcaRow,
+  type CpCampoRow,
+  type LoteIngenioRow,
+} from "./reconciliation";
 
 export type Alert = {
   severity: "bad" | "warn" | "info";
@@ -17,129 +19,164 @@ export type Alert = {
   message: string;
 };
 
-const FINCAS = [
-  { id: "LOTE4", label: "Las 101" },
-  { id: "VIRGINIA", label: "Tano" },
-] as const;
-
 function fmt(fecha: string | null): string {
   if (!fecha) return "—";
   return fecha.slice(5).split("-").reverse().join("/");
 }
 
-function peoresCps(infraruts: InfrarutRow[], fecha: string, fincaId: string) {
-  return porFincaFecha(infraruts, fecha, fincaId)
+function peoresRemitos(rows: InfrarutRow[]): string {
+  return [...rows]
     .sort((a, b) => a.rdto - b.rdto)
     .slice(0, 2)
-    .map((r) => `CP${r.cp} (${r.rdto.toFixed(2)}%)`)
+    .map((r) => `remito ${r.remito ?? "s/rem"} (${formatPercent(r.rdto)})`)
     .join(" y ");
 }
 
-export function computeAlerts(
-  infraruts: InfrarutRow[],
+// Viajes reconciliados (libreta cruzada con INFRARUT por remito, ver reconciliar())
+// agrupados por lote de origen. Mismo cruce que rendimientoPorLote() en
+// reconciliation.ts, pero acá hace falta el detalle día por día (no el agregado de
+// todo el período), así que no se puede reutilizar esa función tal cual.
+function infrarutsPorLote(
   cpsCampo: CpCampoRow[],
+  infraruts: InfrarutRow[],
   bajas: BajaArcaRow[],
+  lotesIngenio: LoteIngenioRow[],
+): { nombre: string; rows: InfrarutRow[] }[] {
+  const { reconciliados, infrarutPorRemito } = reconciliar(cpsCampo, infraruts, bajas);
+  const porLoteKey = new Map<string, InfrarutRow[]>();
+  for (const x of reconciliados) {
+    if (!x.lote) continue;
+    const inf = infrarutPorRemito.get(x.cp);
+    if (!inf) continue;
+    if (!porLoteKey.has(x.lote)) porLoteKey.set(x.lote, []);
+    porLoteKey.get(x.lote)!.push(inf);
+  }
+  const result: { nombre: string; rows: InfrarutRow[] }[] = [];
+  for (const meta of lotesIngenio) {
+    const rows = porLoteKey.get(meta.lote_key);
+    if (rows && rows.length > 0) result.push({ nombre: meta.nombre, rows });
+  }
+  return result;
+}
+
+// Alertas de UN ingenio (cpsCampo/infraruts/lotesIngenio ya filtrados a ese
+// ingenio_id). Reglas por lote + reglas a nivel ingenio (reconciliación pendiente,
+// antigüedad de datos) — ver computeAlertaBajas() aparte para bajas ARCA, que no
+// tiene ingenio_id y por eso no puede vivir acá adentro.
+export function computeAlerts(
+  cpsCampo: CpCampoRow[],
+  infraruts: InfrarutRow[],
+  bajas: BajaArcaRow[],
+  lotesIngenio: LoteIngenioRow[],
   hoy: Date = new Date(),
 ): Alert[] {
-  const fechas = fechasUnicas(infraruts);
   const alerts: Alert[] = [];
-  if (fechas.length === 0) return alerts;
+  const lotes = infrarutsPorLote(cpsCampo, infraruts, bajas, lotesIngenio);
 
-  const lastF = fechas[fechas.length - 1];
-  const prevF = fechas.length > 1 ? fechas[fechas.length - 2] : null;
+  // "Todos los lotes cayeron el mismo día" — corrige un bug del legacy, que decía
+  // "ambas fincas cayeron" con solo chequear que ALGUNA hubiera caído (con 2 fincas
+  // hardcodeadas nunca se notó). Ahora se cuenta de verdad sobre los lotes con datos
+  // comparables (ambos días) de este ingenio.
+  let lotesComparables = 0;
+  let lotesQueCaen = 0;
 
-  const statsByFinca = Object.fromEntries(
-    FINCAS.map((f) => [
-      f.id,
-      {
-        last: statsFor(porFincaFecha(infraruts, lastF, f.id)),
-        prev: prevF ? statsFor(porFincaFecha(infraruts, prevF, f.id)) : null,
-      },
-    ]),
-  );
+  for (const { nombre, rows } of lotes) {
+    const fechasLote = [...new Set(rows.map((r) => r.fecha))].sort();
+    const lastF = fechasLote[fechasLote.length - 1];
+    // "Día anterior" = día anterior CON DATOS para este lote, no día calendario.
+    const prevF = fechasLote.length > 1 ? fechasLote[fechasLote.length - 2] : null;
+    const lastRows = rows.filter((r) => r.fecha === lastF);
+    const last = statsFor(lastRows)!;
+    const prev = prevF ? statsFor(rows.filter((r) => r.fecha === prevF)) : null;
 
-  // Caída de rendimiento vs día anterior (index_10.html:3124-3129)
-  let algunaCae = false;
-  for (const f of FINCAS) {
-    const { last, prev } = statsByFinca[f.id];
-    if (!last || !prev) continue;
-    const delta = last.rdto - prev.rdto;
-    if (delta < -0.3) {
-      algunaCae = true;
+    // Caída de Rdto% vs día anterior con datos
+    if (prev) {
+      lotesComparables++;
+      const delta = last.rdto - prev.rdto;
+      if (delta < -0.3) {
+        lotesQueCaen++;
+        alerts.push({
+          severity: "bad",
+          icon: "trending-down",
+          message: `${nombre}: caída de ${formatNumber(Math.abs(delta), 2)} pp de Rdto% vs día anterior (${formatPercent(prev.rdto)} → ${formatPercent(last.rdto)}, ${fmt(prevF)} → ${fmt(lastF)}). Verificar madurez del sector, regulación de cosechadora y lluvias previas.`,
+        });
+      }
+    }
+
+    // Rdto% bajo la meta (último día) — meta única (10,0%) para todos los lotes
+    if (last.rdto < META) {
       alerts.push({
         severity: "bad",
-        icon: "trending-down",
-        message: `${f.label}: caída de ${Math.abs(delta).toFixed(2)} pp de Rdto% vs día anterior (${prev.rdto.toFixed(2)}% → ${last.rdto.toFixed(2)}%, ${fmt(prevF)} → ${fmt(lastF)}). Verificar madurez del sector, regulación de cosechadora y lluvias previas.`,
+        icon: "alert-circle",
+        message: `${nombre} bajo la meta el ${fmt(lastF)}: ${formatPercent(last.rdto)} vs meta ${formatPercent(META, 1)}${prev ? ` (día anterior: ${formatPercent(prev.rdto)})` : ""}. Viajes más críticos: ${peoresRemitos(lastRows) || "—"}.`,
       });
     }
+
+    // Pureza crítica (último día)
+    if (last.pureza < UMBRALES.purezaCritica) {
+      alerts.push({
+        severity: "bad",
+        icon: "droplet-off",
+        message: `Pureza crítica en ${nombre}: ${formatPercent(last.pureza)} promedio (mín. recomendado: ${formatPercent(UMBRALES.purezaWarn, 0)}). Indica azúcares reductores, material vegetal o caña deteriorada.`,
+      });
+    }
+
+    // Caída de POL en un día
+    if (prev) {
+      const deltaPol = last.pol - prev.pol;
+      if (deltaPol < -0.5) {
+        alerts.push({
+          severity: "warn",
+          icon: "droplet",
+          message: `POL cayó ${formatNumber(Math.abs(deltaPol), 2)} pp en ${nombre} en un solo día (${formatPercent(prev.pol)} → ${formatPercent(last.pol)}). Posibles causas: lluvia reciente, sector menos maduro o caña más joven.`,
+        });
+      }
+    }
+
+    // Trash alto (último día)
+    if (last.trash_pct > UMBRALES.trashAlerta) {
+      alerts.push({
+        severity: "warn",
+        icon: "leaf",
+        message: `Trash alto en ${nombre}: ${formatPercent(last.trash_pct)} el ${fmt(lastF)}. Revisar regulación de extractores de la cosechadora.`,
+      });
+    }
+
+    // Tendencia acumulada: primeros 3 días vs últimos 3 días CON DATOS para este lote
+    if (fechasLote.length >= 4) {
+      const diasStats = fechasLote.map(
+        (f) => statsFor(rows.filter((r) => r.fecha === f))!,
+      );
+      const ini = avg(diasStats.slice(0, 3), (x) => x.rdto);
+      const fin = avg(diasStats.slice(-3), (x) => x.rdto);
+      const delta = fin - ini;
+      if (Math.abs(delta) < 0.15) {
+        alerts.push({
+          severity: "info",
+          icon: "chart-line",
+          message: `${nombre}: rendimiento estable (${formatPercent(ini)} → ${formatPercent(fin)} comparando primeros y últimos 3 días).`,
+        });
+      } else {
+        alerts.push({
+          severity: "info",
+          icon: "chart-line",
+          message: `${nombre}: tendencia ${delta > 0 ? "positiva ▲" : "negativa ▼"} de ${delta > 0 ? "+" : ""}${formatNumber(delta, 2)} pp (${formatPercent(ini)} → ${formatPercent(fin)}).`,
+        });
+      }
+    }
   }
-  if (algunaCae) {
+
+  if (lotesComparables > 0 && lotesQueCaen === lotesComparables) {
     alerts.push({
       severity: "info",
       icon: "trending-down",
       message:
-        "Ambas fincas cayeron el mismo día — puede apuntar a un factor externo común: lluvia, cambio de sector o condición del ingenio.",
+        "Todos los lotes con datos comparables cayeron el mismo día — puede apuntar a un factor externo común: lluvia, cambio de sector o condición del ingenio.",
     });
   }
 
-  // Bajo la meta (index_10.html:3136-3137)
-  for (const f of FINCAS) {
-    const { last, prev } = statsByFinca[f.id];
-    if (!last || last.rdto >= META) continue;
-    const severity = f.id === "LOTE4" ? "bad" : "warn";
-    alerts.push({
-      severity,
-      icon: "alert-circle",
-      message: `${f.label} bajo la meta el ${fmt(lastF)}: ${last.rdto.toFixed(2)}% vs meta ${META.toFixed(1)}%${prev ? ` (día anterior: ${prev.rdto.toFixed(2)}%)` : ""}. Viajes más críticos: ${peoresCps(infraruts, lastF, f.id) || "—"}.`,
-    });
-  }
-
-  // Pureza crítica (index_10.html:3140-3141)
-  for (const f of FINCAS) {
-    const { last } = statsByFinca[f.id];
-    if (last && last.pureza < UMBRALES.purezaCritica) {
-      alerts.push({
-        severity: "bad",
-        icon: "droplet-off",
-        message: `Pureza crítica en ${f.label}: ${last.pureza.toFixed(2)}% promedio (mín. recomendado: ${UMBRALES.purezaWarn}%). Indica azúcares reductores, material vegetal o caña deteriorada.`,
-      });
-    }
-  }
-
-  // Caída de POL en un día (index_10.html:3144-3145)
-  for (const f of FINCAS) {
-    const { last, prev } = statsByFinca[f.id];
-    if (!last || !prev) continue;
-    const delta = last.pol - prev.pol;
-    if (delta < -0.5) {
-      alerts.push({
-        severity: "warn",
-        icon: "droplet",
-        message: `POL cayó ${Math.abs(delta).toFixed(2)} pp en ${f.label} en un solo día (${prev.pol.toFixed(2)}% → ${last.pol.toFixed(2)}%). Posibles causas: lluvia reciente, sector menos maduro o caña más joven.`,
-      });
-    }
-  }
-
-  // Trash alto (index_10.html:3148-3149)
-  for (const f of FINCAS) {
-    const { last } = statsByFinca[f.id];
-    if (last && last.trash_pct > UMBRALES.trashAlerta) {
-      alerts.push({
-        severity: "warn",
-        icon: "leaf",
-        message: `Trash alto en ${f.label}: ${last.trash_pct.toFixed(2)}% el ${fmt(lastF)}. Revisar regulación de extractores de la cosechadora.`,
-      });
-    }
-  }
-
-  // Reconciliación pendiente (index_10.html:3152-3162)
-  const enInfrarut = new Set(
-    infraruts.filter((r) => r.remito != null).map((r) => r.remito as number),
-  );
-  const bajasSet = new Set(bajas.map((b) => b.cp));
-  const pendientes = cpsCampo.filter(
-    (x) => !enInfrarut.has(x.cp) && !bajasSet.has(x.cp),
-  );
+  // ---- Reglas a nivel ingenio ----
+  const { pendientes } = reconciliar(cpsCampo, infraruts, bajas);
   if (pendientes.length > 0) {
     alerts.push({
       severity: "warn",
@@ -150,14 +187,7 @@ export function computeAlerts(
         .join(", ")}${pendientes.length > 8 ? "…" : ""}. Verificar si falta cargar el INFRARUT correspondiente o reclamar al ingenio.`,
     });
   }
-  const bajasPendientes = bajas.filter((b) => !b.gestionado);
-  if (bajasPendientes.length > 0) {
-    alerts.push({
-      severity: "bad",
-      icon: "file-x",
-      message: `${bajasPendientes.length} baja${bajasPendientes.length !== 1 ? "s" : ""} ARCA pendiente${bajasPendientes.length !== 1 ? "s" : ""} de gestión: ${bajasPendientes.map((b) => "remito " + b.cp).join(", ")}. Recordá dar de baja estas cartas de porte.`,
-    });
-  }
+
   const cpsCampoSet = new Set(cpsCampo.map((x) => x.cp));
   const sinLibreta = infraruts.filter(
     (r) => r.remito != null && !cpsCampoSet.has(r.remito),
@@ -170,47 +200,26 @@ export function computeAlerts(
     });
   }
 
-  // Tendencia primeros 3 días vs últimos 3 días con datos (index_10.html:3165-3175)
-  for (const f of FINCAS) {
-    const dias = fechas
-      .map((fecha) => statsFor(porFincaFecha(infraruts, fecha, f.id)))
-      .filter((s): s is NonNullable<typeof s> => s !== null);
-    if (dias.length < 4) continue;
-    const ini = avg(dias.slice(0, 3), (x) => x.rdto);
-    const fin = avg(dias.slice(-3), (x) => x.rdto);
-    const delta = fin - ini;
-    if (Math.abs(delta) < 0.15) {
+  const fechasIngenio = [...new Set(infraruts.map((r) => r.fecha))].sort();
+  if (fechasIngenio.length > 0) {
+    const lastF = fechasIngenio[fechasIngenio.length - 1];
+    const diasDesde = Math.floor(
+      (hoy.getTime() - new Date(lastF).getTime()) / 86400000,
+    );
+    if (diasDesde >= 3) {
       alerts.push({
-        severity: "info",
-        icon: "chart-line",
-        message: `${f.label}: rendimiento estable (${ini.toFixed(2)}% → ${fin.toFixed(2)}% comparando primeros y últimos 3 días).`,
+        severity: "warn",
+        icon: "file-upload",
+        message: `Último INFRARUT cargado: ${fmt(lastF)} (hace ${diasDesde} días). Revisá si hay reportes del ingenio pendientes de subir.`,
       });
     } else {
       alerts.push({
         severity: "info",
-        icon: "chart-line",
-        message: `${f.label}: tendencia ${delta > 0 ? "positiva ▲" : "negativa ▼"} de ${delta > 0 ? "+" : ""}${delta.toFixed(2)} pp (${ini.toFixed(2)}% → ${fin.toFixed(2)}%).`,
+        icon: "file-upload",
+        message:
+          "Seguí cargando los INFRARUTs diarios. El sistema acumula automáticamente cada archivo y actualiza las alertas.",
       });
     }
-  }
-
-  // Antigüedad de datos (index_10.html:3178-3181)
-  const diasDesde = Math.floor(
-    (hoy.getTime() - new Date(lastF).getTime()) / 86400000,
-  );
-  if (diasDesde >= 3) {
-    alerts.push({
-      severity: "warn",
-      icon: "file-upload",
-      message: `Último INFRARUT cargado: ${fmt(lastF)} (hace ${diasDesde} días). Revisá si hay reportes del ingenio pendientes de subir.`,
-    });
-  } else {
-    alerts.push({
-      severity: "info",
-      icon: "file-upload",
-      message:
-        "Seguí cargando los INFRARUTs diarios. El sistema acumula automáticamente cada archivo y actualiza las alertas.",
-    });
   }
 
   if (alerts.length === 0) {
@@ -223,4 +232,18 @@ export function computeAlerts(
   }
 
   return alerts;
+}
+
+// Bajas ARCA sin gestionar — bajas_arca no tiene ingenio_id (es el talonario único
+// del campo, ver comentario en app/(app)/viajes/reconciliacion/page.tsx), así que no
+// se puede atribuir a un ingenio: se calcula una sola vez y se muestra aparte de las
+// dos secciones por ingenio en /alertas.
+export function computeAlertaBajas(bajas: BajaArcaRow[]): Alert | null {
+  const pendientes = bajas.filter((b) => !b.gestionado);
+  if (pendientes.length === 0) return null;
+  return {
+    severity: "bad",
+    icon: "file-x",
+    message: `${pendientes.length} baja${pendientes.length !== 1 ? "s" : ""} ARCA pendiente${pendientes.length !== 1 ? "s" : ""} de gestión: ${pendientes.map((b) => "remito " + b.cp).join(", ")}. Recordá dar de baja estas cartas de porte.`,
+  };
 }

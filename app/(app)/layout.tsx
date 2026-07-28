@@ -1,6 +1,8 @@
 import { getCurrentProfile } from "@/lib/dal";
 import { Topbar } from "@/components/layout/topbar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { ReadOnlyBanner } from "@/components/layout/read-only-banner";
+import { RoleProvider } from "@/components/providers/role-provider";
 
 export default async function AppLayout({
   children,
@@ -11,14 +13,17 @@ export default async function AppLayout({
   const isAdmin = profile.role === "admin";
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#F4F3F0]">
-      <Topbar username={profile.username} isAdmin={isAdmin} />
-      <div className="flex flex-1">
-        <Sidebar isAdmin={isAdmin} />
-        <div className="min-w-0 flex-1 overflow-x-hidden">
-          <div className="mx-auto w-full max-w-6xl p-4 sm:p-6">{children}</div>
+    <RoleProvider role={profile.role}>
+      <div className="flex min-h-screen flex-col bg-[#F4F3F0]">
+        {profile.role === "viewer" && <ReadOnlyBanner />}
+        <Topbar username={profile.username} isAdmin={isAdmin} />
+        <div className="flex flex-1">
+          <Sidebar isAdmin={isAdmin} />
+          <div className="min-w-0 flex-1 overflow-x-hidden">
+            <div className="mx-auto w-full max-w-6xl p-4 sm:p-6">{children}</div>
+          </div>
         </div>
       </div>
-    </div>
+    </RoleProvider>
   );
 }

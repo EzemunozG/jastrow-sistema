@@ -50,7 +50,15 @@ export default async function UsuariosAdminPage() {
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.username}</TableCell>
                 <TableCell>
-                  <Badge variant={p.role === "admin" ? "default" : "secondary"}>
+                  <Badge
+                    variant={
+                      p.role === "admin"
+                        ? "default"
+                        : p.role === "viewer"
+                          ? "outline"
+                          : "secondary"
+                    }
+                  >
                     {p.role}
                   </Badge>
                 </TableCell>
@@ -100,6 +108,7 @@ export default async function UsuariosAdminPage() {
               <SelectContent>
                 <SelectItem value="user">Usuario</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="viewer">Solo lectura</SelectItem>
               </SelectContent>
             </Select>
           </div>

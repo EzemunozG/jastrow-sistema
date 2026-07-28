@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireWriter } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import {
   facturaSchema,
@@ -51,6 +52,8 @@ export async function saveFactura(
   _prevState: FacturaActionState,
   formData: FormData,
 ): Promise<FacturaActionState> {
+  await requireWriter();
+
   const parsed = parseFacturaForm(formData);
   if (!parsed.success) {
     return {
@@ -111,6 +114,7 @@ export async function saveFactura(
 }
 
 export async function deleteFactura(id: string, imgPath: string | null) {
+  await requireWriter();
   const supabase = await createClient();
   if (imgPath) {
     await supabase.storage.from("facturas-imgs").remove([imgPath]);

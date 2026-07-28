@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { addCpsCampo, addCpsLista } from "@/actions/cps-campo";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -59,6 +60,7 @@ function ResultMessage({ state }: { state: CpsCampoActionState }) {
 }
 
 export function RegistrarCpsForm() {
+  const canWrite = useCanWrite();
   const [singleState, singleAction, singlePending] = useActionState(
     addCpsCampo,
     CPS_CAMPO_ACTION_IDLE,
@@ -86,6 +88,8 @@ export function RegistrarCpsForm() {
       if (raw) raw.value = "";
     }
   }, [listaState]);
+
+  if (!canWrite) return null;
 
   return (
     <div className="space-y-4 rounded-xl border bg-white p-4">

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/lib/database.types";
@@ -28,6 +29,7 @@ export function RecetasView({
   productos: Producto[];
   precioProm: Map<string, number>;
 }) {
+  const canWrite = useCanWrite();
   const [open, setOpen] = useState(false);
   const [dialogKey, setDialogKey] = useState(0);
 
@@ -41,11 +43,13 @@ export function RecetasView({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={openNew}>
-          <IconPlus size={14} /> Nueva receta
-        </Button>
-      </div>
+      {canWrite && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={openNew}>
+            <IconPlus size={14} /> Nueva receta
+          </Button>
+        </div>
+      )}
 
       {recetas.length === 0 ? (
         <div className="rounded-xl border bg-white p-6 text-center text-sm text-neutral-400">

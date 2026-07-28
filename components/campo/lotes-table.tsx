@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
 import { deleteLote } from "@/actions/lotes";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,7 @@ export function LotesTable({
   trabajos: Trabajo[];
   facturas: Factura[];
 }) {
+  const canWrite = useCanWrite();
   const [selected, setSelected] = useState<Lote | null>(null);
   const [open, setOpen] = useState(false);
   // Fuerza un remount del diálogo (y de su useActionState interno) en cada apertura,
@@ -73,11 +75,13 @@ export function LotesTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={openNew}>
-          <IconPlus size={14} /> Nuevo lote
-        </Button>
-      </div>
+      {canWrite && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={openNew}>
+            <IconPlus size={14} /> Nuevo lote
+          </Button>
+        </div>
+      )}
 
       <div className="rounded-xl border bg-white">
         <Table>
@@ -125,20 +129,24 @@ export function LotesTable({
                     >
                       Trabajos ({trabajosLote.length})
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEdit(l)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteLote(l.id)}
-                    >
-                      Eliminar
-                    </Button>
+                    {canWrite && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEdit(l)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteLote(l.id)}
+                        >
+                          Eliminar
+                        </Button>
+                      </>
+                    )}
                   </TableCell>
                 </TableRow>
               );
