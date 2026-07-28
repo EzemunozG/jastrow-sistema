@@ -9,7 +9,7 @@ const createUserSchema = z.object({
   email: z.email(),
   username: z.string().min(2),
   password: z.string().min(8),
-  role: z.enum(["admin", "user"]),
+  role: z.enum(["admin", "user", "viewer"]),
 });
 
 export async function createUser(formData: FormData) {
@@ -32,13 +32,18 @@ export async function createUser(formData: FormData) {
     password: parsed.data.password,
     email_confirm: true,
     user_metadata: { username: parsed.data.username },
+    // app_metadata es solo descriptivo acá — el gate real (app + RLS) lee
+    // profiles.role, ver la nota en la migración 20260728000000_viewer_role.sql.
+    app_metadata: { role: parsed.data.role },
   });
   if (error) throw new Error(error.message);
 
-  if (parsed.data.role === "admin" && data.user) {
+  // profiles.role ya viene en 'user' por default (trigger handle_new_user) — solo
+  // hace falta un update para admin/viewer.
+  if (parsed.data.role !== "user" && data.user) {
     await admin
       .from("profiles")
-      .update({ role: "admin" })
+      .update({ role: parsed.data.role })
       .eq("id", data.user.id);
   }
 

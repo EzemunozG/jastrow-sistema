@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { importLibreta, type ImportLibretaResult } from "@/actions/cps-campo";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ import {
 import type { ParseResult } from "@/lib/excel/parse-common";
 
 export function LibretaImportForm() {
+  const canWrite = useCanWrite();
   const [parsed, setParsed] = useState<{
     libreta: ParseResult<LibretaRow>;
     bajasCandidatas: BajaCandidata[];
@@ -50,6 +52,8 @@ export function LibretaImportForm() {
       if (res.status === "success") setParsed(null);
     });
   }
+
+  if (!canWrite) return null;
 
   return (
     <div className="space-y-3 rounded-xl border bg-white p-4">

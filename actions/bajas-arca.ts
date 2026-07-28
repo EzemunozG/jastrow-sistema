@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireWriter } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { addBajaArcaSchema, type BajaArcaActionState } from "@/lib/forms/bajas-arca";
 
@@ -20,6 +21,8 @@ export async function addBajaArca(
   _prevState: BajaArcaActionState,
   formData: FormData,
 ): Promise<BajaArcaActionState> {
+  await requireWriter();
+
   const parsed = addBajaArcaSchema.safeParse({
     cp: formData.get("cp"),
     fecha: emptyToUndefined(formData.get("fecha")),
@@ -58,6 +61,7 @@ export async function addBajaArca(
 
 // index_10.html:1731 (toggleGestionBaja, onclick inline en el pill de estado)
 export async function toggleGestionBaja(cp: number, gestionado: boolean) {
+  await requireWriter();
   const supabase = await createClient();
   await supabase.from("bajas_arca").update({ gestionado }).eq("cp", cp);
   revalidateViajes();
@@ -65,6 +69,7 @@ export async function toggleGestionBaja(cp: number, gestionado: boolean) {
 
 // index_10.html:1751-1755 (deleteBajaArca)
 export async function deleteBajaArca(cp: number) {
+  await requireWriter();
   const supabase = await createClient();
   await supabase.from("bajas_arca").delete().eq("cp", cp);
   revalidateViajes();

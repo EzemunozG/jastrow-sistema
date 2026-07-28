@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireWriter } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { recetaSchema, type RecetaActionState } from "@/lib/forms/recetas";
 
@@ -32,6 +33,8 @@ export async function saveReceta(
   _prevState: RecetaActionState,
   formData: FormData,
 ): Promise<RecetaActionState> {
+  await requireWriter();
+
   const parsed = recetaSchema.safeParse({
     fecha: formData.get("fecha"),
     loteId: formData.get("loteId"),

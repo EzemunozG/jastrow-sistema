@@ -38,3 +38,27 @@ export async function requireAdmin() {
   if (profile.role !== "admin") redirect("/resumen");
   return profile;
 }
+
+// Mensaje reusado por el catch de cada Server Action que use requireWriter() en un
+// formulario con useActionState, para mostrar el mismo texto que ve un viewer que
+// llega a pegarle a la acción directamente (sin pasar por la UI, que ya se la oculta).
+export const READ_ONLY_MESSAGE =
+  "No tenés permiso para modificar datos (modo solo lectura).";
+
+export class ReadOnlyError extends Error {
+  constructor() {
+    super(READ_ONLY_MESSAGE);
+    this.name = "ReadOnlyError";
+  }
+}
+
+// Límite de confianza para toda mutación (Server Action): la UI ya oculta los
+// botones/forms para un viewer (ver useCanWrite en components/providers/role-
+// provider.tsx), pero eso es cosmético — esto es lo que realmente bloquea la
+// escritura si alguien le pega a la acción directo. Segunda línea de defensa: RLS
+// (ver supabase/migrations/20260728000001_viewer_rls.sql).
+export async function requireWriter() {
+  const { profile } = await getCurrentProfile();
+  if (profile.role === "viewer") throw new ReadOnlyError();
+  return profile;
+}

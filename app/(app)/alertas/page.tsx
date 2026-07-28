@@ -2,18 +2,18 @@ export const dynamic = "force-dynamic";
 
 import { AlertasList } from "@/components/alertas/alertas-list";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
-import { computeAlerts } from "@/lib/alerts";
-import type { InfrarutRow } from "@/lib/business-rules";
-import { fechasUnicas } from "@/lib/business-rules";
+import { computeAlertaBajas, computeAlerts } from "@/lib/alerts";
+import { INGENIOS, fechasUnicas, type IngenioId, type InfrarutRow } from "@/lib/business-rules";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function AlertasPage() {
-  const supabase = await createClient();
-  const [{ data: infrarutsData }, { data: cpsCampo }, { data: bajas }] =
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+async function fetchIngenio(supabase: Supabase, ingenioId: IngenioId) {
+  const [{ data: cpsCampo }, { data: infrarutsData }, { data: lotesIngenio }] =
     await Promise.all([
-      supabase.from("infraruts").select("*").eq("ingenio_id", "concepcion"),
-      supabase.from("cps_campo").select("*"),
-      supabase.from("bajas_arca").select("*"),
+      supabase.from("cps_campo").select("*").eq("ingenio_id", ingenioId).order("cp"),
+      supabase.from("infraruts").select("*").eq("ingenio_id", ingenioId),
+      supabase.from("lotes_ingenio").select("*").eq("ingenio_id", ingenioId),
     ]);
 
   const infraruts: InfrarutRow[] = (infrarutsData ?? []).map((r) => ({
@@ -33,17 +33,42 @@ export default async function AlertasPage() {
     rdto: r.rdto ?? 0,
   }));
 
-  const alerts = computeAlerts(infraruts, cpsCampo ?? [], bajas ?? []);
-  const fechas = fechasUnicas(infraruts);
+  return { cpsCampo: cpsCampo ?? [], infraruts, lotesIngenio: lotesIngenio ?? [] };
+}
+
+export default async function AlertasPage() {
+  const supabase = await createClient();
+  // Las bajas ARCA no se separan por ingenio (talonario único del campo, ver
+  // computeAlertaBajas en lib/alerts.ts) — se calculan una sola vez, aparte.
+  const [{ data: bajas }, ...porIngenio] = await Promise.all([
+    supabase.from("bajas_arca").select("*"),
+    ...INGENIOS.map((i) => fetchIngenio(supabase, i.id)),
+  ]);
+
+  const alertaBajas = computeAlertaBajas(bajas ?? []);
 
   return (
-    <>
+    <div className="space-y-6">
       <RealtimeRefresh tables={["infraruts", "cps_campo", "bajas_arca"]} />
-      <AlertasList
-        alerts={alerts}
-        desde={fechas[0] ?? null}
-        hasta={fechas[fechas.length - 1] ?? null}
-      />
-    </>
+
+      {alertaBajas && (
+        <AlertasList alerts={[alertaBajas]} desde={null} hasta={null} />
+      )}
+
+      {INGENIOS.map((ingenio, idx) => {
+        const { cpsCampo, infraruts, lotesIngenio } = porIngenio[idx];
+        const fechas = fechasUnicas(infraruts);
+        return (
+          <div key={ingenio.id} className="space-y-3">
+            <h2 className="text-base font-semibold">{ingenio.nombre}</h2>
+            <AlertasList
+              alerts={computeAlerts(cpsCampo, infraruts, bajas ?? [], lotesIngenio)}
+              desde={fechas[0] ?? null}
+              hasta={fechas[fechas.length - 1] ?? null}
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 }

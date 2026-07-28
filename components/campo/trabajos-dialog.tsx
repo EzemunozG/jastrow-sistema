@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { deleteTrabajo } from "@/actions/trabajos";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +44,7 @@ export function TrabajosDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const canWrite = useCanWrite();
   const [formOpen, setFormOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
@@ -85,11 +87,13 @@ export function TrabajosDialog({
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button size="sm" onClick={openForm}>
-              <IconPlus size={14} /> Nuevo trabajo
-            </Button>
-          </div>
+          {canWrite && (
+            <div className="flex justify-end">
+              <Button size="sm" onClick={openForm}>
+                <IconPlus size={14} /> Nuevo trabajo
+              </Button>
+            </div>
+          )}
 
           <div className="overflow-x-auto rounded-xl border">
             <Table>
@@ -126,13 +130,15 @@ export function TrabajosDialog({
                       {t.obs || "—"}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteTrabajo(t.id)}
-                      >
-                        <IconTrash size={14} />
-                      </Button>
+                      {canWrite && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteTrabajo(t.id)}
+                        >
+                          <IconTrash size={14} />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

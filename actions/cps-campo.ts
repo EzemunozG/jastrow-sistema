@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { INGENIOS, type IngenioId } from "@/lib/business-rules";
+import { requireWriter } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import type { BajaCandidata, LibretaRow } from "@/lib/excel/parse-libreta";
 import {
@@ -26,6 +27,8 @@ export async function importLibreta(
   bajasCandidatas: BajaCandidata[],
   ingenioId: IngenioId,
 ): Promise<ImportLibretaResult> {
+  await requireWriter();
+
   if (rows.length === 0) {
     return { status: "error", error: "No hay filas válidas para importar." };
   }
@@ -87,6 +90,8 @@ export async function addCpsCampo(
   _prevState: CpsCampoActionState,
   formData: FormData,
 ): Promise<CpsCampoActionState> {
+  await requireWriter();
+
   const parsed = addCpsCampoSchema.safeParse({
     raw: formData.get("raw"),
     ingenio_id: formData.get("ingenio_id"),
@@ -144,6 +149,8 @@ export async function addCpsLista(
   _prevState: CpsCampoActionState,
   formData: FormData,
 ): Promise<CpsCampoActionState> {
+  await requireWriter();
+
   const parsed = addCpsListaSchema.safeParse({
     raw: formData.get("raw"),
     ingenio_id: formData.get("ingenio_id"),
@@ -195,6 +202,7 @@ export async function addCpsLista(
 }
 
 export async function deleteCpCampo(cp: number) {
+  await requireWriter();
   const supabase = await createClient();
   await supabase.from("cps_campo").delete().eq("cp", cp);
   revalidateViajes();

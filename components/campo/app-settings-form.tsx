@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { updateAppSettings } from "@/actions/app-settings";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import { APP_SETTINGS_ACTION_IDLE } from "@/lib/forms/app-settings";
 type AppSettings = Database["public"]["Tables"]["app_settings"]["Row"];
 
 export function AppSettingsForm({ settings }: { settings: AppSettings }) {
+  const canWrite = useCanWrite();
   const [state, action, pending] = useActionState(
     updateAppSettings,
     APP_SETTINGS_ACTION_IDLE,
@@ -37,6 +39,7 @@ export function AppSettingsForm({ settings }: { settings: AppSettings }) {
             type="number"
             step="1"
             defaultValue={settings.precio_bolsa}
+            disabled={!canWrite}
           />
         </div>
         <div className="space-y-1.5">
@@ -47,6 +50,7 @@ export function AppSettingsForm({ settings }: { settings: AppSettings }) {
             type="number"
             step="1"
             defaultValue={settings.tc_oficial}
+            disabled={!canWrite}
           />
         </div>
         <div className="space-y-1.5">
@@ -57,6 +61,7 @@ export function AppSettingsForm({ settings }: { settings: AppSettings }) {
             type="number"
             step="1"
             defaultValue={settings.tc_blue}
+            disabled={!canWrite}
           />
         </div>
         <div className="space-y-1.5">
@@ -67,6 +72,7 @@ export function AppSettingsForm({ settings }: { settings: AppSettings }) {
             type="number"
             step="1"
             defaultValue={settings.tc_ccl}
+            disabled={!canWrite}
           />
         </div>
       </div>
@@ -85,15 +91,19 @@ export function AppSettingsForm({ settings }: { settings: AppSettings }) {
         </div>
       )}
 
-      {state.status === "error" && (
-        <p className="text-sm text-red-600">{state.error}</p>
-      )}
+      {canWrite && (
+        <>
+          {state.status === "error" && (
+            <p className="text-sm text-red-600">{state.error}</p>
+          )}
 
-      <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Guardando…" : "Guardar"}
-      </Button>
-      {state.status === "success" && (
-        <span className="ml-2 text-xs text-emerald-700">Guardado.</span>
+          <Button type="submit" size="sm" disabled={pending}>
+            {pending ? "Guardando…" : "Guardar"}
+          </Button>
+          {state.status === "success" && (
+            <span className="ml-2 text-xs text-emerald-700">Guardado.</span>
+          )}
+        </>
       )}
     </form>
   );

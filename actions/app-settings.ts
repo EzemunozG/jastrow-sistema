@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireWriter } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import {
   appSettingsSchema,
@@ -11,6 +12,8 @@ export async function updateAppSettings(
   _prevState: AppSettingsActionState,
   formData: FormData,
 ): Promise<AppSettingsActionState> {
+  await requireWriter();
+
   const parsed = appSettingsSchema.safeParse({
     precio_bolsa: formData.get("precio_bolsa"),
     tc_oficial: formData.get("tc_oficial"),

@@ -24,19 +24,19 @@ export type Database = {
         {
           id: string;
           username: string;
-          role: "admin" | "user";
+          role: "admin" | "user" | "viewer";
           disabled: boolean;
           created_at: string;
         },
         {
           id: string;
           username: string;
-          role?: "admin" | "user";
+          role?: "admin" | "user" | "viewer";
           disabled?: boolean;
         },
         Partial<{
           username: string;
-          role: "admin" | "user";
+          role: "admin" | "user" | "viewer";
           disabled: boolean;
         }>
       >;

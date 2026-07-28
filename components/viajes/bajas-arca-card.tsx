@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { addBajaArca, deleteBajaArca, toggleGestionBaja } from "@/actions/bajas-arca";
+import { useCanWrite } from "@/components/providers/role-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import { BAJA_ARCA_ACTION_IDLE, BAJA_MOTIVOS } from "@/lib/forms/bajas-arca";
 type BajaArca = Database["public"]["Tables"]["bajas_arca"]["Row"];
 
 export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
+  const canWrite = useCanWrite();
   const [state, action, pending] = useActionState(
     addBajaArca,
     BAJA_ARCA_ACTION_IDLE,
@@ -62,30 +64,45 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
                     {b.obs || "—"}
                   </td>
                   <td className="py-1.5 pr-3">
-                    <button
-                      type="button"
-                      onClick={() => toggleGestionBaja(b.cp, !b.gestionado)}
-                    >
+                    {canWrite ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleGestionBaja(b.cp, !b.gestionado)}
+                      >
+                        <Badge
+                          variant="outline"
+                          className={
+                            b.gestionado
+                              ? "cursor-pointer border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "cursor-pointer border-red-200 bg-red-50 text-red-700"
+                          }
+                        >
+                          {b.gestionado ? "✅ Gestionado" : "❌ Pendiente"}
+                        </Badge>
+                      </button>
+                    ) : (
                       <Badge
                         variant="outline"
                         className={
                           b.gestionado
-                            ? "cursor-pointer border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "cursor-pointer border-red-200 bg-red-50 text-red-700"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-red-200 bg-red-50 text-red-700"
                         }
                       >
                         {b.gestionado ? "✅ Gestionado" : "❌ Pendiente"}
                       </Badge>
-                    </button>
+                    )}
                   </td>
                   <td className="py-1.5 pr-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteBajaArca(b.cp)}
-                    >
-                      Eliminar
-                    </Button>
+                    {canWrite && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteBajaArca(b.cp)}
+                      >
+                        Eliminar
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -98,60 +115,67 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
         </p>
       )}
 
-      <form action={action} className="flex flex-wrap items-end gap-3 border-t pt-3">
-        <div className="space-y-1.5">
-          <label className="text-xs text-neutral-500" htmlFor="inp-baja-cp">
-            N° de remito a dar de baja *
-          </label>
-          <Input
-            id="inp-baja-cp"
-            name="cp"
-            type="number"
-            placeholder="Ej: 6908"
-            className="w-32"
-            required
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs text-neutral-500" htmlFor="inp-baja-fecha">
-            Fecha emisión
-          </label>
-          <Input id="inp-baja-fecha" name="fecha" type="date" className="w-40" />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs text-neutral-500" htmlFor="inp-baja-motivo">
-            Motivo
-          </label>
-          <Select name="motivo" defaultValue={BAJA_MOTIVOS[0]}>
-            <SelectTrigger id="inp-baja-motivo" className="w-56">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {BAJA_MOTIVOS.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {m}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs text-neutral-500" htmlFor="inp-baja-obs">
-            Obs.
-          </label>
-          <Input
-            id="inp-baja-obs"
-            name="obs"
-            placeholder="Detalle adicional..."
-            className="w-44"
-          />
-        </div>
-        <Button type="submit" size="sm" disabled={pending} variant="destructive">
-          {pending ? "Registrando…" : "+ Registrar baja"}
-        </Button>
-      </form>
-      {state.status === "error" && (
-        <p className="text-sm text-red-600">{state.error}</p>
+      {canWrite && (
+        <>
+          <form
+            action={action}
+            className="flex flex-wrap items-end gap-3 border-t pt-3"
+          >
+            <div className="space-y-1.5">
+              <label className="text-xs text-neutral-500" htmlFor="inp-baja-cp">
+                N° de remito a dar de baja *
+              </label>
+              <Input
+                id="inp-baja-cp"
+                name="cp"
+                type="number"
+                placeholder="Ej: 6908"
+                className="w-32"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-neutral-500" htmlFor="inp-baja-fecha">
+                Fecha emisión
+              </label>
+              <Input id="inp-baja-fecha" name="fecha" type="date" className="w-40" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-neutral-500" htmlFor="inp-baja-motivo">
+                Motivo
+              </label>
+              <Select name="motivo" defaultValue={BAJA_MOTIVOS[0]}>
+                <SelectTrigger id="inp-baja-motivo" className="w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BAJA_MOTIVOS.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-neutral-500" htmlFor="inp-baja-obs">
+                Obs.
+              </label>
+              <Input
+                id="inp-baja-obs"
+                name="obs"
+                placeholder="Detalle adicional..."
+                className="w-44"
+              />
+            </div>
+            <Button type="submit" size="sm" disabled={pending} variant="destructive">
+              {pending ? "Registrando…" : "+ Registrar baja"}
+            </Button>
+          </form>
+          {state.status === "error" && (
+            <p className="text-sm text-red-600">{state.error}</p>
+          )}
+        </>
       )}
     </div>
   );
