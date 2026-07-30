@@ -9,6 +9,7 @@ import {
   LandPlot,
   LayoutDashboard,
   List,
+  Map as MapIcon,
   MapPin,
   Package,
   Sprout,
@@ -27,6 +28,7 @@ export type NavItem = {
 };
 
 export const NAV: NavItem[] = [
+  { label: "Mapa de lotes", icon: MapIcon, href: "/mapa" },
   { label: "Resumen", icon: LayoutDashboard, href: "/resumen" },
   { label: "Tendencia", icon: TrendingUp, href: "/tendencia" },
   {

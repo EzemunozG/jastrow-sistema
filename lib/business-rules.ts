@@ -23,6 +23,28 @@ export function fincaNombre(fincaId: string | null): string {
   return FINCAS.find((f) => f.id === fincaId)?.nombre ?? fincaId ?? "—";
 }
 
+// Etiquetas crudas de finca que manda el ingenio en el INFRARUT (`infraruts.finca_raw`),
+// centralizadas acá para documentar qué significa cada una. El `finca_id` se deriva por
+// substring en actions/infraruts.ts:resolveFincaId ("LOTE4" → LOTE4, resto → VIRGINIA),
+// que solo distingue las dos fincas del INFRARUT y NO captura el lote real de la libreta.
+// La atribución real a lote se hace por cps_campo.lote, no por finca_raw — este registro
+// es documentación/mapeo para no perder de vista qué es cada etiqueta cuando aparecen
+// nuevas. "JASTROW - LOTE 3" es la etiqueta nueva del 2026-07-30 (= PACO en la libreta).
+export const FINCA_RAW_LABELS: Record<
+  string,
+  { fincaId: "LOTE4" | "VIRGINIA"; lote?: string; nota?: string }
+> = {
+  "JASTROW - LOTE4": { fincaId: "LOTE4", lote: "LAS 101" },
+  "JASTROW - LA VIRGINIA": { fincaId: "VIRGINIA", lote: "TANO" },
+  "JASTROW - LOTE 3": {
+    fincaId: "VIRGINIA",
+    lote: "PACO",
+    nota: "Concepción; en la libreta es PACO",
+  },
+  "JASTROW - FRAU": { fincaId: "VIRGINIA", lote: "FRAU", nota: "Trinidad" },
+  "JASTROW - PILOT": { fincaId: "VIRGINIA", lote: "PILOT", nota: "Trinidad" },
+};
+
 export type InfrarutRow = {
   cp: number;
   ingenio_id: string; // 'concepcion' | 'trinidad' — el cp es correlativo POR ingenio
