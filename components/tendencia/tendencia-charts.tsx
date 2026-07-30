@@ -42,14 +42,14 @@ function TrendLineChart({
           dataKey="fecha"
           tick={{ fontSize: 11 }}
           stroke="currentColor"
-          className="text-neutral-400"
+          className="text-muted-foreground"
         />
         <YAxis
           domain={domain}
           tick={{ fontSize: 11 }}
           tickFormatter={(v: number) => `${v.toFixed(1)}${unit ?? ""}`}
           stroke="currentColor"
-          className="text-neutral-400"
+          className="text-muted-foreground"
           width={48}
         />
         <Tooltip
@@ -101,7 +101,7 @@ export function TendenciaCharts({
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <div className="rounded-xl border bg-white p-4">
+      <div className="rounded-xl border bg-card p-4">
         <h3 className="mb-2 text-sm font-semibold">Rendimiento % — tendencia</h3>
         <TrendLineChart
           data={rdtoData}
@@ -111,11 +111,11 @@ export function TendenciaCharts({
           referenceLabel="Meta"
         />
       </div>
-      <div className="rounded-xl border bg-white p-4">
+      <div className="rounded-xl border bg-card p-4">
         <h3 className="mb-2 text-sm font-semibold">POL % — tendencia</h3>
         <TrendLineChart data={polData} unit="%" />
       </div>
-      <div className="rounded-xl border bg-white p-4">
+      <div className="rounded-xl border bg-card p-4">
         <h3 className="mb-2 text-sm font-semibold">Pureza % — tendencia</h3>
         <TrendLineChart
           data={purezaData}

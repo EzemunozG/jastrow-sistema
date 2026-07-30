@@ -52,7 +52,7 @@ export function RecetasView({
       )}
 
       {recetas.length === 0 ? (
-        <div className="rounded-xl border bg-white p-6 text-center text-sm text-neutral-400">
+        <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
           Sin recetas registradas. Usá &quot;+ Nueva receta&quot; para cargar la
           primera aplicación.
         </div>
@@ -69,7 +69,7 @@ export function RecetasView({
               .join(", ");
             const faltaPrecio = items.some((it) => (it.precio_unit ?? 0) === 0);
             return (
-              <div key={r.id} className="rounded-xl border bg-white p-4">
+              <div key={r.id} className="rounded-xl border bg-card p-4">
                 <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <div className="text-sm font-semibold">{r.nombre}</div>
@@ -79,22 +79,22 @@ export function RecetasView({
                       <Badge variant="outline">{r.tipo}</Badge>
                       {r.empresa && <Badge variant="outline">{r.empresa}</Badge>}
                     </div>
-                    <div className="mt-1 text-xs text-neutral-500">
+                    <div className="mt-1 text-xs text-muted-foreground">
                       Lotes: {lotesNames || "—"}
                     </div>
                     {r.obs && (
-                      <div className="mt-1 text-xs text-neutral-400">{r.obs}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">{r.obs}</div>
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-neutral-400">Costo total</div>
+                    <div className="text-xs text-muted-foreground">Costo total</div>
                     <div
-                      className={`text-lg font-semibold ${r.costo_total > 0 ? "text-emerald-700" : "text-amber-700"}`}
+                      className={`text-lg font-semibold ${r.costo_total > 0 ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}`}
                     >
                       {r.costo_total > 0 ? fmtMonto(r.costo_total) : "Parcial*"}
                     </div>
                     {r.costo_ha > 0 && (
-                      <div className="text-xs text-neutral-400">
+                      <div className="text-xs text-muted-foreground">
                         {fmtMonto(r.costo_ha)}/ha
                       </div>
                     )}
@@ -104,7 +104,7 @@ export function RecetasView({
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-left text-neutral-500">
+                      <tr className="text-left text-muted-foreground">
                         <th className="py-1 pr-3 font-normal">Producto</th>
                         <th className="py-1 pr-3 font-normal">Dosis</th>
                         <th className="py-1 pr-3 font-normal">Total usado</th>
@@ -132,7 +132,7 @@ export function RecetasView({
                             {(it.precio_unit ?? 0) > 0 ? (
                               fmtMonto(it.precio_unit ?? 0)
                             ) : (
-                              <span className="text-amber-700">Sin precio</span>
+                              <span className="text-amber-700 dark:text-amber-300">Sin precio</span>
                             )}
                           </td>
                           <td className="py-1.5 pr-3 font-medium">
@@ -144,7 +144,7 @@ export function RecetasView({
                   </table>
                 </div>
                 {faltaPrecio && (
-                  <p className="mt-2 text-xs text-amber-700">
+                  <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
                     * Costo incompleto — faltan precios de:{" "}
                     {items
                       .filter((it) => (it.precio_unit ?? 0) === 0)

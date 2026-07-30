@@ -156,7 +156,7 @@ export function RecetaFormDialog({
               return (
                 <div
                   key={field.id}
-                  className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-end gap-2 rounded-lg bg-neutral-50 p-2"
+                  className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-end gap-2 rounded-lg bg-muted p-2"
                 >
                   <select
                     className={selectNativeClass}
@@ -179,9 +179,9 @@ export function RecetaFormDialog({
                     readOnly
                     value={row ? row.cantidad.toFixed(2) : ""}
                     placeholder={`Total (${row?.unidad ?? "u"})`}
-                    className="bg-neutral-100"
+                    className="bg-muted"
                   />
-                  <div className="px-2 text-sm font-medium text-emerald-700">
+                  <div className="px-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
                     {row && row.total > 0 ? fmtMonto(row.total) : "—"}
                   </div>
                   <Button
@@ -200,12 +200,12 @@ export function RecetaFormDialog({
             <div className="flex justify-end gap-4 text-sm">
               <div>
                 Costo total:{" "}
-                <strong className="text-emerald-700">{fmtMonto(costoTotal)}</strong>
+                <strong className="text-emerald-700 dark:text-emerald-300">{fmtMonto(costoTotal)}</strong>
               </div>
               {ha > 0 && (
                 <div>
                   Costo/ha:{" "}
-                  <strong className="text-emerald-700">
+                  <strong className="text-emerald-700 dark:text-emerald-300">
                     {fmtMonto(costoTotal / ha)}
                   </strong>
                 </div>
@@ -214,7 +214,7 @@ export function RecetaFormDialog({
           </div>
 
           {state.status === "error" && (
-            <p className="text-sm text-red-600">{state.error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
           )}
 
           <DialogFooter>

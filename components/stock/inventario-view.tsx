@@ -23,13 +23,13 @@ type Movimiento = Database["public"]["Tables"]["movimientos_stock"]["Row"];
 type Factura = Database["public"]["Tables"]["facturas"]["Row"];
 
 const CAT_COLOR: Record<string, string> = {
-  Herbicida: "text-red-700",
-  Fertilizante: "text-emerald-700",
-  Bioestimulante: "text-blue-700",
+  Herbicida: "text-red-700 dark:text-red-300",
+  Fertilizante: "text-emerald-700 dark:text-emerald-300",
+  Bioestimulante: "text-blue-700 dark:text-blue-300",
   Insecticida: "text-purple-700",
-  Fungicida: "text-amber-800",
-  Madurante: "text-emerald-800",
-  Otro: "text-neutral-500",
+  Fungicida: "text-amber-800 dark:text-amber-300",
+  Madurante: "text-emerald-800 dark:text-emerald-300",
+  Otro: "text-muted-foreground",
 };
 
 export function InventarioView({
@@ -101,25 +101,25 @@ export function InventarioView({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">Productos</div>
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">Productos</div>
           <div className="text-lg font-semibold">{productos.length}</div>
-          <div className="text-xs text-neutral-400">en inventario</div>
+          <div className="text-xs text-muted-foreground">en inventario</div>
         </div>
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">Valor stock</div>
-          <div className="text-lg font-semibold text-emerald-700">
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">Valor stock</div>
+          <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
             {fmtMonto(totalValor)}
           </div>
-          <div className="text-xs text-neutral-400">al precio de compra</div>
+          <div className="text-xs text-muted-foreground">al precio de compra</div>
         </div>
         {sinPrecio > 0 && (
-          <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-            <div className="text-xs text-neutral-500">Sin precio</div>
-            <div className="text-lg font-semibold text-amber-700">
+          <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+            <div className="text-xs text-muted-foreground">Sin precio</div>
+            <div className="text-lg font-semibold text-amber-700 dark:text-amber-300">
               {sinPrecio}
             </div>
-            <div className="text-xs text-neutral-400">pendiente de factura</div>
+            <div className="text-xs text-muted-foreground">pendiente de factura</div>
           </div>
         )}
       </div>
@@ -132,7 +132,7 @@ export function InventarioView({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -168,10 +168,10 @@ export function InventarioView({
                     variant="outline"
                     className={
                       s.saldo < 0
-                        ? "border-red-200 bg-red-50 text-red-700"
+                        ? "border-red-200 dark:border-red-500/25 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300"
                         : s.saldo === 0
-                          ? "border-neutral-200 bg-neutral-50 text-neutral-600"
-                          : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          ? "border-border bg-muted text-muted-foreground"
+                          : "border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                     }
                   >
                     {s.saldo.toLocaleString("es-AR", { maximumFractionDigits: 2 })}{" "}
@@ -182,7 +182,7 @@ export function InventarioView({
                   {s.precio_prom > 0 ? (
                     fmtMonto(s.precio_prom)
                   ) : (
-                    <span className="text-xs text-amber-700">⚠ Sin precio</span>
+                    <span className="text-xs text-amber-700 dark:text-amber-300">⚠ Sin precio</span>
                   )}
                 </TableCell>
                 <TableCell className="font-medium">
@@ -203,7 +203,7 @@ export function InventarioView({
             ))}
             {stats.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="py-8 text-center text-neutral-400">
+                <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                   Sin productos cargados todavía.
                 </TableCell>
               </TableRow>
@@ -212,7 +212,7 @@ export function InventarioView({
         </Table>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -235,8 +235,8 @@ export function InventarioView({
                     variant="outline"
                     className={
                       m.tipo === "entrada"
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                        : "border-red-200 bg-red-50 text-red-700"
+                        ? "border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                        : "border-red-200 dark:border-red-500/25 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300"
                     }
                   >
                     {m.tipo === "entrada" ? "↓ Entrada" : "↑ Salida"}
@@ -254,7 +254,7 @@ export function InventarioView({
                 <TableCell>
                   {(m.total ?? 0) > 0 ? fmtMonto(m.total ?? 0) : "—"}
                 </TableCell>
-                <TableCell className="max-w-[160px] truncate text-xs text-neutral-500">
+                <TableCell className="max-w-[160px] truncate text-xs text-muted-foreground">
                   {m.origen ?? "—"}
                 </TableCell>
                 <TableCell>
@@ -265,7 +265,7 @@ export function InventarioView({
             ))}
             {movimientosOrdenados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="py-8 text-center text-neutral-400">
+                <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
                   Sin movimientos registrados todavía.
                 </TableCell>
               </TableRow>

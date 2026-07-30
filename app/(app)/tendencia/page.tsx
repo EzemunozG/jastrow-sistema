@@ -42,7 +42,7 @@ export default async function TendenciaPage() {
 
   if (infraruts.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-6 text-sm text-neutral-500">
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
         Todavía no hay viajes de INFRARUT cargados — importalos desde Resumen.
       </div>
     );
@@ -107,10 +107,10 @@ export default async function TendenciaPage() {
         rdtoDomain={rdtoDomain}
       />
 
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b text-left text-xs text-neutral-500">
+            <tr className="border-b text-left text-xs text-muted-foreground">
               <th className="p-2 font-normal">Fecha</th>
               <th className="p-2 font-normal">Ingenio</th>
               <th className="p-2 font-normal">Viajes</th>
@@ -132,7 +132,7 @@ export default async function TendenciaPage() {
               return (
                 <tr
                   key={`${r.fecha}-${r.ingenioId}`}
-                  className="border-b transition-colors last:border-0 hover:bg-neutral-50"
+                  className="border-b transition-colors last:border-0 hover:bg-muted"
                 >
                   <td className="p-2">{r.fecha.slice(5)}</td>
                   <td className="p-2">
@@ -151,10 +151,10 @@ export default async function TendenciaPage() {
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                         r.stats.rdto >= META
-                          ? "bg-emerald-50 text-emerald-700"
+                          ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                           : r.stats.rdto >= 9.5
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-red-50 text-red-700"
+                            ? "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                            : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300"
                       }`}
                     >
                       {formatPercent(r.stats.rdto)}
@@ -167,8 +167,8 @@ export default async function TendenciaPage() {
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           delta >= 0
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-red-50 text-red-700"
+                            ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                            : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300"
                         }`}
                       >
                         {delta >= 0 ? "+" : ""}

@@ -91,7 +91,7 @@ export function TrabajoFormDialog({
         <DialogHeader>
           <DialogTitle>Registrar trabajo</DialogTitle>
         </DialogHeader>
-        <p className="-mt-2 text-xs text-neutral-500">
+        <p className="-mt-2 text-xs text-muted-foreground">
           Lote: {lote.id}
           {lote.nombre ? ` — ${lote.nombre}` : ""} · {lote.ha} ha
         </p>
@@ -180,7 +180,7 @@ export function TrabajoFormDialog({
             </div>
 
             {fields.length === 0 && (
-              <p className="text-xs text-neutral-400">
+              <p className="text-xs text-muted-foreground">
                 Opcional — agregá los productos usados en este trabajo.
               </p>
             )}
@@ -188,7 +188,7 @@ export function TrabajoFormDialog({
             {fields.map((field, i) => (
               <div
                 key={field.id}
-                className="grid grid-cols-[2fr_1fr_1fr_1fr_1.4fr_auto] items-end gap-2 rounded-lg bg-neutral-50 p-2"
+                className="grid grid-cols-[2fr_1fr_1fr_1fr_1.4fr_auto] items-end gap-2 rounded-lg bg-muted p-2"
               >
                 <Input
                   placeholder="Nombre del producto"
@@ -238,9 +238,9 @@ export function TrabajoFormDialog({
               </div>
             ))}
 
-            <div className="flex justify-end text-sm text-neutral-600">
+            <div className="flex justify-end text-sm text-muted-foreground">
               Total insumos:{" "}
-              <strong className="ml-1.5 text-neutral-900">
+              <strong className="ml-1.5 text-foreground">
                 $
                 {totalInsumos.toLocaleString("es-AR", {
                   maximumFractionDigits: 0,
@@ -250,7 +250,7 @@ export function TrabajoFormDialog({
           </div>
 
           {state.status === "error" && (
-            <p className="text-sm text-red-600">{state.error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
           )}
 
           <DialogFooter>

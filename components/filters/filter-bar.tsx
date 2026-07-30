@@ -73,9 +73,9 @@ export function FilterBar({
   const activos = countFiltrosActivos(filtros);
 
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-white p-3">
+    <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
       <div className="space-y-1">
-        <label className="text-xs text-neutral-500">Ingenio</label>
+        <label className="text-xs text-muted-foreground">Ingenio</label>
         <Select
           value={filtros.ingenio}
           onValueChange={(v) =>
@@ -97,7 +97,7 @@ export function FilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs text-neutral-500">Lote</label>
+        <label className="text-xs text-muted-foreground">Lote</label>
         <Select
           value={filtros.lote || "todos"}
           onValueChange={(v) => push({ lote: v === "todos" ? "" : v })}
@@ -117,7 +117,7 @@ export function FilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs text-neutral-500">Desde</label>
+        <label className="text-xs text-muted-foreground">Desde</label>
         <Input
           type="date"
           value={filtros.desde}
@@ -127,7 +127,7 @@ export function FilterBar({
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs text-neutral-500">Hasta</label>
+        <label className="text-xs text-muted-foreground">Hasta</label>
         <Input
           type="date"
           value={filtros.hasta}
@@ -138,7 +138,7 @@ export function FilterBar({
 
       {showBusca && (
         <div className="space-y-1">
-          <label className="text-xs text-neutral-500">{buscaLabel}</label>
+          <label className="text-xs text-muted-foreground">{buscaLabel}</label>
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -150,7 +150,7 @@ export function FilterBar({
 
       <div className="ml-auto flex items-center gap-2">
         {activos > 0 && (
-          <span className="flex items-center gap-1 rounded-full bg-[#0F4C2B]/10 px-2.5 py-1 text-xs font-medium text-[#0F4C2B]">
+          <span className="flex items-center gap-1 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-medium text-brand">
             <Filter className="size-3" />
             {activos} filtro{activos > 1 ? "s" : ""}
           </span>

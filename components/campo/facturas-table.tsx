@@ -57,24 +57,24 @@ export function FacturasTable({ facturas }: { facturas: Factura[] }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
-        <div className="min-w-[140px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">Total facturas</div>
+        <div className="min-w-[140px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">Total facturas</div>
           <div className="text-lg font-semibold">{facturas.length}</div>
-          <div className="text-xs text-neutral-400">comprobantes</div>
+          <div className="text-xs text-muted-foreground">comprobantes</div>
         </div>
-        <div className="min-w-[140px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">Monto total</div>
+        <div className="min-w-[140px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">Monto total</div>
           <div className="text-lg font-semibold">{fmtMonto(total)}</div>
-          <div className="text-xs text-neutral-400">registrado</div>
+          <div className="text-xs text-muted-foreground">registrado</div>
         </div>
         {topCategorias.map(([cat, monto]) => (
           <div
             key={cat}
-            className="min-w-[140px] flex-1 rounded-xl border bg-white p-3"
+            className="min-w-[140px] flex-1 rounded-xl border bg-card p-3"
           >
-            <div className="text-xs text-neutral-500">{cat}</div>
+            <div className="text-xs text-muted-foreground">{cat}</div>
             <div className="text-lg font-semibold">{fmtMonto(monto)}</div>
-            <div className="text-xs text-neutral-400">
+            <div className="text-xs text-muted-foreground">
               {total > 0 ? ((monto / total) * 100).toFixed(0) : 0}% del total
             </div>
           </div>
@@ -89,7 +89,7 @@ export function FacturasTable({ facturas }: { facturas: Factura[] }) {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -111,14 +111,14 @@ export function FacturasTable({ facturas }: { facturas: Factura[] }) {
                   <Badge variant="outline">{f.tipo}</Badge>
                 </TableCell>
                 <TableCell>{f.proveedor}</TableCell>
-                <TableCell className="text-xs text-neutral-500">
+                <TableCell className="text-xs text-muted-foreground">
                   {f.cuit || "—"}
                 </TableCell>
                 <TableCell>{f.fecha}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">{f.categoria}</Badge>
                 </TableCell>
-                <TableCell className="font-medium text-emerald-700">
+                <TableCell className="font-medium text-emerald-700 dark:text-emerald-300">
                   {fmtMonto(f.total || 0)}
                 </TableCell>
                 <TableCell className="flex gap-2 whitespace-nowrap">
@@ -154,7 +154,7 @@ export function FacturasTable({ facturas }: { facturas: Factura[] }) {
               <TableRow>
                 <TableCell
                   colSpan={8}
-                  className="py-8 text-center text-neutral-400"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   No hay facturas registradas aún.
                 </TableCell>

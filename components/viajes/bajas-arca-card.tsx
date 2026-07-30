@@ -26,12 +26,12 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
   );
 
   return (
-    <div className="space-y-3 rounded-xl border border-l-4 border-l-red-500 bg-white p-4">
+    <div className="space-y-3 rounded-xl border border-l-4 border-l-red-500 bg-card p-4">
       <div>
-        <h2 className="text-sm font-semibold text-red-700">
+        <h2 className="text-sm font-semibold text-red-700 dark:text-red-300">
           Remitos a dar de baja en ARCA
         </h2>
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           Carta de porte emitidas que no generaron viaje real (camión sin
           carga, rechazado, enterrado, etc.). Deben ser formalmente anuladas
           ante ARCA/AFIP para evitar inconsistencias fiscales.
@@ -42,7 +42,7 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="text-left text-neutral-500">
+              <tr className="text-left text-muted-foreground">
                 <th className="py-1 pr-3 font-normal">Remito</th>
                 <th className="py-1 pr-3 font-normal">Fecha</th>
                 <th className="py-1 pr-3 font-normal">Motivo</th>
@@ -55,12 +55,12 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
               {bajas.map((b) => (
                 <tr
                   key={b.cp}
-                  className={`border-t ${b.gestionado ? "bg-emerald-50/40" : "bg-red-50/40"}`}
+                  className={`border-t ${b.gestionado ? "bg-emerald-50/40 dark:bg-emerald-500/10" : "bg-red-50/40 dark:bg-red-500/10"}`}
                 >
-                  <td className="py-1.5 pr-3 font-bold text-red-700">{b.cp}</td>
+                  <td className="py-1.5 pr-3 font-bold text-red-700 dark:text-red-300">{b.cp}</td>
                   <td className="py-1.5 pr-3">{b.fecha || "—"}</td>
                   <td className="py-1.5 pr-3">{b.motivo || "—"}</td>
-                  <td className="py-1.5 pr-3 text-neutral-500">
+                  <td className="py-1.5 pr-3 text-muted-foreground">
                     {b.obs || "—"}
                   </td>
                   <td className="py-1.5 pr-3">
@@ -73,8 +73,8 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
                           variant="outline"
                           className={
                             b.gestionado
-                              ? "cursor-pointer border-emerald-200 bg-emerald-50 text-emerald-700"
-                              : "cursor-pointer border-red-200 bg-red-50 text-red-700"
+                              ? "cursor-pointer border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                              : "cursor-pointer border-red-200 dark:border-red-500/25 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300"
                           }
                         >
                           {b.gestionado ? "✅ Gestionado" : "❌ Pendiente"}
@@ -85,8 +85,8 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
                         variant="outline"
                         className={
                           b.gestionado
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-red-200 bg-red-50 text-red-700"
+                            ? "border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                            : "border-red-200 dark:border-red-500/25 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300"
                         }
                       >
                         {b.gestionado ? "✅ Gestionado" : "❌ Pendiente"}
@@ -110,7 +110,7 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
           </table>
         </div>
       ) : (
-        <p className="py-2 text-center text-xs text-neutral-400">
+        <p className="py-2 text-center text-xs text-muted-foreground">
           No hay bajas registradas.
         </p>
       )}
@@ -122,7 +122,7 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
             className="flex flex-wrap items-end gap-3 border-t pt-3"
           >
             <div className="space-y-1.5">
-              <label className="text-xs text-neutral-500" htmlFor="inp-baja-cp">
+              <label className="text-xs text-muted-foreground" htmlFor="inp-baja-cp">
                 N° de remito a dar de baja *
               </label>
               <Input
@@ -135,13 +135,13 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs text-neutral-500" htmlFor="inp-baja-fecha">
+              <label className="text-xs text-muted-foreground" htmlFor="inp-baja-fecha">
                 Fecha emisión
               </label>
               <Input id="inp-baja-fecha" name="fecha" type="date" className="w-40" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs text-neutral-500" htmlFor="inp-baja-motivo">
+              <label className="text-xs text-muted-foreground" htmlFor="inp-baja-motivo">
                 Motivo
               </label>
               <Select name="motivo" defaultValue={BAJA_MOTIVOS[0]}>
@@ -158,7 +158,7 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs text-neutral-500" htmlFor="inp-baja-obs">
+              <label className="text-xs text-muted-foreground" htmlFor="inp-baja-obs">
                 Obs.
               </label>
               <Input
@@ -173,7 +173,7 @@ export function BajasArcaCard({ bajas }: { bajas: BajaArca[] }) {
             </Button>
           </form>
           {state.status === "error" && (
-            <p className="text-sm text-red-600">{state.error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
           )}
         </>
       )}

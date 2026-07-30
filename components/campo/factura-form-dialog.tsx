@@ -241,9 +241,9 @@ export function FacturaFormDialog({
             ))}
 
             <div className="flex justify-end">
-              <div className="rounded-lg bg-neutral-50 px-3 py-1.5 text-sm">
+              <div className="rounded-lg bg-muted px-3 py-1.5 text-sm">
                 Total:{" "}
-                <strong className="ml-1.5 text-base text-emerald-700">
+                <strong className="ml-1.5 text-base text-emerald-700 dark:text-emerald-300">
                   $
                   {total.toLocaleString("es-AR", {
                     maximumFractionDigits: 0,
@@ -264,7 +264,7 @@ export function FacturaFormDialog({
               accept="image/*,application/pdf"
             />
             {factura?.img_path && (
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-muted-foreground">
                 Ya hay un archivo cargado — subí uno nuevo solo si querés
                 reemplazarlo.
               </p>
@@ -272,7 +272,7 @@ export function FacturaFormDialog({
           </div>
 
           {state.status === "error" && (
-            <p className="text-sm text-red-600">{state.error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
           )}
 
           <DialogFooter>

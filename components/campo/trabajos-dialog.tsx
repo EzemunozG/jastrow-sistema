@@ -68,17 +68,17 @@ export function TrabajosDialog({
 
           <div className="flex flex-wrap gap-3">
             <div className="min-w-[110px] flex-1 rounded-xl border p-3">
-              <div className="text-xs text-neutral-500">Trabajos</div>
+              <div className="text-xs text-muted-foreground">Trabajos</div>
               <div className="text-lg font-semibold">{trabajos.length}</div>
             </div>
             <div className="min-w-[110px] flex-1 rounded-xl border p-3">
-              <div className="text-xs text-neutral-500">Costo total</div>
+              <div className="text-xs text-muted-foreground">Costo total</div>
               <div className="text-lg font-semibold">
                 {fmtMonto(costoTotal)}
               </div>
             </div>
             <div className="min-w-[110px] flex-1 rounded-xl border p-3">
-              <div className="text-xs text-neutral-500">Costo / ha</div>
+              <div className="text-xs text-muted-foreground">Costo / ha</div>
               <div className="text-lg font-semibold">
                 {costoTotal > 0 && lote.ha > 0
                   ? fmtMonto(costoTotal / lote.ha)
@@ -118,15 +118,15 @@ export function TrabajosDialog({
                     </TableCell>
                     <TableCell>{t.ha ? `${t.ha} ha` : "—"}</TableCell>
                     <TableCell>{t.empresa || "—"}</TableCell>
-                    <TableCell className="max-w-[160px] text-xs text-neutral-500">
+                    <TableCell className="max-w-[160px] text-xs text-muted-foreground">
                       {t.insumos.length > 0
                         ? t.insumos.map((i) => i.descripcion).join(", ")
                         : "—"}
                     </TableCell>
-                    <TableCell className="font-medium text-emerald-700">
+                    <TableCell className="font-medium text-emerald-700 dark:text-emerald-300">
                       {fmtMonto(t.costo_total || 0)}
                     </TableCell>
-                    <TableCell className="max-w-[140px] truncate text-xs text-neutral-500">
+                    <TableCell className="max-w-[140px] truncate text-xs text-muted-foreground">
                       {t.obs || "—"}
                     </TableCell>
                     <TableCell>
@@ -146,7 +146,7 @@ export function TrabajosDialog({
                   <TableRow>
                     <TableCell
                       colSpan={8}
-                      className="py-8 text-center text-neutral-400"
+                      className="py-8 text-center text-muted-foreground"
                     >
                       Sin trabajos registrados en este lote.
                     </TableCell>

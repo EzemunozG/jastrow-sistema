@@ -83,7 +83,7 @@ export function LotesTable({
         </div>
       )}
 
-      <div className="rounded-xl border bg-white">
+      <div className="rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -118,7 +118,7 @@ export function LotesTable({
                       {l.estado}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-emerald-700">
+                  <TableCell className="text-emerald-700 dark:text-emerald-300">
                     {costoLote > 0 ? fmtMonto(costoLote) : "—"}
                   </TableCell>
                   <TableCell className="flex gap-2 whitespace-nowrap">
@@ -155,7 +155,7 @@ export function LotesTable({
               <TableRow>
                 <TableCell
                   colSpan={8}
-                  className="py-8 text-center text-neutral-400"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   Sin lotes cargados todavía.
                 </TableCell>
