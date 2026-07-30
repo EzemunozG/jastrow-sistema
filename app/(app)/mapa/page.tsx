@@ -18,6 +18,7 @@ export default async function MapaPage() {
     { data: trabajos },
     { data: trabajoInsumos },
     { data: productos },
+    { data: lotesFisicos },
     { data: appSettings },
   ] = await Promise.all([
     supabase.from("lotes_ingenio").select("lote_key, nombre, ha, surcos_por_ha"),
@@ -35,6 +36,7 @@ export default async function MapaPage() {
       .from("trabajo_insumos")
       .select("trabajo_id, descripcion, cantidad, unidad, total"),
     supabase.from("productos").select("id, nombre"),
+    supabase.from("lotes").select("id, ha"), // ha del lote físico, para prorratear
     supabase.from("app_settings").select("*").eq("id", 1).maybeSingle(),
   ]);
 
@@ -55,6 +57,7 @@ export default async function MapaPage() {
     trabajos: trabajos ?? [],
     trabajoInsumos: trabajoInsumos ?? [],
     productos: productos ?? [],
+    lotesFisicos: (lotesFisicos ?? []).map((l) => ({ id: l.id, ha: l.ha ?? 0 })),
     tcBlue: appSettings?.tc_blue ?? 1495,
     ingenioNombre: (id) => INGENIOS.find((i) => i.id === id)?.nombre ?? id,
   });

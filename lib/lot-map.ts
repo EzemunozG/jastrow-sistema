@@ -28,21 +28,22 @@ export const SURCOS_POR_HA_DEFAULT = 61; // fallback si lotes_ingenio.surcos_por
 // tabla `lotes` (Campo) y `lotes_ingenio` (cosecha) se armaron por separado y no
 // comparten id ni nombre, así que este vínculo hay que declararlo a mano. PROVISORIO —
 // Ezequiel confirma/corrige los que faltan (los `[]` son "no sé todavía"). Editar acá.
+// Mapeo definitivo confirmado por el usuario (2026-07-30). Las diferencias de hectáreas
+// entre el lote de cosecha (lotes_ingenio.ha) y el físico (lotes.ha) son conocidas y
+// aceptadas — el prorrateo por ha del gasto (ver computeMapaLotes) las absorbe. Cada
+// físico en un solo lote_key (el guard dupsLoteFisico lo verifica).
 export const LOTE_FISICO_POR_KEY: Record<string, string[]> = {
-  // Confianza alta (match por nombre / dueño / texto de receta):
   "LAS 101": ["L4-100"], // receta llama "Lote 100" al L4-100; lote_ingenio "Lote 101"
-  LUCHO: ["L4-LUCHO"], // mismo nombre
-  "TALA POSO 2": ["L4-TP2"], // TP2
-  "TALA POSO 3": ["L4-TP3"], // TP3
-  PILOT: ["L4-PILOT"], // mismo nombre (aunque el físico está en finca LOTE4)
+  LUCHO: ["L4-LUCHO"],
+  "TALA POSO 2": ["L4-TP2"],
+  "TALA POSO 3": ["L4-TP3"],
+  PILOT: ["L4-PILOT"],
   FRAU: ["VA-07"], // REC-004 "Lote Frau" → VA-07; VA-07 dueño = Néstor Frau
-  // Guess a confirmar:
-  "CASA FRAU": ["VA-08"], // VA-08 también dueño Néstor Frau — CONFIRMAR
-  // Sin match evidente todavía — completar:
-  TANO: [],
-  PACO: [], // "JASTROW - LOTE 3" en el INFRARUT
-  PAQUITO: [],
-  "TALA POSO 1": [],
+  "CASA FRAU": ["VA-08"], // VA-08 también dueño Néstor Frau
+  TANO: ["VA-05"],
+  PACO: ["VA-09"], // "JASTROW - LOTE 3" en el INFRARUT
+  PAQUITO: ["VA-10"],
+  "TALA POSO 1": [], // no existe físico todavía → tarjeta con empty state
 };
 
 // Detecta un lote FÍSICO asignado a más de un lote_key. Eso sería un bug: el costo de
@@ -103,7 +104,8 @@ export type ProductoLite = { id: string; nombre: string };
 export type Aplicacion = {
   nombre: string;
   detalle: string; // dosis/cantidad
-  usd: number;
+  usd: number; // ya prorrateado si la receta es compartida
+  compartida: boolean; // la receta abarca >1 lote físico (costo repartido por ha)
 };
 
 export type ColorLote = "verde" | "amarillo" | "rojo" | "sin-cosecha";
@@ -154,6 +156,7 @@ export function computeMapaLotes(params: {
   trabajos: TrabajoLink[];
   trabajoInsumos: TrabajoInsumo[];
   productos: ProductoLite[];
+  lotesFisicos: { id: string; ha: number }[]; // ha del lote físico, para prorratear
   tcBlue: number;
   ingenioNombre: (id: string) => string;
 }): LoteMapCard[] {
@@ -167,6 +170,7 @@ export function computeMapaLotes(params: {
     trabajos,
     trabajoInsumos,
     productos,
+    lotesFisicos,
     tcBlue,
     ingenioNombre,
   } = params;
@@ -213,6 +217,22 @@ export function computeMapaLotes(params: {
   }
   const toUsd = (ars: number) => (tcBlue > 0 ? ars / tcBlue : 0);
 
+  // Para el prorrateo de recetas compartidas: ha de cada lote físico, y los lotes
+  // físicos que abarca cada receta (una receta puede estar cargada sobre varios).
+  const haFisico = new Map(lotesFisicos.map((l) => [l.id, l.ha]));
+  const fisicosDeReceta = new Map<string, string[]>();
+  for (const rl of recetaLotes) {
+    if (rl.lote_id == null) continue;
+    const arr = fisicosDeReceta.get(rl.receta_id);
+    if (arr) arr.push(rl.lote_id);
+    else fisicosDeReceta.set(rl.receta_id, [rl.lote_id]);
+  }
+  const haTotalReceta = (recetaId: string) =>
+    (fisicosDeReceta.get(recetaId) ?? []).reduce(
+      (s, id) => s + (haFisico.get(id) ?? 0),
+      0,
+    );
+
   const cards: LoteMapCard[] = lotesIngenio.map((meta) => {
     const loteTrips = tripsByLote.get(meta.lote_key) ?? [];
     const kgNeto = loteTrips.reduce((s, t) => s + (t.kg_neto || 0), 0);
@@ -235,9 +255,25 @@ export function computeMapaLotes(params: {
     const aplicaciones: Aplicacion[] = [];
 
     const recetaIds = new Set(
-      recetaLotes.filter((rl) => rl.lote_id != null && fisicos.has(rl.lote_id)).map((rl) => rl.receta_id),
+      recetaLotes
+        .filter((rl) => rl.lote_id != null && fisicos.has(rl.lote_id))
+        .map((rl) => rl.receta_id),
     );
     for (const recetaId of recetaIds) {
+      const fisicosReceta = fisicosDeReceta.get(recetaId) ?? [];
+      const compartida = fisicosReceta.length > 1;
+      // Prorrateo: de la receta, la parte que le toca a ESTE lote = ha de los físicos
+      // de este lote_key sobre la ha total de todos los físicos de la receta. Si
+      // ninguna ha está cargada, se reparte por cantidad de físicos (no dividir por 0).
+      const enEsteLote = fisicosReceta.filter((id) => fisicos.has(id));
+      const haTot = haTotalReceta(recetaId);
+      const cardHa = enEsteLote.reduce((s, id) => s + (haFisico.get(id) ?? 0), 0);
+      const factor =
+        haTot > 0
+          ? cardHa / haTot
+          : fisicosReceta.length > 0
+            ? enEsteLote.length / fisicosReceta.length
+            : 1;
       for (const it of itemsByReceta.get(recetaId) ?? []) {
         const cant = it.cantidad ?? 0;
         const detalle =
@@ -249,10 +285,12 @@ export function computeMapaLotes(params: {
         aplicaciones.push({
           nombre: productoNombre.get(it.producto_id ?? "") ?? "—",
           detalle,
-          usd: toUsd(it.total ?? 0),
+          usd: toUsd(it.total ?? 0) * factor,
+          compartida,
         });
       }
     }
+    // Trabajos: siempre sobre un único lote físico (lote_id), nunca compartidos.
     for (const trabajo of trabajos) {
       if (trabajo.lote_id == null || !fisicos.has(trabajo.lote_id)) continue;
       for (const ins of insumosByTrabajo.get(trabajo.id) ?? []) {
@@ -260,6 +298,7 @@ export function computeMapaLotes(params: {
           nombre: ins.descripcion ?? "—",
           detalle: `${ins.cantidad ?? 0} ${ins.unidad ?? ""}`.trim(),
           usd: toUsd(ins.total ?? 0),
+          compartida: false,
         });
       }
       if ((trabajo.costo_labor ?? 0) > 0) {
@@ -267,6 +306,7 @@ export function computeMapaLotes(params: {
           nombre: "Mano de obra",
           detalle: "labor",
           usd: toUsd(trabajo.costo_labor ?? 0),
+          compartida: false,
         });
       }
     }

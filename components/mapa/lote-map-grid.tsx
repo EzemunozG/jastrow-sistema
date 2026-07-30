@@ -100,7 +100,14 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
                     key={`${a.nombre}-${i}`}
                     className="border-b transition-colors last:border-0 hover:bg-neutral-50"
                   >
-                    <td className="p-2 font-medium">{a.nombre}</td>
+                    <td className="p-2 font-medium">
+                      {a.nombre}
+                      {a.compartida && (
+                        <span className="ml-1.5 inline-flex rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 align-middle">
+                          compartida
+                        </span>
+                      )}
+                    </td>
                     <td className="p-2 text-neutral-600">{a.detalle}</td>
                     <td className="p-2 text-right">
                       {a.usd > 0 ? usd(a.usd) : "—"}
@@ -118,6 +125,13 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
               </tfoot>
             </table>
           </div>
+        )}
+        {lote.aplicaciones.some((a) => a.compartida) && (
+          <p className="mt-1.5 text-xs text-neutral-400">
+            Las recetas <span className="font-medium text-blue-700">compartidas</span>{" "}
+            se aplicaron sobre varios lotes; el monto que se muestra es la parte
+            prorrateada por hectárea que le toca a este lote.
+          </p>
         )}
       </div>
     </div>
