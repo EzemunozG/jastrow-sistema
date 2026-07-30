@@ -23,7 +23,7 @@ export function SortButton<K extends string>({
     <button
       type="button"
       onClick={() => onSort(sortKey)}
-      className="flex items-center gap-1 transition-colors hover:text-neutral-900"
+      className="flex items-center gap-1 transition-colors hover:text-foreground"
     >
       {label}
       {active ? (
@@ -33,7 +33,7 @@ export function SortButton<K extends string>({
           <ArrowDown className="size-3" />
         )
       ) : (
-        <ArrowUpDown className="size-3 text-neutral-300" />
+        <ArrowUpDown className="size-3 text-muted-foreground" />
       )}
     </button>
   );

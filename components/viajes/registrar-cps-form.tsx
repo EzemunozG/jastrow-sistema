@@ -24,7 +24,7 @@ import {
 function IngenioSelect({ id }: { id: string }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs text-neutral-500" htmlFor={id}>
+      <label className="text-xs text-muted-foreground" htmlFor={id}>
         Ingenio
       </label>
       <Select name="ingenio_id" defaultValue="concepcion">
@@ -45,11 +45,11 @@ function IngenioSelect({ id }: { id: string }) {
 
 function ResultMessage({ state }: { state: CpsCampoActionState }) {
   if (state.status === "error") {
-    return <p className="text-sm text-red-600">{state.error}</p>;
+    return <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>;
   }
   if (state.status === "success") {
     return (
-      <p className="text-sm text-emerald-700">
+      <p className="text-sm text-emerald-700 dark:text-emerald-300">
         {state.added} remito{state.added !== 1 ? "s" : ""} agregado
         {state.added !== 1 ? "s" : ""}
         {state.skipped > 0 && ` (${state.skipped} ya existían)`}.
@@ -92,12 +92,12 @@ export function RegistrarCpsForm() {
   if (!canWrite) return null;
 
   return (
-    <div className="space-y-4 rounded-xl border bg-white p-4">
+    <div className="space-y-4 rounded-xl border bg-card p-4">
       <div>
         <h2 className="text-sm font-semibold">
           Registrar remitos emitidos desde el campo
         </h2>
-        <p className="mt-1 text-xs text-neutral-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           Ingresá los números de remito que salieron del campo. El
           sistema los cruza contra el INFRARUT y muestra cuáles no figuran.
         </p>
@@ -105,7 +105,7 @@ export function RegistrarCpsForm() {
 
       <form action={singleAction} className="flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
-          <label className="text-xs text-neutral-500" htmlFor="inp-cp-campo">
+          <label className="text-xs text-muted-foreground" htmlFor="inp-cp-campo">
             Remito individual o rango
           </label>
           <Input
@@ -117,13 +117,13 @@ export function RegistrarCpsForm() {
         </div>
         <IngenioSelect id="inp-cp-ingenio" />
         <div className="space-y-1.5">
-          <label className="text-xs text-neutral-500" htmlFor="inp-cp-fecha">
+          <label className="text-xs text-muted-foreground" htmlFor="inp-cp-fecha">
             Fecha de salida
           </label>
           <Input id="inp-cp-fecha" name="fecha" type="date" className="w-40" />
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs text-neutral-500" htmlFor="inp-cp-camion">
+          <label className="text-xs text-muted-foreground" htmlFor="inp-cp-camion">
             Camión / Chofer (opcional)
           </label>
           <Input
@@ -134,7 +134,7 @@ export function RegistrarCpsForm() {
           />
         </div>
         <div className="space-y-1.5">
-          <label className="text-xs text-neutral-500" htmlFor="inp-cp-obs">
+          <label className="text-xs text-muted-foreground" htmlFor="inp-cp-obs">
             Obs.
           </label>
           <Input
@@ -151,7 +151,7 @@ export function RegistrarCpsForm() {
       <ResultMessage state={singleState} />
 
       <div className="border-t pt-3">
-        <p className="mb-2 text-xs text-neutral-500">
+        <p className="mb-2 text-xs text-muted-foreground">
           También podés pegar una lista completa separada por comas o saltos
           de línea:
         </p>
@@ -165,7 +165,7 @@ export function RegistrarCpsForm() {
           <IngenioSelect id="inp-lista-ingenio" />
           <div className="space-y-1.5">
             <label
-              className="text-xs text-neutral-500"
+              className="text-xs text-muted-foreground"
               htmlFor="inp-lista-fecha"
             >
               Fecha para la lista

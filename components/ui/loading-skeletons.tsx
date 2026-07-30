@@ -6,7 +6,7 @@ export function CardsSkeleton({ count = 4 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="min-w-[150px] flex-1 space-y-2 rounded-xl border bg-white p-3"
+          className="min-w-[150px] flex-1 space-y-2 rounded-xl border bg-card p-3"
         >
           <Skeleton className="h-3 w-20" />
           <Skeleton className="h-6 w-16" />
@@ -19,7 +19,7 @@ export function CardsSkeleton({ count = 4 }: { count?: number }) {
 
 export function TableSkeleton({ rows = 6, cols = 6 }: { rows?: number; cols?: number }) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-white">
+    <div className="overflow-hidden rounded-xl border bg-card">
       <div className="flex gap-4 border-b p-3">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} className="h-3 flex-1" />
@@ -38,7 +38,7 @@ export function TableSkeleton({ rows = 6, cols = 6 }: { rows?: number; cols?: nu
 
 export function FilterBarSkeleton() {
   return (
-    <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-white p-3">
+    <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="space-y-1">
           <Skeleton className="h-3 w-12" />

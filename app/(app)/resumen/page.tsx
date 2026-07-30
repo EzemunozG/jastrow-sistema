@@ -18,10 +18,10 @@ import { createClient } from "@/lib/supabase/server";
 
 function kpiClass(cls: "ok" | "warn" | "bad" | "info") {
   return {
-    ok: "text-emerald-700",
-    warn: "text-amber-700",
-    bad: "text-red-700",
-    info: "text-blue-700",
+    ok: "text-emerald-700 dark:text-emerald-300",
+    warn: "text-amber-700 dark:text-amber-300",
+    bad: "text-red-700 dark:text-red-300",
+    info: "text-blue-700 dark:text-blue-300",
   }[cls];
 }
 
@@ -36,7 +36,7 @@ function FincaCard({
 }) {
   if (!stats) {
     return (
-      <div className="rounded-xl border bg-white p-4 text-sm text-neutral-400">
+      <div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
         Sin datos de {nombre}
       </div>
     );
@@ -51,7 +51,7 @@ function FincaCard({
     ["Trash%", `${stats.trash_pct.toFixed(2)}%`, stats.trash_pct > 10],
   ];
   return (
-    <div className="space-y-2 rounded-xl border bg-white p-4">
+    <div className="space-y-2 rounded-xl border bg-card p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-medium">
           <span
@@ -63,8 +63,8 @@ function FincaCard({
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
             stats.rdto >= META
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-red-50 text-red-700"
+              ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+              : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300"
           }`}
         >
           Rdto. {stats.rdto.toFixed(2)}%
@@ -74,9 +74,9 @@ function FincaCard({
         <tbody>
           {rows.map(([label, value, warn]) => (
             <tr key={label} className="border-t">
-              <td className="py-1 text-neutral-500">{label}</td>
+              <td className="py-1 text-muted-foreground">{label}</td>
               <td
-                className={`py-1 text-right font-medium ${warn ? "text-amber-700" : ""}`}
+                className={`py-1 text-right font-medium ${warn ? "text-amber-700 dark:text-amber-300" : ""}`}
               >
                 {value}
               </td>
@@ -181,7 +181,7 @@ export default async function ResumenPage() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-muted-foreground">
         <i className="mr-1" />
         Total acumulado: <strong>{fechas.length} día(s)</strong>
         {fechas.length > 0 && (
@@ -195,7 +195,7 @@ export default async function ResumenPage() {
       {profile.role === "admin" && <InfrarutsImportForm />}
 
       {infraruts.length === 0 ? (
-        <div className="rounded-xl border bg-white p-6 text-sm text-neutral-500">
+        <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
           Todavía no hay viajes de INFRARUT cargados
           {profile.role === "admin"
             ? " — usá el importador de arriba."
@@ -207,18 +207,18 @@ export default async function ResumenPage() {
             {kpis.map((k) => (
               <div
                 key={k.lbl}
-                className="min-w-[150px] flex-1 rounded-xl border bg-white p-3"
+                className="min-w-[150px] flex-1 rounded-xl border bg-card p-3"
               >
-                <div className="text-xs text-neutral-500">{k.lbl}</div>
+                <div className="text-xs text-muted-foreground">{k.lbl}</div>
                 <div className={`text-lg font-semibold ${kpiClass(k.cls)}`}>
                   {k.val}
                 </div>
-                <div className="text-xs text-neutral-400">{k.sub}</div>
+                <div className="text-xs text-muted-foreground">{k.sub}</div>
               </div>
             ))}
           </div>
 
-          <div className="rounded-xl border bg-white p-4">
+          <div className="rounded-xl border bg-card p-4">
             <h3 className="mb-3 text-sm font-medium">Totales por ingenio</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {porIngenio.map(({ ingenio, stats }) => (
@@ -227,32 +227,32 @@ export default async function ResumenPage() {
                   className="flex flex-wrap gap-3 rounded-lg border p-3"
                 >
                   <div className="min-w-[120px]">
-                    <div className="text-xs text-neutral-500">Ingenio</div>
+                    <div className="text-xs text-muted-foreground">Ingenio</div>
                     <div className="text-sm font-semibold">{ingenio.nombre}</div>
                   </div>
                   <div className="min-w-[90px]">
-                    <div className="text-xs text-neutral-500">Kg neto</div>
+                    <div className="text-xs text-muted-foreground">Kg neto</div>
                     <div className="text-sm font-medium">
                       {(stats?.kg_neto ?? 0).toLocaleString("es-AR")}
                     </div>
                   </div>
                   <div className="min-w-[90px]">
-                    <div className="text-xs text-neutral-500">Kg azúcar</div>
+                    <div className="text-xs text-muted-foreground">Kg azúcar</div>
                     <div className="text-sm font-medium">
                       {(stats?.kg_azucar ?? 0).toLocaleString("es-AR")}
                     </div>
                   </div>
                   <div className="min-w-[80px]">
-                    <div className="text-xs text-neutral-500">Viajes</div>
+                    <div className="text-xs text-muted-foreground">Viajes</div>
                     <div className="text-sm font-medium">{stats?.n ?? 0}</div>
                   </div>
                   <div className="min-w-[90px]">
-                    <div className="text-xs text-neutral-500">Rdto% prom.</div>
+                    <div className="text-xs text-muted-foreground">Rdto% prom.</div>
                     <div
                       className={`text-sm font-medium ${
                         stats && stats.rdto >= META
-                          ? "text-emerald-700"
-                          : "text-red-700"
+                          ? "text-emerald-700 dark:text-emerald-300"
+                          : "text-red-700 dark:text-red-300"
                       }`}
                     >
                       {stats ? `${stats.rdto.toFixed(2)}%` : "—"}
@@ -274,7 +274,7 @@ export default async function ResumenPage() {
             ))}
           </div>
 
-          <div className="rounded-xl border bg-white p-4">
+          <div className="rounded-xl border bg-card p-4">
             <h3 className="mb-3 text-sm font-medium">
               Rdto% por viaje — último día cargado ({lastFecha})
             </h3>

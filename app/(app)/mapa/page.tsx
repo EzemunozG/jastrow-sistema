@@ -67,14 +67,14 @@ export default async function MapaPage() {
       <RealtimeRefresh tables={["infraruts", "cps_campo", "bajas_arca"]} />
       <div>
         <h1 className="text-lg font-semibold">Mapa de lotes</h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted-foreground">
           Un vistazo a toda la zafra: el número grande es tn/surco (parcial mientras la
           cosecha está en curso); el color va por Rdto% promedio vs la meta de 10%.
         </p>
       </div>
 
       {cards.length === 0 ? (
-        <div className="rounded-xl border bg-white p-6 text-sm text-neutral-500">
+        <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
           Todavía no hay lotes cargados en el sistema.
         </div>
       ) : (

@@ -7,24 +7,26 @@ import { formatNumber, formatPercent, formatTn } from "@/lib/format";
 import type { ColorLote, LoteMapCard } from "@/lib/lot-map";
 
 const CARD_STYLE: Record<ColorLote, string> = {
-  verde: "border-emerald-200 bg-emerald-50 hover:bg-emerald-100",
-  amarillo: "border-amber-200 bg-amber-50 hover:bg-amber-100",
-  rojo: "border-red-200 bg-red-50 hover:bg-red-100",
-  "sin-cosecha": "border-neutral-200 bg-neutral-50 hover:bg-neutral-100",
+  verde:
+    "border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20",
+  amarillo:
+    "border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20",
+  rojo: "border-red-200 dark:border-red-500/25 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20",
+  "sin-cosecha": "border-border bg-muted hover:bg-accent",
 };
 
 const NUM_STYLE: Record<ColorLote, string> = {
-  verde: "text-emerald-800",
-  amarillo: "text-amber-800",
-  rojo: "text-red-800",
-  "sin-cosecha": "text-neutral-400",
+  verde: "text-emerald-800 dark:text-emerald-300",
+  amarillo: "text-amber-800 dark:text-amber-300",
+  rojo: "text-red-800 dark:text-red-300",
+  "sin-cosecha": "text-muted-foreground",
 };
 
 const RDTO_BADGE: Record<ColorLote, string> = {
-  verde: "bg-emerald-100 text-emerald-800",
-  amarillo: "bg-amber-100 text-amber-800",
-  rojo: "bg-red-100 text-red-800",
-  "sin-cosecha": "bg-neutral-100 text-neutral-500",
+  verde: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300",
+  amarillo: "bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300",
+  rojo: "bg-red-100 dark:bg-red-500/15 text-red-800 dark:text-red-300",
+  "sin-cosecha": "bg-muted text-muted-foreground",
 };
 
 const LEYENDA: { color: ColorLote; label: string }[] = [
@@ -38,7 +40,7 @@ const DOT: Record<ColorLote, string> = {
   verde: "bg-emerald-500",
   amarillo: "bg-amber-500",
   rojo: "bg-red-500",
-  "sin-cosecha": "bg-neutral-300",
+  "sin-cosecha": "bg-muted-foreground/40",
 };
 
 function usd(n: number): string {
@@ -57,10 +59,10 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
   ];
 
   return (
-    <div className="space-y-4 rounded-xl border bg-white p-4">
+    <div className="space-y-4 rounded-xl border bg-card p-4">
       <div>
         <h2 className="text-base font-semibold">{lote.nombre}</h2>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted-foreground">
           {lote.ingenio_nombre
             ? `Cosechó: ${lote.ingenio_nombre}`
             : "Sin cosecha registrada esta zafra"}
@@ -70,7 +72,7 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {metrics.map((m) => (
           <div key={m.lbl} className="rounded-lg border p-3">
-            <div className="text-xs text-neutral-500">{m.lbl}</div>
+            <div className="text-xs text-muted-foreground">{m.lbl}</div>
             <div className="text-lg font-semibold">{m.val}</div>
           </div>
         ))}
@@ -88,7 +90,7 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
           <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs text-neutral-500">
+                <tr className="border-b text-left text-xs text-muted-foreground">
                   <th className="p-2 font-normal">Producto</th>
                   <th className="p-2 font-normal">Dosis / cantidad</th>
                   <th className="p-2 text-right font-normal">USD</th>
@@ -98,17 +100,17 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
                 {lote.aplicaciones.map((a, i) => (
                   <tr
                     key={`${a.nombre}-${i}`}
-                    className="border-b transition-colors last:border-0 hover:bg-neutral-50"
+                    className="border-b transition-colors last:border-0 hover:bg-muted"
                   >
                     <td className="p-2 font-medium">
                       {a.nombre}
                       {a.compartida && (
-                        <span className="ml-1.5 inline-flex rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 align-middle">
+                        <span className="ml-1.5 inline-flex rounded-full bg-blue-50 dark:bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300 align-middle">
                           compartida
                         </span>
                       )}
                     </td>
-                    <td className="p-2 text-neutral-600">{a.detalle}</td>
+                    <td className="p-2 text-muted-foreground">{a.detalle}</td>
                     <td className="p-2 text-right">
                       {a.usd > 0 ? usd(a.usd) : "—"}
                     </td>
@@ -116,7 +118,7 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t bg-neutral-50 font-medium">
+                <tr className="border-t bg-muted font-medium">
                   <td className="p-2" colSpan={2}>
                     Total · {usd(lote.usd_por_ha)}/ha
                   </td>
@@ -127,8 +129,8 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
           </div>
         )}
         {lote.aplicaciones.some((a) => a.compartida) && (
-          <p className="mt-1.5 text-xs text-neutral-400">
-            Las recetas <span className="font-medium text-blue-700">compartidas</span>{" "}
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Las recetas <span className="font-medium text-blue-700 dark:text-blue-300">compartidas</span>{" "}
             se aplicaron sobre varios lotes; el monto que se muestra es la parte
             prorrateada por hectárea que le toca a este lote.
           </p>
@@ -162,11 +164,11 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
               type="button"
               onClick={() => seleccionar(c.lote_key)}
               className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition-colors ${CARD_STYLE[c.color]} ${
-                activo ? "ring-2 ring-[#0F4C2B] ring-offset-1" : ""
+                activo ? "ring-2 ring-brand ring-offset-1" : ""
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="text-sm font-semibold text-neutral-800">
+                <span className="text-sm font-semibold text-foreground">
                   {c.nombre}
                 </span>
                 <span
@@ -181,21 +183,21 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
                   <div className={`text-2xl font-bold ${NUM_STYLE[c.color]}`}>
                     {formatNumber(c.tn_surco, 2)}
                   </div>
-                  <div className="text-xs text-neutral-500">
+                  <div className="text-xs text-muted-foreground">
                     tn/surco · {formatNumber(c.ha)} ha
                   </div>
                   {c.parcial && (
-                    <span className="mt-0.5 inline-flex w-fit rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">
+                    <span className="mt-0.5 inline-flex w-fit rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground dark:bg-white/10">
                       cosecha en curso · parcial
                     </span>
                   )}
                 </>
               ) : (
                 <>
-                  <div className="text-lg font-semibold text-neutral-400">
+                  <div className="text-lg font-semibold text-muted-foreground">
                     Sin cosecha aún
                   </div>
-                  <div className="text-xs text-neutral-400">
+                  <div className="text-xs text-muted-foreground">
                     {formatNumber(c.ha)} ha
                   </div>
                 </>
@@ -205,7 +207,7 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-neutral-500">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
         <span className="font-medium">Color por Rdto% vs meta 10%:</span>
         {LEYENDA.map((l) => (
           <span key={l.color} className="flex items-center gap-1.5">
@@ -219,7 +221,7 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
         {loteSel ? (
           <Detalle lote={loteSel} />
         ) : (
-          <div className="rounded-xl border border-dashed bg-white p-6 text-center text-sm text-neutral-400">
+          <div className="rounded-xl border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">
             Tocá una tarjeta para ver el detalle del lote.
           </div>
         )}

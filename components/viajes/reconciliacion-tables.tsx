@@ -23,7 +23,7 @@ function RemitoList({
   if (remitos.length === 0) return null;
   return (
     <div className="flex flex-wrap items-baseline gap-1.5">
-      <span className="text-neutral-500">{label}:</span>
+      <span className="text-muted-foreground">{label}:</span>
       {remitos.map((r, i) => (
         <span key={r ?? `sin-remito-${i}`} className={`rounded px-1.5 py-0.5 font-medium ${className}`}>
           {r ?? "s/rem"}
@@ -89,45 +89,45 @@ export function ReconciliacionTables({
     <div className="space-y-4">
       {title && <h2 className="text-base font-semibold">{title}</h2>}
       <div className="flex flex-wrap gap-3">
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">Total libreta</div>
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">Total libreta</div>
           <div className="text-lg font-semibold">{cpsCampo.length}</div>
-          <div className="text-xs text-neutral-400">remitos del campo</div>
+          <div className="text-xs text-muted-foreground">remitos del campo</div>
         </div>
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">✅ Reconciliados</div>
-          <div className="text-lg font-semibold text-emerald-700">
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">✅ Reconciliados</div>
+          <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
             {reconciliados.length}
           </div>
-          <div className="text-xs text-neutral-400">confirmados por ingenio</div>
+          <div className="text-xs text-muted-foreground">confirmados por ingenio</div>
         </div>
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">❌ Sin reconciliar</div>
-          <div className="text-lg font-semibold text-red-700">
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">❌ Sin reconciliar</div>
+          <div className="text-lg font-semibold text-red-700 dark:text-red-300">
             {pendientes.length}
           </div>
-          <div className="text-xs text-neutral-400">no están en INFRARUT</div>
+          <div className="text-xs text-muted-foreground">no están en INFRARUT</div>
         </div>
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">⚠ Bajas ARCA</div>
-          <div className="text-lg font-semibold text-amber-700">
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">⚠ Bajas ARCA</div>
+          <div className="text-lg font-semibold text-amber-700 dark:text-amber-300">
             {bajas.length}
           </div>
-          <div className="text-xs text-neutral-400">no deben aparecer</div>
+          <div className="text-xs text-muted-foreground">no deben aparecer</div>
         </div>
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">❌ Sin manual</div>
-          <div className="text-lg font-semibold text-orange-700">
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">❌ Sin manual</div>
+          <div className="text-lg font-semibold text-orange-700 dark:text-orange-300">
             {sinManual.length}
           </div>
-          <div className="text-xs text-neutral-400">INFRARUT sin libreta</div>
+          <div className="text-xs text-muted-foreground">INFRARUT sin libreta</div>
         </div>
       </div>
 
       {porLote.length > 0 && (
-        <div className="space-y-2 rounded-xl border bg-white p-4">
+        <div className="space-y-2 rounded-xl border bg-card p-4">
           <h3 className="text-sm font-semibold">Desglose por lote</h3>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted-foreground">
             Según el lote de origen anotado en la libreta. Los INFRARUT sin
             registro manual no tienen lote asignable y van a “Sin lote”.
           </p>
@@ -136,13 +136,13 @@ export function ReconciliacionTables({
               <details key={g.lote} className="rounded-lg border">
                 <summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
                   <span className="text-sm font-semibold">{g.lote}</span>
-                  <span className="text-xs text-emerald-700">
+                  <span className="text-xs text-emerald-700 dark:text-emerald-300">
                     ✅ {g.reconciliados.length} reconciliados
                   </span>
-                  <span className="text-xs text-red-700">
+                  <span className="text-xs text-red-700 dark:text-red-300">
                     ❌ {g.reclamo.length} reclamo
                   </span>
-                  <span className="text-xs text-orange-700">
+                  <span className="text-xs text-orange-700 dark:text-orange-300">
                     ⚠ {g.sinManual.length} sin manual
                   </span>
                 </summary>
@@ -150,23 +150,23 @@ export function ReconciliacionTables({
                   <RemitoList
                     label="Reconciliados"
                     remitos={g.reconciliados.map((x) => x.cp)}
-                    className="bg-emerald-50 text-emerald-700"
+                    className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
                   />
                   <RemitoList
                     label="Reclamo (sin reconciliar)"
                     remitos={g.reclamo.map((x) => x.cp)}
-                    className="bg-red-50 text-red-700"
+                    className="bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300"
                   />
                   <RemitoList
                     label="Sin manual (INFRARUT sin libreta)"
                     remitos={g.sinManual.map((r) => r.remito)}
-                    className="bg-orange-50 text-orange-700"
+                    className="bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-300"
                   />
                   {g.reconciliados.length +
                     g.reclamo.length +
                     g.sinManual.length ===
                     0 && (
-                    <p className="text-neutral-400">Sin viajes en este lote.</p>
+                    <p className="text-muted-foreground">Sin viajes en este lote.</p>
                   )}
                 </div>
               </details>
@@ -176,9 +176,9 @@ export function ReconciliacionTables({
       )}
 
       {rendimientoConDatos.length > 0 && (
-        <div className="space-y-2 rounded-xl border bg-white p-4">
+        <div className="space-y-2 rounded-xl border bg-card p-4">
           <h3 className="text-sm font-semibold">Rendimiento por lote</h3>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted-foreground">
             Kg neto y Rdto% medidos por el ingenio en los viajes reconciliados de
             cada lote, contra su hectareaje. Solo lotes con hectareaje cargado y al
             menos un viaje reconciliado.
@@ -186,7 +186,7 @@ export function ReconciliacionTables({
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-neutral-500">
+                <tr className="text-left text-muted-foreground">
                   <th className="py-1 pr-3 font-normal">Lote</th>
                   <th className="py-1 pr-3 font-normal">Ha</th>
                   <th className="py-1 pr-3 font-normal">Surcos</th>
@@ -201,7 +201,7 @@ export function ReconciliacionTables({
                 {rendimientoConDatos.map((r) => (
                   <tr
                     key={r.lote_key}
-                    className="border-t transition-colors hover:bg-neutral-50"
+                    className="border-t transition-colors hover:bg-muted"
                   >
                     <td className="py-1.5 pr-3 font-semibold">{r.nombre}</td>
                     <td className="py-1.5 pr-3">
@@ -218,8 +218,8 @@ export function ReconciliacionTables({
                       <span
                         className={`rounded-full px-2 py-0.5 font-medium ${
                           r.rdto_promedio >= META
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-amber-50 text-amber-700"
+                            ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                            : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"
                         }`}
                       >
                         {formatPercent(r.rdto_promedio)}
@@ -234,11 +234,11 @@ export function ReconciliacionTables({
       )}
 
       {pendientes.length > 0 && (
-        <div className="space-y-2 rounded-xl border border-l-4 border-l-red-500 bg-white p-4">
-          <h3 className="text-sm font-semibold text-red-700">
+        <div className="space-y-2 rounded-xl border border-l-4 border-l-red-500 bg-card p-4">
+          <h3 className="text-sm font-semibold text-red-700 dark:text-red-300">
             Sin reconciliar — no aparecen en el INFRARUT ({pendientes.length})
           </h3>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted-foreground">
             Estos remitos salieron del campo pero el ingenio no los reportó.
             Verificar si el INFRARUT correspondiente está pendiente de
             llegada o si hay que reclamar.
@@ -246,7 +246,7 @@ export function ReconciliacionTables({
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-neutral-500">
+                <tr className="text-left text-muted-foreground">
                   <th className="py-1 pr-3 font-normal">Remito</th>
                   <th className="py-1 pr-3 font-normal">Fecha salida</th>
                   <th className="py-1 pr-3 font-normal">Matrícula / Camión</th>
@@ -257,14 +257,14 @@ export function ReconciliacionTables({
                 {pendientes.map((x) => (
                   <tr
                     key={x.cp}
-                    className="border-t bg-red-50/40 transition-colors hover:bg-red-50"
+                    className="border-t bg-red-50/40 dark:bg-red-500/10 transition-colors hover:bg-red-50 dark:hover:bg-red-500/15"
                   >
-                    <td className="py-1.5 pr-3 text-sm font-bold text-red-700">
+                    <td className="py-1.5 pr-3 text-sm font-bold text-red-700 dark:text-red-300">
                       {x.cp}
                     </td>
                     <td className="py-1.5 pr-3">{x.fecha || "—"}</td>
                     <td className="py-1.5 pr-3">{x.camion || "—"}</td>
-                    <td className="py-1.5 pr-3 text-neutral-500">
+                    <td className="py-1.5 pr-3 text-muted-foreground">
                       {x.obs || "—"}
                     </td>
                   </tr>
@@ -276,11 +276,11 @@ export function ReconciliacionTables({
       )}
 
       {sinManual.length > 0 && (
-        <div className="space-y-2 rounded-xl border border-l-4 border-l-orange-500 bg-white p-4">
-          <h3 className="text-sm font-semibold text-orange-700">
+        <div className="space-y-2 rounded-xl border border-l-4 border-l-orange-500 bg-card p-4">
+          <h3 className="text-sm font-semibold text-orange-700 dark:text-orange-300">
             Sin manual — INFRARUT sin registro en libreta ({sinManual.length})
           </h3>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-muted-foreground">
             El ingenio reportó estos viajes pero el remito no está anotado en
             la libreta del campo. Falta cargar el despacho manual (o el
             INFRARUT vino sin número de remito).
@@ -288,7 +288,7 @@ export function ReconciliacionTables({
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-neutral-500">
+                <tr className="text-left text-muted-foreground">
                   <th className="py-1 pr-3 font-normal">Remito</th>
                   <th className="py-1 pr-3 font-normal">CP ingenio</th>
                   <th className="py-1 pr-3 font-normal">Fecha INFRARUT</th>
@@ -301,12 +301,12 @@ export function ReconciliacionTables({
                 {sinManual.map((r) => (
                   <tr
                     key={r.cp}
-                    className="border-t bg-orange-50/40 transition-colors hover:bg-orange-50"
+                    className="border-t bg-orange-50/40 dark:bg-orange-500/10 transition-colors hover:bg-orange-50 dark:hover:bg-orange-500/15"
                   >
-                    <td className="py-1.5 pr-3 text-sm font-bold text-orange-700">
+                    <td className="py-1.5 pr-3 text-sm font-bold text-orange-700 dark:text-orange-300">
                       {r.remito ?? "—"}
                     </td>
-                    <td className="py-1.5 pr-3 text-neutral-500">{r.cp}</td>
+                    <td className="py-1.5 pr-3 text-muted-foreground">{r.cp}</td>
                     <td className="py-1.5 pr-3">{r.fecha.slice(5)}</td>
                     <td className="py-1.5 pr-3">{fincaNombre(r.finca_id)}</td>
                     <td className="py-1.5 pr-3">{formatTn(r.kg_neto / 1000)}</td>
@@ -319,15 +319,15 @@ export function ReconciliacionTables({
         </div>
       )}
 
-      <div className="space-y-2 rounded-xl border border-l-4 border-l-emerald-500 bg-white p-4">
-        <h3 className="text-sm font-semibold text-emerald-700">
+      <div className="space-y-2 rounded-xl border border-l-4 border-l-emerald-500 bg-card p-4">
+        <h3 className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
           Reconciliados — confirmados por el ingenio ({reconciliados.length})
         </h3>
         {reconciliados.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-neutral-500">
+                <tr className="text-left text-muted-foreground">
                   <th className="py-1 pr-3 font-normal">Remito</th>
                   <th className="py-1 pr-3 font-normal">Fecha campo</th>
                   <th className="py-1 pr-3 font-normal">Fecha INFRARUT</th>
@@ -343,9 +343,9 @@ export function ReconciliacionTables({
                   return (
                     <tr
                       key={x.cp}
-                      className="border-t transition-colors hover:bg-neutral-50"
+                      className="border-t transition-colors hover:bg-muted"
                     >
-                      <td className="py-1.5 pr-3 font-semibold text-emerald-700">
+                      <td className="py-1.5 pr-3 font-semibold text-emerald-700 dark:text-emerald-300">
                         {x.cp}
                       </td>
                       <td className="py-1.5 pr-3">{x.fecha || "—"}</td>
@@ -360,8 +360,8 @@ export function ReconciliacionTables({
                           <span
                             className={`rounded-full px-2 py-0.5 font-medium ${
                               inf.rdto >= META
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-amber-50 text-amber-700"
+                                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                                : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"
                             }`}
                           >
                             {formatPercent(inf.rdto)}
@@ -383,7 +383,7 @@ export function ReconciliacionTables({
             </table>
           </div>
         ) : (
-          <p className="py-4 text-center text-xs text-neutral-400">
+          <p className="py-4 text-center text-xs text-muted-foreground">
             Todavía no hay remitos reconciliados. Cargá los INFRARUTs
             correspondientes para empezar a cruzar.
           </p>

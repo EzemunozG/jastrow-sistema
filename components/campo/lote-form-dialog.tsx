@@ -213,7 +213,7 @@ export function LoteFormDialog({
           </div>
 
           {state.status === "error" && (
-            <p className="col-span-2 text-sm text-red-600">{state.error}</p>
+            <p className="col-span-2 text-sm text-red-600 dark:text-red-400">{state.error}</p>
           )}
 
           <DialogFooter className="col-span-2">

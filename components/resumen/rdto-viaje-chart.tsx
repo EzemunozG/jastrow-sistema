@@ -38,14 +38,14 @@ export function RdtoViajeChart({ data }: { data: RdtoViajePoint[] }) {
           dataKey="cp"
           tick={{ fontSize: 10 }}
           stroke="currentColor"
-          className="text-neutral-400"
+          className="text-muted-foreground"
         />
         <YAxis
           domain={[8, 11]}
           tick={{ fontSize: 11 }}
           tickFormatter={(v: number) => `${v.toFixed(1)}%`}
           stroke="currentColor"
-          className="text-neutral-400"
+          className="text-muted-foreground"
           width={48}
         />
         <Tooltip

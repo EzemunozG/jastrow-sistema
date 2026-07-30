@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV, LEAF_ICONS, type NavItem } from "@/components/layout/nav-config";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import {
   Sheet,
   SheetContent,
@@ -53,8 +54,8 @@ function NavGroup({
           "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
           collapsed && "justify-center px-0",
           active
-            ? "bg-[#0F4C2B]/10 font-medium text-[#0F4C2B]"
-            : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
+            ? "bg-brand/10 font-medium text-brand"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >
         <Icon className="size-4 shrink-0" />
@@ -73,8 +74,8 @@ function NavGroup({
         className={cn(
           "flex items-center justify-center rounded-lg px-0 py-2 text-sm transition-colors",
           active
-            ? "bg-[#0F4C2B]/10 text-[#0F4C2B]"
-            : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
+            ? "bg-brand/10 text-brand"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >
         <Icon className="size-4 shrink-0" />
@@ -90,8 +91,8 @@ function NavGroup({
         className={cn(
           "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
           active
-            ? "font-medium text-[#0F4C2B]"
-            : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
+            ? "font-medium text-brand"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
         )}
       >
         <Icon className="size-4 shrink-0" />
@@ -112,8 +113,8 @@ function NavGroup({
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
                   leafActive
-                    ? "bg-[#0F4C2B]/10 font-medium text-[#0F4C2B]"
-                    : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900",
+                    ? "bg-brand/10 font-medium text-brand"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 {LeafIcon && <LeafIcon className="size-3.5 shrink-0" />}
@@ -175,7 +176,7 @@ export function Sidebar({ isAdmin }: { isAdmin: boolean }) {
   return (
     <aside
       className={cn(
-        "hidden shrink-0 flex-col border-r bg-white transition-[width] duration-150 md:flex",
+        "hidden shrink-0 flex-col border-r bg-card transition-[width] duration-150 md:flex",
         collapsed ? "w-14" : "w-56",
         !hydrated && "invisible", // evita el flash colapsado→expandido en el primer paint
       )}
@@ -183,10 +184,13 @@ export function Sidebar({ isAdmin }: { isAdmin: boolean }) {
       <div className="flex-1 overflow-y-auto p-2.5">
         <NavList pathname={pathname} collapsed={collapsed} isAdmin={isAdmin} />
       </div>
+      <div className="border-t p-2.5">
+        <ThemeToggle collapsed={collapsed} />
+      </div>
       <button
         type="button"
         onClick={toggle}
-        className="flex items-center justify-center gap-2 border-t p-2.5 text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+        className="flex items-center justify-center gap-2 border-t p-2.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         {collapsed ? (
           <PanelLeftOpen className="size-4" />
@@ -228,6 +232,9 @@ export function MobileNav({ isAdmin }: { isAdmin: boolean }) {
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           <NavList pathname={pathname} collapsed={false} isAdmin={isAdmin} />
+        </div>
+        <div className="border-t p-4">
+          <ThemeToggle />
         </div>
       </SheetContent>
     </Sheet>

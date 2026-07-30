@@ -21,9 +21,9 @@ function StatTile({
 }) {
   return (
     <div className="min-w-[130px] flex-1 rounded-xl border p-3">
-      <div className="text-xs text-neutral-500">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-base font-semibold">{value}</div>
-      {sub && <div className="text-xs text-neutral-400">{sub}</div>}
+      {sub && <div className="text-xs text-muted-foreground">{sub}</div>}
     </div>
   );
 }
@@ -101,14 +101,14 @@ export default async function CostosPage() {
 
   return (
     <div className="space-y-6">
-      <section className="space-y-3 rounded-xl border bg-white p-4">
+      <section className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="text-sm font-semibold">
           Precio de la bolsa de azúcar (50 kg)
         </h2>
         <AppSettingsForm settings={appSettings} />
       </section>
 
-      <section className="space-y-3 rounded-xl border bg-white p-4">
+      <section className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="text-sm font-semibold">
           Arriendo — pagado en bolsas de azúcar/ha/año
         </h2>
@@ -149,7 +149,7 @@ export default async function CostosPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-neutral-500">
+                <tr className="text-left text-muted-foreground">
                   <th className="py-1 pr-3 font-normal">Lote</th>
                   <th className="py-1 pr-3 font-normal">Propietario</th>
                   <th className="py-1 pr-3 font-normal">Ha</th>
@@ -166,7 +166,7 @@ export default async function CostosPage() {
                     <td className="py-1.5 pr-3 font-medium">{l.id}</td>
                     <td className="py-1.5 pr-3">{l.propietario || "—"}</td>
                     <td className="py-1.5 pr-3">{l.ha}</td>
-                    <td className="py-1.5 pr-3 font-medium text-amber-700">
+                    <td className="py-1.5 pr-3 font-medium text-amber-700 dark:text-amber-300">
                       {l.arriendo}
                     </td>
                     <td className="py-1.5 pr-3">
@@ -185,7 +185,7 @@ export default async function CostosPage() {
                           )
                         : "—"}
                     </td>
-                    <td className="py-1.5 pr-3 text-neutral-500">
+                    <td className="py-1.5 pr-3 text-muted-foreground">
                       {l.arriendo_obs || "Pago único anual"}
                     </td>
                   </tr>
@@ -194,14 +194,14 @@ export default async function CostosPage() {
             </table>
           </div>
         ) : (
-          <p className="py-2 text-center text-xs text-neutral-400">
+          <p className="py-2 text-center text-xs text-muted-foreground">
             Editá los lotes arrendados y cargá las bolsas/ha para calcular el
             arriendo.
           </p>
         )}
       </section>
 
-      <section className="space-y-3 rounded-xl border bg-white p-4">
+      <section className="space-y-3 rounded-xl border bg-card p-4">
         <h2 className="text-sm font-semibold">
           Resumen global — todos los lotes
         </h2>
@@ -236,7 +236,7 @@ export default async function CostosPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-neutral-500">
+                <tr className="text-left text-muted-foreground">
                   <th className="py-1 pr-3 font-normal">Tipo de trabajo</th>
                   <th className="py-1 pr-3 font-normal">Costo total</th>
                   <th className="py-1 pr-3 font-normal">% del total</th>
@@ -250,7 +250,7 @@ export default async function CostosPage() {
                     <td className="py-1.5 pr-3">{fmtMonto(monto)}</td>
                     <td className="py-1.5 pr-3">
                       <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-20 overflow-hidden rounded-full bg-neutral-100">
+                        <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
                           <div
                             className="h-full rounded-full bg-emerald-600"
                             style={{
@@ -272,7 +272,7 @@ export default async function CostosPage() {
             </table>
           </div>
         ) : (
-          <p className="py-2 text-center text-xs text-neutral-400">
+          <p className="py-2 text-center text-xs text-muted-foreground">
             Cargá trabajos en los lotes para ver la distribución de costos.
           </p>
         )}
@@ -287,56 +287,56 @@ export default async function CostosPage() {
             const costoPorHa = costo > 0 && l.ha > 0 ? costo / l.ha : null;
             const trabLote = trabajosData.filter((t) => t.lote_id === l.id);
             return (
-              <div key={l.id} className="rounded-xl border bg-white p-4">
+              <div key={l.id} className="rounded-xl border bg-card p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold">
                       {l.id} — {l.nombre || ""}{" "}
-                      <span className="ml-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-normal text-neutral-600">
+                      <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">
                         {l.estado}
                       </span>
                     </div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-muted-foreground">
                       {l.ha} ha · {l.tipo} · {l.variedad || "—"} · {l.soca}ª
                       soca
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-4 text-center text-sm">
                     <div>
-                      <div className="text-xs text-neutral-400">
+                      <div className="text-xs text-muted-foreground">
                         Costo total
                       </div>
-                      <div className="font-semibold text-amber-700">
+                      <div className="font-semibold text-amber-700 dark:text-amber-300">
                         {costo > 0 ? fmtMonto(costo) : "—"}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-neutral-400">$/ha</div>
+                      <div className="text-xs text-muted-foreground">$/ha</div>
                       <div className="font-semibold">
                         {costoPorHa !== null ? fmtMonto(costoPorHa) : "—"}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-neutral-400">Tn caña</div>
-                      <div className="font-semibold text-emerald-700">
+                      <div className="text-xs text-muted-foreground">Tn caña</div>
+                      <div className="font-semibold text-emerald-700 dark:text-emerald-300">
                         {tnCana > 0 ? tnCana.toFixed(1) : "—"}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-neutral-400">
+                      <div className="text-xs text-muted-foreground">
                         Kg azúcar
                       </div>
-                      <div className="font-semibold text-amber-600">
+                      <div className="font-semibold text-amber-600 dark:text-amber-400">
                         {kgAzucar > 0
                           ? kgAzucar.toLocaleString("es-AR")
                           : "—"}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-neutral-400">
+                      <div className="text-xs text-muted-foreground">
                         $/kg azúcar
                       </div>
-                      <div className="font-semibold text-blue-700">
+                      <div className="font-semibold text-blue-700 dark:text-blue-300">
                         {cxkg !== null ? `$${cxkg.toFixed(2)}` : "—"}
                       </div>
                     </div>
@@ -344,7 +344,7 @@ export default async function CostosPage() {
                 </div>
 
                 {trabLote.length === 0 && (
-                  <p className="mt-2 text-xs text-neutral-400">
+                  <p className="mt-2 text-xs text-muted-foreground">
                     Sin trabajos registrados en este lote.
                   </p>
                 )}

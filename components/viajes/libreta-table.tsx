@@ -31,14 +31,14 @@ const ESTADO_LABEL: Record<Estado, string> = {
 };
 
 const ESTADO_CLASS: Record<Estado, string> = {
-  reconciliado: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  baja: "border-amber-200 bg-amber-50 text-amber-700",
-  pendiente: "border-red-200 bg-red-50 text-red-700",
+  reconciliado: "border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  baja: "border-amber-200 dark:border-amber-500/25 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  pendiente: "border-red-200 dark:border-red-500/25 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300",
 };
 
 const ROW_BG: Record<Estado, string> = {
-  reconciliado: "bg-emerald-50/40",
-  baja: "bg-amber-50",
+  reconciliado: "bg-emerald-50/40 dark:bg-emerald-500/10",
+  baja: "bg-amber-50 dark:bg-amber-500/10",
   pendiente: "",
 };
 
@@ -83,37 +83,37 @@ export function LibretaTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3">
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">Total despachos</div>
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">Total despachos</div>
           <div className="text-lg font-semibold">{cpsCampo.length}</div>
-          <div className="text-xs text-neutral-400">en la libreta</div>
+          <div className="text-xs text-muted-foreground">en la libreta</div>
         </div>
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">✅ Reconciliados</div>
-          <div className="text-lg font-semibold text-emerald-700">
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">✅ Reconciliados</div>
+          <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
             {reconciliados.length}
           </div>
-          <div className="text-xs text-neutral-400">en INFRARUT</div>
+          <div className="text-xs text-muted-foreground">en INFRARUT</div>
         </div>
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">❌ Sin reconciliar</div>
-          <div className="text-lg font-semibold text-red-700">
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">❌ Sin reconciliar</div>
+          <div className="text-lg font-semibold text-red-700 dark:text-red-300">
             {pendientes.length}
           </div>
-          <div className="text-xs text-neutral-400">no están en INFRARUT</div>
+          <div className="text-xs text-muted-foreground">no están en INFRARUT</div>
         </div>
-        <div className="min-w-[130px] flex-1 rounded-xl border bg-white p-3">
-          <div className="text-xs text-neutral-500">⚠ Bajas ARCA</div>
-          <div className="text-lg font-semibold text-amber-700">
+        <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
+          <div className="text-xs text-muted-foreground">⚠ Bajas ARCA</div>
+          <div className="text-lg font-semibold text-amber-700 dark:text-amber-300">
             {bajas.length}
           </div>
-          <div className="text-xs text-neutral-400">a gestionar</div>
+          <div className="text-xs text-muted-foreground">a gestionar</div>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-white p-3">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-3">
         <div className="space-y-1">
-          <label className="text-xs text-neutral-500">Finca</label>
+          <label className="text-xs text-muted-foreground">Finca</label>
           <Select
             value={finca || "todas"}
             onValueChange={(v) => setFinca(v === "todas" ? "" : v)}
@@ -129,7 +129,7 @@ export function LibretaTable({
           </Select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs text-neutral-500">Estado</label>
+          <label className="text-xs text-muted-foreground">Estado</label>
           <Select
             value={estado || "todos"}
             onValueChange={(v) => setEstado(v === "todos" ? "" : v)}
@@ -146,7 +146,7 @@ export function LibretaTable({
           </Select>
         </div>
         <div className="space-y-1">
-          <label className="text-xs text-neutral-500">Buscar remito</label>
+          <label className="text-xs text-muted-foreground">Buscar remito</label>
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -156,7 +156,7 @@ export function LibretaTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -176,7 +176,7 @@ export function LibretaTable({
               const est = estadoDe(x.cp);
               return (
                 <TableRow key={x.cp} className={ROW_BG[est]}>
-                  <TableCell className="font-semibold text-blue-700">
+                  <TableCell className="font-semibold text-blue-700 dark:text-blue-300">
                     {x.cp}
                   </TableCell>
                   <TableCell>{(x.fecha ?? "").slice(5)}</TableCell>
@@ -187,13 +187,13 @@ export function LibretaTable({
                   </TableCell>
                   <TableCell className="text-xs">{getMatricula(x)}</TableCell>
                   <TableCell className="text-xs">{getCamNum(x)}</TableCell>
-                  <TableCell className="text-xs text-neutral-500">
+                  <TableCell className="text-xs text-muted-foreground">
                     {getDesp(x)}
                   </TableCell>
-                  <TableCell className="text-xs text-neutral-500">
+                  <TableCell className="text-xs text-muted-foreground">
                     {getHora(x)}
                   </TableCell>
-                  <TableCell className="max-w-[160px] truncate text-xs text-neutral-500">
+                  <TableCell className="max-w-[160px] truncate text-xs text-muted-foreground">
                     {x.obs || "—"}
                   </TableCell>
                   <TableCell>
@@ -208,7 +208,7 @@ export function LibretaTable({
               <TableRow>
                 <TableCell
                   colSpan={9}
-                  className="py-8 text-center text-neutral-400"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   Sin resultados para el filtro seleccionado.
                 </TableCell>

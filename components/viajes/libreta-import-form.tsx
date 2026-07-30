@@ -56,7 +56,7 @@ export function LibretaImportForm() {
   if (!canWrite) return null;
 
   return (
-    <div className="space-y-3 rounded-xl border bg-white p-4">
+    <div className="space-y-3 rounded-xl border bg-card p-4">
       <h2 className="text-sm font-semibold">Subir libreta del campo (Excel)</h2>
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
@@ -92,18 +92,18 @@ export function LibretaImportForm() {
           <p>
             <strong>{parsed.libreta.valid.length}</strong> despachos leídos
             {parsed.bajasCandidatas.length > 0 && (
-              <span className="ml-1 text-amber-700">
+              <span className="ml-1 text-amber-700 dark:text-amber-300">
                 · {parsed.bajasCandidatas.length} bajas ARCA detectadas
               </span>
             )}
             {parsed.libreta.errors.length > 0 && (
-              <span className="ml-1 text-red-600">
+              <span className="ml-1 text-red-600 dark:text-red-400">
                 · {parsed.libreta.errors.length} con errores
               </span>
             )}
           </p>
           {parsed.libreta.errors.length > 0 && (
-            <ul className="max-h-32 space-y-0.5 overflow-y-auto text-xs text-red-600">
+            <ul className="max-h-32 space-y-0.5 overflow-y-auto text-xs text-red-600 dark:text-red-400">
               {parsed.libreta.errors.slice(0, 10).map((e) => (
                 <li key={e.row}>
                   Fila {e.row}: {e.errors.join(", ")}
@@ -126,10 +126,10 @@ export function LibretaImportForm() {
       )}
 
       {result?.status === "error" && (
-        <p className="text-sm text-red-600">{result.error}</p>
+        <p className="text-sm text-red-600 dark:text-red-400">{result.error}</p>
       )}
       {result?.status === "success" && (
-        <p className="text-sm text-emerald-700">
+        <p className="text-sm text-emerald-700 dark:text-emerald-300">
           Se cargaron {result.count} despachos
           {result.bajas > 0 && ` (${result.bajas} bajas ARCA nuevas)`}.
         </p>

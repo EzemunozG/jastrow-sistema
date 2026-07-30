@@ -79,13 +79,13 @@ export function AppSettingsForm({ settings }: { settings: AppSettings }) {
 
       {bolsaUSD && kgUSD && (
         <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">
+          <span className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 font-medium text-emerald-700 dark:text-emerald-300">
             ${(settings.precio_bolsa / PESO_BOLSA).toFixed(0)}/kg
           </span>
-          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">
+          <span className="rounded-full bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 text-blue-700 dark:text-blue-300">
             USD {bolsaUSD}/bolsa (blue ${settings.tc_blue})
           </span>
-          <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-neutral-600">
+          <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
             USD {kgUSD}/kg
           </span>
         </div>
@@ -94,14 +94,14 @@ export function AppSettingsForm({ settings }: { settings: AppSettings }) {
       {canWrite && (
         <>
           {state.status === "error" && (
-            <p className="text-sm text-red-600">{state.error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
           )}
 
           <Button type="submit" size="sm" disabled={pending}>
             {pending ? "Guardando…" : "Guardar"}
           </Button>
           {state.status === "success" && (
-            <span className="ml-2 text-xs text-emerald-700">Guardado.</span>
+            <span className="ml-2 text-xs text-emerald-700 dark:text-emerald-300">Guardado.</span>
           )}
         </>
       )}

@@ -14,7 +14,7 @@ export default async function AppLayout({
 
   return (
     <RoleProvider role={profile.role}>
-      <div className="flex min-h-screen flex-col bg-[#F4F3F0]">
+      <div className="flex min-h-screen flex-col bg-background">
         {profile.role === "viewer" && <ReadOnlyBanner />}
         <Topbar username={profile.username} isAdmin={isAdmin} />
         <div className="flex flex-1">

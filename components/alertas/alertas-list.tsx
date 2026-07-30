@@ -29,15 +29,15 @@ const ICONS: Record<string, typeof IconAlertCircle> = {
 };
 
 const SEVERITY_CLASS: Record<Alert["severity"], string> = {
-  bad: "border-l-red-600 bg-red-50 text-red-900",
-  warn: "border-l-amber-600 bg-amber-50 text-amber-900",
-  info: "border-l-blue-600 bg-blue-50 text-blue-900",
+  bad: "border-l-red-600 bg-red-50 dark:bg-red-500/10 text-red-900 dark:text-red-200",
+  warn: "border-l-amber-600 bg-amber-50 dark:bg-amber-500/10 text-amber-900 dark:text-amber-200",
+  info: "border-l-blue-600 bg-blue-50 dark:bg-blue-500/10 text-blue-900 dark:text-blue-200",
 };
 
 const ICON_CLASS: Record<Alert["severity"], string> = {
-  bad: "text-red-600",
-  warn: "text-amber-600",
-  info: "text-blue-600",
+  bad: "text-red-600 dark:text-red-400",
+  warn: "text-amber-600 dark:text-amber-400",
+  info: "text-blue-600 dark:text-blue-400",
 };
 
 // index_10.html:3113-3190 (renderAlertas) — mismo orden y umbrales, ver lib/alerts.ts.
@@ -52,7 +52,7 @@ export function AlertasList({
 }) {
   if (alerts.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-6 text-center text-sm text-neutral-400">
+      <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
         Sin datos de INFRARUT cargados todavía — las alertas se calculan sobre esos
         datos (ver Resumen).
       </div>
@@ -62,7 +62,7 @@ export function AlertasList({
   return (
     <div className="space-y-4">
       {desde && hasta && (
-        <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-neutral-400 uppercase">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
           <IconCalendar size={13} />
           Análisis acumulado — {desde} al {hasta} · generado automáticamente
         </div>

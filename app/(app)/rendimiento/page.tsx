@@ -117,7 +117,7 @@ export default async function RendimientoPage({
                 sub="lotes con datos de este ingenio"
                 total={totalizarRendimiento(lotes)}
               />
-              <div className="rounded-xl border bg-white p-4">
+              <div className="rounded-xl border bg-card p-4">
                 <LoteTable lotes={lotes} />
               </div>
             </div>

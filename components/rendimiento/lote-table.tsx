@@ -27,7 +27,7 @@ export function LoteTable({ lotes }: { lotes: RendimientoLote[] }) {
 
   if (lotes.length === 0) {
     return (
-      <p className="py-4 text-center text-xs text-neutral-400">
+      <p className="py-4 text-center text-xs text-muted-foreground">
         Todavía no hay lotes con metadata cargada para este ingenio.
       </p>
     );
@@ -49,7 +49,7 @@ export function LoteTable({ lotes }: { lotes: RendimientoLote[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="text-left text-neutral-500">
+          <tr className="text-left text-muted-foreground">
             {th("Lote", "nombre")}
             {th("Ha", "ha")}
             {th("Surcos totales", "surcos")}
@@ -65,7 +65,7 @@ export function LoteTable({ lotes }: { lotes: RendimientoLote[] }) {
             l.n === 0 ? (
               <tr
                 key={l.lote_key}
-                className="border-t text-neutral-400 transition-colors hover:bg-neutral-50"
+                className="border-t text-muted-foreground transition-colors hover:bg-muted"
               >
                 <td className="py-1.5 pr-3 font-medium">{l.nombre}</td>
                 <td className="py-1.5 pr-3">{formatNumber(l.ha, l.ha % 1 ? 1 : 0)}</td>
@@ -79,7 +79,7 @@ export function LoteTable({ lotes }: { lotes: RendimientoLote[] }) {
             ) : (
               <tr
                 key={l.lote_key}
-                className="border-t transition-colors hover:bg-neutral-50"
+                className="border-t transition-colors hover:bg-muted"
               >
                 <td className="py-1.5 pr-3 font-semibold">{l.nombre}</td>
                 <td className="py-1.5 pr-3">{formatNumber(l.ha, l.ha % 1 ? 1 : 0)}</td>
@@ -94,8 +94,8 @@ export function LoteTable({ lotes }: { lotes: RendimientoLote[] }) {
                   <span
                     className={`rounded-full px-2 py-0.5 font-medium ${
                       l.rdto_promedio >= META
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-amber-50 text-amber-700"
+                        ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                        : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"
                     }`}
                   >
                     {formatPercent(l.rdto_promedio)}
