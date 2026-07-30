@@ -33,7 +33,7 @@ export async function login(
     return { message: "Usuario o contraseña incorrectos" };
   }
 
-  redirect("/resumen");
+  redirect("/mapa");
 }
 
 export async function logout() {
