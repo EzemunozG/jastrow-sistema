@@ -45,6 +45,27 @@ export const LOTE_FISICO_POR_KEY: Record<string, string[]> = {
   "TALA POSO 1": [],
 };
 
+// Detecta un lote FÍSICO asignado a más de un lote_key. Eso sería un bug: el costo de
+// las recetas/trabajos de ese lote físico se contaría en cada lote_key (double-count
+// del "Gastado" y aplicaciones repetidas). computeMapaLotes() llama a esto y falla
+// ruidosamente en dev / loguea en prod para que no pase en silencio (ver el test en
+// lib/lot-map.test.ts). Devuelve [] si el mapeo está sano.
+export function dupsLoteFisico(
+  map: Record<string, string[]> = LOTE_FISICO_POR_KEY,
+): { fisico: string; keys: string[] }[] {
+  const usos = new Map<string, string[]>();
+  for (const [key, fisicos] of Object.entries(map)) {
+    for (const f of fisicos) {
+      const arr = usos.get(f);
+      if (arr) arr.push(key);
+      else usos.set(f, [key]);
+    }
+  }
+  return [...usos.entries()]
+    .filter(([, keys]) => keys.length > 1)
+    .map(([fisico, keys]) => ({ fisico, keys }));
+}
+
 export type MapaTrip = {
   remito: number | null;
   ingenio_id: string;
@@ -149,6 +170,18 @@ export function computeMapaLotes(params: {
     tcBlue,
     ingenioNombre,
   } = params;
+
+  // Guard: un lote físico en más de un lote_key duplicaría sus aplicaciones/gasto.
+  // En dev revienta (imposible no verlo); en prod loguea y sigue (no tira abajo el
+  // home por un error de mapeo). El test lib/lot-map.test.ts lo cubre formalmente.
+  const dups = dupsLoteFisico();
+  if (dups.length > 0) {
+    const msg =
+      "LOTE_FISICO_POR_KEY: lote(s) físico(s) en más de un lote_key (double-count de aplicaciones): " +
+      dups.map((d) => `${d.fisico} → [${d.keys.join(", ")}]`).join("; ");
+    if (process.env.NODE_ENV !== "production") throw new Error(msg);
+    console.error(msg);
+  }
 
   const bajasSet = new Set(bajas.map((b) => b.cp));
   const tripByRemito = new Map<number, MapaTrip>();
