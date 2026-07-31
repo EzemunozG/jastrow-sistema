@@ -43,6 +43,26 @@ const DOT: Record<ColorLote, string> = {
   "sin-cosecha": "bg-muted-foreground/40",
 };
 
+// Relleno de la barra de avance (color sólido del estado; va bien en ambos temas).
+const BAR_FILL: Record<ColorLote, string> = {
+  verde: "bg-emerald-500",
+  amarillo: "bg-amber-500",
+  rojo: "bg-red-500",
+  "sin-cosecha": "bg-muted-foreground/40",
+};
+
+const ALERT_DOT: Record<"bad" | "warn", string> = {
+  bad: "bg-red-500",
+  warn: "bg-amber-500",
+};
+
+// Banner de alerta en el detalle: fondo suave por severidad, con variante dark.
+const ALERT_BANNER: Record<"bad" | "warn" | "info", string> = {
+  bad: "border-l-red-500 bg-red-50 text-red-800 dark:bg-red-500/10 dark:text-red-200",
+  warn: "border-l-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200",
+  info: "border-l-blue-500 bg-blue-50 text-blue-900 dark:bg-blue-500/10 dark:text-blue-200",
+};
+
 function usd(n: number): string {
   return `US$ ${formatNumber(n, 0)}`;
 }
@@ -54,6 +74,10 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
       val: lote.rdto_promedio != null ? formatPercent(lote.rdto_promedio) : "—",
     },
     { lbl: "Cosechado", val: formatTn(lote.cosechado_tn) },
+    {
+      lbl: "Avance",
+      val: lote.avance_pct != null ? formatPercent(lote.avance_pct, 0) : "—",
+    },
     { lbl: "Viajes", val: String(lote.viajes) },
     { lbl: "Gastado", val: lote.aplicaciones.length > 0 ? usd(lote.gastado_usd) : "—" },
   ];
@@ -69,7 +93,20 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {lote.alertas.length > 0 && (
+        <div className="space-y-1.5">
+          {lote.alertas.map((a, i) => (
+            <div
+              key={i}
+              className={`rounded border-l-4 px-3 py-1.5 text-xs leading-relaxed ${ALERT_BANNER[a.severity]}`}
+            >
+              {a.message}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {metrics.map((m) => (
           <div key={m.lbl} className="rounded-lg border p-3">
             <div className="text-xs text-muted-foreground">{m.lbl}</div>
@@ -168,14 +205,22 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
               }`}
             >
               <div className="flex items-start justify-between gap-2">
-                <span className="text-sm font-semibold text-foreground">
+                <span className="min-w-0 truncate text-sm font-semibold text-foreground">
                   {c.nombre}
                 </span>
-                <span
-                  className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium ${RDTO_BADGE[c.color]}`}
-                >
-                  {c.rdto_promedio != null ? formatPercent(c.rdto_promedio, 1) : "s/d"}
-                </span>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {c.alerta_severidad && (
+                    <span
+                      className={`size-[9px] rounded-full ${ALERT_DOT[c.alerta_severidad]}`}
+                      title="Este lote tiene alertas"
+                    />
+                  )}
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[11px] font-medium ${RDTO_BADGE[c.color]}`}
+                  >
+                    {c.rdto_promedio != null ? formatPercent(c.rdto_promedio, 1) : "s/d"}
+                  </span>
+                </div>
               </div>
 
               {c.viajes > 0 ? (
@@ -183,14 +228,19 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
                   <div className={`text-2xl font-bold ${NUM_STYLE[c.color]}`}>
                     {formatNumber(c.tn_surco, 2)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    tn/surco · {formatNumber(c.ha)} ha
+                  <div className="text-xs text-muted-foreground">tn/surco</div>
+                  <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-foreground/10">
+                    <div
+                      className={`h-full rounded-full ${BAR_FILL[c.color]}`}
+                      style={{ width: `${c.avance_pct ?? 0}%` }}
+                    />
                   </div>
-                  {c.parcial && (
-                    <span className="mt-0.5 inline-flex w-fit rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground dark:bg-white/10">
-                      cosecha en curso · parcial
-                    </span>
-                  )}
+                  <div className="text-[11px] text-muted-foreground">
+                    {c.avance_pct != null
+                      ? `${formatNumber(c.avance_pct, 0)}% cosechado · `
+                      : ""}
+                    {formatNumber(c.ha)} ha
+                  </div>
                 </>
               ) : (
                 <>

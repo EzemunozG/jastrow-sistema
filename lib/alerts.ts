@@ -17,6 +17,7 @@ export type Alert = {
   severity: "bad" | "warn" | "info";
   icon: string; // nombre de ícono Tabler, ej. "trending-down"
   message: string;
+  lote_key?: string; // lote al que pertenece; undefined = alerta a nivel ingenio
 };
 
 function fmt(fecha: string | null): string {
@@ -41,7 +42,7 @@ function infrarutsPorLote(
   infraruts: InfrarutRow[],
   bajas: BajaArcaRow[],
   lotesIngenio: LoteIngenioRow[],
-): { nombre: string; rows: InfrarutRow[] }[] {
+): { lote_key: string; nombre: string; rows: InfrarutRow[] }[] {
   const { reconciliados, infrarutPorRemito } = reconciliar(cpsCampo, infraruts, bajas);
   const porLoteKey = new Map<string, InfrarutRow[]>();
   for (const x of reconciliados) {
@@ -51,10 +52,11 @@ function infrarutsPorLote(
     if (!porLoteKey.has(x.lote)) porLoteKey.set(x.lote, []);
     porLoteKey.get(x.lote)!.push(inf);
   }
-  const result: { nombre: string; rows: InfrarutRow[] }[] = [];
+  const result: { lote_key: string; nombre: string; rows: InfrarutRow[] }[] = [];
   for (const meta of lotesIngenio) {
     const rows = porLoteKey.get(meta.lote_key);
-    if (rows && rows.length > 0) result.push({ nombre: meta.nombre, rows });
+    if (rows && rows.length > 0)
+      result.push({ lote_key: meta.lote_key, nombre: meta.nombre, rows });
   }
   return result;
 }
@@ -80,7 +82,7 @@ export function computeAlerts(
   let lotesComparables = 0;
   let lotesQueCaen = 0;
 
-  for (const { nombre, rows } of lotes) {
+  for (const { lote_key, nombre, rows } of lotes) {
     const fechasLote = [...new Set(rows.map((r) => r.fecha))].sort();
     const lastF = fechasLote[fechasLote.length - 1];
     // "Día anterior" = día anterior CON DATOS para este lote, no día calendario.
@@ -97,6 +99,7 @@ export function computeAlerts(
         lotesQueCaen++;
         alerts.push({
           severity: "bad",
+          lote_key,
           icon: "trending-down",
           message: `${nombre}: caída de ${formatNumber(Math.abs(delta), 2)} pp de Rdto% vs día anterior (${formatPercent(prev.rdto)} → ${formatPercent(last.rdto)}, ${fmt(prevF)} → ${fmt(lastF)}). Verificar madurez del sector, regulación de cosechadora y lluvias previas.`,
         });
@@ -107,6 +110,7 @@ export function computeAlerts(
     if (last.rdto < META) {
       alerts.push({
         severity: "bad",
+        lote_key,
         icon: "alert-circle",
         message: `${nombre} bajo la meta el ${fmt(lastF)}: ${formatPercent(last.rdto)} vs meta ${formatPercent(META, 1)}${prev ? ` (día anterior: ${formatPercent(prev.rdto)})` : ""}. Viajes más críticos: ${peoresRemitos(lastRows) || "—"}.`,
       });
@@ -116,6 +120,7 @@ export function computeAlerts(
     if (last.pureza < UMBRALES.purezaCritica) {
       alerts.push({
         severity: "bad",
+        lote_key,
         icon: "droplet-off",
         message: `Pureza crítica en ${nombre}: ${formatPercent(last.pureza)} promedio (mín. recomendado: ${formatPercent(UMBRALES.purezaWarn, 0)}). Indica azúcares reductores, material vegetal o caña deteriorada.`,
       });
@@ -127,6 +132,7 @@ export function computeAlerts(
       if (deltaPol < -0.5) {
         alerts.push({
           severity: "warn",
+          lote_key,
           icon: "droplet",
           message: `POL cayó ${formatNumber(Math.abs(deltaPol), 2)} pp en ${nombre} en un solo día (${formatPercent(prev.pol)} → ${formatPercent(last.pol)}). Posibles causas: lluvia reciente, sector menos maduro o caña más joven.`,
         });
@@ -137,6 +143,7 @@ export function computeAlerts(
     if (last.trash_pct > UMBRALES.trashAlerta) {
       alerts.push({
         severity: "warn",
+        lote_key,
         icon: "leaf",
         message: `Trash alto en ${nombre}: ${formatPercent(last.trash_pct)} el ${fmt(lastF)}. Revisar regulación de extractores de la cosechadora.`,
       });
@@ -153,12 +160,14 @@ export function computeAlerts(
       if (Math.abs(delta) < 0.15) {
         alerts.push({
           severity: "info",
+          lote_key,
           icon: "chart-line",
           message: `${nombre}: rendimiento estable (${formatPercent(ini)} → ${formatPercent(fin)} comparando primeros y últimos 3 días).`,
         });
       } else {
         alerts.push({
           severity: "info",
+          lote_key,
           icon: "chart-line",
           message: `${nombre}: tendencia ${delta > 0 ? "positiva ▲" : "negativa ▼"} de ${delta > 0 ? "+" : ""}${formatNumber(delta, 2)} pp (${formatPercent(ini)} → ${formatPercent(fin)}).`,
         });
