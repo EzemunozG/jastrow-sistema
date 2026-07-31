@@ -16,12 +16,6 @@ import type { Alert } from "./alerts";
 // cosas distintas, no mezclar (decisión del usuario, 2026-07-30).
 export const RDTO_AMARILLO = 9;
 
-// ── Umbrales de tn/surco FINAL (para cuando exista noción de "lote cerrado" y el color
-// pueda pasar a tn/surco definitivo). Hoy NO se usan para colorear — el color va por
-// rdto. Viven en app_settings para poder calibrarlos sin deploy; estos son solo el
-// fallback si la migración de columnas todavía no se aplicó.
-export const TN_SURCO_UMBRAL_DEFAULT = { verde: 5.5, amarillo: 4.5 };
-
 export const SURCOS_POR_HA_DEFAULT = 61; // fallback si lotes_ingenio.surcos_por_ha viniera null
 
 // ── Rinde esperado (tn/ha) para la barra de avance de cosecha: avance = tn cosechadas
