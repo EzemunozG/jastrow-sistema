@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { META } from "@/lib/business-rules";
+import { chartTooltipProps } from "@/components/ui/chart-tooltip";
 
 // Port de drawRdto() de index_10.html:1189-1208: barras de Rdto% por viaje del
 // último día cargado, ordenadas por CP, con la meta como línea punteada. Coloreadas
@@ -49,6 +50,7 @@ export function RdtoViajeChart({ data }: { data: RdtoViajePoint[] }) {
           width={48}
         />
         <Tooltip
+          {...chartTooltipProps}
           formatter={(value) => `${Number(value).toFixed(2)}%`}
           labelFormatter={(cp) => `CP ${cp}`}
         />
