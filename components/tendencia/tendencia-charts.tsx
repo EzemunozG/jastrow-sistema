@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { chartTooltipProps } from "@/components/ui/chart-tooltip";
 
 // Coloreado por ingenio (no por finca_id): desde el soporte multi-ingenio ese campo ya
 // no distingue de forma unívoca entre ingenios — ver rdto-viaje-chart.tsx, mismo
@@ -53,6 +54,7 @@ function TrendLineChart({
           width={48}
         />
         <Tooltip
+          {...chartTooltipProps}
           formatter={(value) => `${Number(value).toFixed(2)}${unit ?? ""}`}
         />
         <Legend wrapperStyle={{ fontSize: 12 }} />
