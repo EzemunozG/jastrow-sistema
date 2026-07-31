@@ -43,6 +43,8 @@ describe("prorrateo de recetas compartidas", () => {
       { id: "L4-TP3", ha: 60 },
     ],
     tcBlue: 1,
+    rindeEsperadoDefault: 70,
+    alertasPorLote: {},
     ingenioNombre: (id) => id,
   });
   const tp2 = cards.find((c) => c.lote_key === "TALA POSO 2")!;

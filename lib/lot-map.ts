@@ -7,6 +7,7 @@
 // REMITO (nunca por carta de porte). Los remitos dados de baja (ARCA) se excluyen.
 
 import { META } from "./business-rules";
+import type { Alert } from "./alerts";
 
 // ── Umbrales de COLOR de la tarjeta: por rdto% promedio vs meta (10%). El rdto es
 // comparable aunque el lote esté a medio cosechar, a diferencia del tn/surco (que
@@ -22,6 +23,12 @@ export const RDTO_AMARILLO = 9;
 export const TN_SURCO_UMBRAL_DEFAULT = { verde: 5.5, amarillo: 4.5 };
 
 export const SURCOS_POR_HA_DEFAULT = 61; // fallback si lotes_ingenio.surcos_por_ha viniera null
+
+// ── Rinde esperado (tn/ha) para la barra de avance de cosecha: avance = tn cosechadas
+// ÷ (ha × rinde), cap 100%. Cada lote puede sobreescribirlo (lotes_ingenio.
+// rinde_esperado_tn_ha); el default global vive en app_settings; esto es el fallback si
+// la migración 20260730000001 todavía no se aplicó.
+export const RINDE_ESPERADO_DEFAULT = 70;
 
 // ── Mapeo lote_key (libreta / lotes_ingenio) → lote(s) FÍSICO(s) (tabla `lotes`, ids
 // L4-* / VA-*), para poder traer las aplicaciones (recetas/trabajos) de cada lote. La
@@ -119,7 +126,7 @@ export type LoteMapCard = {
   kg_neto_total: number;
   cosechado_tn: number;
   tn_surco: number;
-  parcial: boolean; // cosecha en curso (hoy siempre true cuando hay viajes)
+  avance_pct: number | null; // % de cosecha vs. tn esperadas; null si no cosechó
   rdto_promedio: number | null;
   ingenio_id: string | null; // derivado de los viajes, NO hardcodeado
   ingenio_nombre: string | null;
@@ -127,6 +134,8 @@ export type LoteMapCard = {
   aplicaciones: Aplicacion[];
   gastado_usd: number;
   usd_por_ha: number;
+  alertas: Alert[]; // alertas de ESTE lote (severidad bad/warn/info)
+  alerta_severidad: "bad" | "warn" | null; // para el punto de la tarjeta
 };
 
 function avgPresente(vals: (number | null)[]): number | null {
@@ -147,6 +156,7 @@ export function computeMapaLotes(params: {
     nombre: string;
     ha: number;
     surcos_por_ha: number | null;
+    rinde_esperado_tn_ha?: number | null; // override por lote; null = usa el default
   }[];
   cpsCampo: MapaCpCampo[];
   trips: MapaTrip[];
@@ -158,6 +168,8 @@ export function computeMapaLotes(params: {
   productos: ProductoLite[];
   lotesFisicos: { id: string; ha: number }[]; // ha del lote físico, para prorratear
   tcBlue: number;
+  rindeEsperadoDefault: number; // tn/ha esperadas (global, de app_settings)
+  alertasPorLote: Record<string, Alert[]>; // alertas ya computadas, por lote_key
   ingenioNombre: (id: string) => string;
 }): LoteMapCard[] {
   const {
@@ -172,6 +184,8 @@ export function computeMapaLotes(params: {
     productos,
     lotesFisicos,
     tcBlue,
+    rindeEsperadoDefault,
+    alertasPorLote,
     ingenioNombre,
   } = params;
 
@@ -236,9 +250,29 @@ export function computeMapaLotes(params: {
   const cards: LoteMapCard[] = lotesIngenio.map((meta) => {
     const loteTrips = tripsByLote.get(meta.lote_key) ?? [];
     const kgNeto = loteTrips.reduce((s, t) => s + (t.kg_neto || 0), 0);
+    const cosechadoTn = kgNeto / 1000;
     const surcosHa = meta.surcos_por_ha || SURCOS_POR_HA_DEFAULT;
     const surcos = meta.ha * surcosHa;
     const rdto = avgPresente(loteTrips.map((t) => t.rdto));
+
+    // Avance de cosecha = tn cosechadas ÷ tn esperadas (ha × rinde), cap 100%. null si
+    // el lote todavía no cosechó (la tarjeta no muestra barra en ese caso).
+    const rinde = meta.rinde_esperado_tn_ha ?? rindeEsperadoDefault;
+    const tnEsperadas = meta.ha * rinde;
+    const avancePct =
+      loteTrips.length > 0 && tnEsperadas > 0
+        ? Math.min(100, (cosechadoTn / tnEsperadas) * 100)
+        : null;
+
+    // Alertas de este lote (ya computadas una vez en la page) + severidad para el punto.
+    const alertas = alertasPorLote[meta.lote_key] ?? [];
+    const alertaSeveridad: "bad" | "warn" | null = alertas.some(
+      (a) => a.severity === "bad",
+    )
+      ? "bad"
+      : alertas.some((a) => a.severity === "warn")
+        ? "warn"
+        : null;
 
     // Ingenio derivado de los viajes (el más frecuente; en la práctica son todos el
     // mismo). null si el lote todavía no cosechó.
@@ -320,9 +354,9 @@ export function computeMapaLotes(params: {
       surcos_por_ha: surcosHa,
       viajes: loteTrips.length,
       kg_neto_total: kgNeto,
-      cosechado_tn: kgNeto / 1000,
+      cosechado_tn: cosechadoTn,
       tn_surco: surcos > 0 ? kgNeto / 1000 / surcos : 0,
-      parcial: loteTrips.length > 0, // sin noción de "lote cerrado" todavía → todos parciales
+      avance_pct: avancePct,
       rdto_promedio: rdto,
       ingenio_id: ingenioId,
       ingenio_nombre: ingenioId ? ingenioNombre(ingenioId) : null,
@@ -330,6 +364,8 @@ export function computeMapaLotes(params: {
       aplicaciones,
       gastado_usd: gastadoUsd,
       usd_por_ha: meta.ha > 0 ? gastadoUsd / meta.ha : 0,
+      alertas,
+      alerta_severidad: alertaSeveridad,
     };
   });
 

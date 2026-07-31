@@ -51,6 +51,7 @@ export default async function CostosPage() {
     tc_oficial: 0,
     tc_blue: 0,
     tc_ccl: 0,
+    rinde_esperado_tn_ha: 70,
     updated_at: new Date().toISOString(),
   };
 

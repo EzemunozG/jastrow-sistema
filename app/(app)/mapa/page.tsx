@@ -2,8 +2,18 @@ export const dynamic = "force-dynamic";
 
 import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { LoteMapGrid } from "@/components/mapa/lote-map-grid";
-import { INGENIOS } from "@/lib/business-rules";
-import { computeMapaLotes, type MapaTrip } from "@/lib/lot-map";
+import { computeAlerts, type Alert } from "@/lib/alerts";
+import { INGENIOS, type InfrarutRow } from "@/lib/business-rules";
+import {
+  computeMapaLotes,
+  RINDE_ESPERADO_DEFAULT,
+  type MapaTrip,
+} from "@/lib/lot-map";
+import type {
+  BajaArcaRow,
+  CpCampoRow,
+  LoteIngenioRow,
+} from "@/lib/reconciliation";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function MapaPage() {
@@ -21,12 +31,13 @@ export default async function MapaPage() {
     { data: lotesFisicos },
     { data: appSettings },
   ] = await Promise.all([
-    supabase.from("lotes_ingenio").select("lote_key, nombre, ha, surcos_por_ha"),
-    supabase.from("cps_campo").select("cp, lote"),
-    // rdto se preserva nullable a propósito (registros provisionales pueden traerlo
-    // null) — el cálculo promedia solo sobre valores presentes. Ver lib/lot-map.ts.
-    supabase.from("infraruts").select("remito, ingenio_id, kg_neto, rdto"),
-    supabase.from("bajas_arca").select("cp"),
+    // select("*") en lotes_ingenio/app_settings a propósito: si la migración de
+    // rinde_esperado_tn_ha (20260730000001) todavía no se aplicó, la columna no viene
+    // y el fallback en código la cubre — pedirla explícita reventaría el select.
+    supabase.from("lotes_ingenio").select("*"),
+    supabase.from("cps_campo").select("*"),
+    supabase.from("infraruts").select("*"),
+    supabase.from("bajas_arca").select("*"),
     supabase.from("receta_lotes").select("receta_id, lote_id"),
     supabase
       .from("receta_items")
@@ -40,6 +51,8 @@ export default async function MapaPage() {
     supabase.from("app_settings").select("*").eq("id", 1).maybeSingle(),
   ]);
 
+  // rdto se preserva nullable para el promedio del mapa (registros provisionales
+  // pueden traerlo null → se promedia solo sobre presentes).
   const trips: MapaTrip[] = (infraruts ?? []).map((r) => ({
     remito: r.remito,
     ingenio_id: r.ingenio_id,
@@ -47,11 +60,66 @@ export default async function MapaPage() {
     rdto: r.rdto,
   }));
 
+  // Filas completas para computeAlerts (mismo mapeo que /alertas, para que los puntos
+  // del mapa coincidan exactamente con lo que muestra esa pantalla).
+  const infrarutRows: InfrarutRow[] = (infraruts ?? []).map((r) => ({
+    cp: r.cp,
+    ingenio_id: r.ingenio_id,
+    remito: r.remito,
+    fecha: r.fecha,
+    finca_id: r.finca_id,
+    veh: r.veh,
+    maq: r.maq,
+    kg_neto: r.kg_neto ?? 0,
+    kg_trash: r.kg_trash ?? 0,
+    kg_azucar: r.kg_azucar ?? 0,
+    brix: r.brix ?? 0,
+    pol: r.pol ?? 0,
+    pureza: r.pureza ?? 0,
+    rdto: r.rdto ?? 0,
+  }));
+  const cpsCampoRows: CpCampoRow[] = (cpsCampo ?? []).map((c) => ({
+    cp: c.cp,
+    ingenio_id: c.ingenio_id,
+    fecha: c.fecha,
+    camion: c.camion,
+    obs: c.obs,
+    lote: c.lote,
+  }));
+  const bajasRows: BajaArcaRow[] = (bajas ?? []).map((b) => ({
+    cp: b.cp,
+    gestionado: b.gestionado,
+  }));
+  const lotesIngenioRows: LoteIngenioRow[] = (lotesIngenio ?? []).map((l) => ({
+    id: l.id,
+    nombre: l.nombre,
+    ingenio_id: l.ingenio_id,
+    lote_key: l.lote_key,
+    ha: l.ha,
+    surcos_por_ha: l.surcos_por_ha,
+  }));
+
+  // Alertas UNA sola vez para todo el mapa (no por tarjeta). Con datos de ambos
+  // ingenios juntos: las reglas por lote agrupan por lote_key (único entre ingenios),
+  // así que salen bien; las reglas a nivel ingenio (sin lote_key) se descartan acá —
+  // no pintan puntos en lotes.
+  const alertasPorLote: Record<string, Alert[]> = {};
+  for (const a of computeAlerts(cpsCampoRows, infrarutRows, bajasRows, lotesIngenioRows)) {
+    if (!a.lote_key) continue;
+    (alertasPorLote[a.lote_key] ??= []).push(a);
+  }
+
   const cards = computeMapaLotes({
-    lotesIngenio: lotesIngenio ?? [],
-    cpsCampo: cpsCampo ?? [],
+    lotesIngenio: (lotesIngenio ?? []).map((l) => ({
+      lote_key: l.lote_key,
+      nombre: l.nombre,
+      ha: l.ha,
+      surcos_por_ha: l.surcos_por_ha,
+      rinde_esperado_tn_ha: l.rinde_esperado_tn_ha ?? null,
+    })),
+    cpsCampo: (cpsCampo ?? []).map((c) => ({ cp: c.cp, lote: c.lote })),
     trips,
-    bajas: bajas ?? [],
+    bajas: (bajas ?? []).map((b) => ({ cp: b.cp })),
     recetaLotes: recetaLotes ?? [],
     recetaItems: recetaItems ?? [],
     trabajos: trabajos ?? [],
@@ -59,6 +127,8 @@ export default async function MapaPage() {
     productos: productos ?? [],
     lotesFisicos: (lotesFisicos ?? []).map((l) => ({ id: l.id, ha: l.ha ?? 0 })),
     tcBlue: appSettings?.tc_blue ?? 1495,
+    rindeEsperadoDefault: appSettings?.rinde_esperado_tn_ha ?? RINDE_ESPERADO_DEFAULT,
+    alertasPorLote,
     ingenioNombre: (id) => INGENIOS.find((i) => i.id === id)?.nombre ?? id,
   });
 
@@ -68,8 +138,9 @@ export default async function MapaPage() {
       <div>
         <h1 className="text-lg font-semibold">Mapa de lotes</h1>
         <p className="text-sm text-muted-foreground">
-          Un vistazo a toda la zafra: el número grande es tn/surco (parcial mientras la
-          cosecha está en curso); el color va por Rdto% promedio vs la meta de 10%.
+          Un vistazo a toda la zafra: el número grande es tn/surco, la barra el avance
+          de cosecha, y el color va por Rdto% promedio vs la meta de 10%. El punto rojo
+          o amarillo marca lotes con alertas.
         </p>
       </div>
 

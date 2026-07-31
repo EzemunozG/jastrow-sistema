@@ -93,6 +93,7 @@ export type Database = {
           lote_key: string;
           ha: number;
           surcos_por_ha: number;
+          rinde_esperado_tn_ha: number | null;
           propietario: string | null;
           obs: string | null;
           created_at: string;
@@ -104,6 +105,7 @@ export type Database = {
           lote_key: string;
           ha: number;
           surcos_por_ha?: number;
+          rinde_esperado_tn_ha?: number | null;
           propietario?: string | null;
           obs?: string | null;
         }
@@ -406,6 +408,7 @@ export type Database = {
           tc_oficial: number;
           tc_blue: number;
           tc_ccl: number;
+          rinde_esperado_tn_ha: number;
           updated_at: string;
         },
         Partial<{
@@ -413,6 +416,7 @@ export type Database = {
           tc_oficial: number;
           tc_blue: number;
           tc_ccl: number;
+          rinde_esperado_tn_ha: number;
           updated_at: string;
         }>
       >;
