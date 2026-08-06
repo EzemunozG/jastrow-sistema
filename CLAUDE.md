@@ -171,6 +171,22 @@ archivo sin darse cuenta de que ya existía en `reconciliation.ts`.
   columna se llama "cp" por el legacy viejo, que confundía los términos — el legacy corregido
   de main lo anota igual: "en la libreta el campo 'cp' contiene el N° DE REMITO"). En la UI
   siempre decir "remito" para estos números; "CP ingenio" solo como dato secundario.
+- **`infraruts.fecha` es NULLABLE** (migración `20260806000000_infraruts_fecha_nullable.sql`,
+  2026-08-06): el INFRARUT definitivo del ingenio confirma el viaje y trae la calidad completa
+  (brix/pol/pureza/rdto), pero la fecha de salida vive en la libreta física del campo y se
+  transcribe después — hoy hay 36 viajes de Trinidad así, esperando un UPDATE de fecha. La
+  regla, que vale para cualquier pantalla nueva: **un viaje sin fecha suma igual en kg, kg de
+  azúcar y desglose por lote; solo queda fuera de los cortes por día** (Tendencia, "último día"
+  de Alertas), que no tienen dónde ubicarlo — y eso se avisa en pantalla, nunca se lo deja
+  desaparecer en silencio. Herramientas ya escritas para no reimplementarlo: `fechasUnicas()` /
+  `contarSinFecha()` (`lib/business-rules.ts`), `formatFechaCorta()` (`lib/format.ts`, devuelve
+  "—"), `enRangoFecha()` (`lib/filters.ts`, NO filtra los nulos: excluirlos sacaría sus kg de
+  los totales sin señal en pantalla) y `useSort` (un getter puede devolver `null` → va al final
+  en asc y en desc). Cuidado con dos trampas ya pisadas: `[...new Set(rows.map(r => r.fecha))]
+  .sort()` deja el `null` AL FINAL (ordena como el string "null") y termina eligiéndolo como
+  "último día"; y una comparación tipo `fechaSig !== fechaAnt` da `true` contra un nulo, o sea
+  un cambio de día inventado (era el falso positivo de `detectarBrechas`). Tests en
+  `lib/fecha-null.test.ts`.
 - Al portar una fórmula o umbral de `index_10.html`, dejá un comentario con el número de línea
   original solo si el valor no es obvio por sí mismo (ej. por qué `META = 10.0` y no otro
   número), no como documentación genérica.
