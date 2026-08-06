@@ -11,10 +11,12 @@ import {
   contarSinFecha,
   fechasUnicas,
   statsFor,
+  sum,
   type InfrarutRow,
 } from "./business-rules";
-import { formatNumber, formatPercent } from "./format";
+import { compactarRangos, formatNumber, formatPercent, formatTn } from "./format";
 import {
+  libretaStatus,
   reconciliar,
   type BajaArcaRow,
   type CpCampoRow,
@@ -211,24 +213,56 @@ export function computeAlerts(
     });
   }
 
+  // Viajes que el ingenio reportó pero que no están en la libreta del campo. Es
+  // `warn`, no `info`: son trabajo de transcripción pendiente Y un agujero en los
+  // números — sin entrada de libreta no hay `lote`, así que esos kilos no entran en
+  // rendimientoPorLote() ni en el desglose por lote de Reconciliación.
+  // Se usa libretaStatus() (mismo criterio que la card "Sin manual" de
+  // /viajes/reconciliacion, para que los dos números coincidan): eso incluye los
+  // INFRARUT sin número de remito y excluye las bajas ARCA, que están anuladas y no
+  // hay nada que transcribir de ellas.
   const cpsCampoSet = new Set(cpsCampo.map((x) => x.cp));
+  const bajasSet = new Set(bajas.map((b) => b.cp));
   const sinLibreta = infraruts.filter(
-    (r) => r.remito != null && !cpsCampoSet.has(r.remito),
+    (r) => libretaStatus(r, cpsCampoSet, bajasSet) === "sin_manual",
   );
   if (sinLibreta.length > 0) {
+    const n = sinLibreta.length;
+    const tn = sum(sinLibreta, (r) => r.kg_neto) / 1000;
+    const sinFechaEnGrupo = contarSinFecha(sinLibreta);
+    const remitos = sinLibreta
+      .filter((r) => r.remito != null)
+      .map((r) => r.remito as number);
+    const sinRemito = n - remitos.length;
     alerts.push({
-      severity: "info",
+      severity: "warn",
       icon: "notebook",
-      message: `${sinLibreta.length} viaje${sinLibreta.length !== 1 ? "s" : ""} del INFRARUT sin registro manual en la libreta. Falta transcribir esas páginas.`,
+      message:
+        `${n} viaje${n !== 1 ? "s" : ""} del INFRARUT sin entrada en la libreta (${formatTn(tn)} netas` +
+        `${sinFechaEnGrupo > 0 ? `, de los cuales ${sinFechaEnGrupo} sin fecha` : ""}): ` +
+        `remito${remitos.length !== 1 ? "s" : ""} ${compactarRangos(remitos)}` +
+        `${sinRemito > 0 ? ` (+${sinRemito} sin número de remito)` : ""}. ` +
+        `Sin entrada de libreta no hay lote al cual atribuir esos kilos. ` +
+        `Transcribir estos remitos de la libreta física (fecha + lote) para completar el rendimiento por lote.`,
     });
   }
 
-  const sinFecha = contarSinFecha(infraruts);
-  if (sinFecha > 0) {
+  // Sin fecha PERO ya transcriptos en la libreta: el caso que la alerta de arriba no
+  // cubre. Hoy este conjunto está vacío (los 36 sin fecha de Trinidad tampoco están
+  // en la libreta), y por eso no se avisa dos veces lo mismo; pero las dos cosas son
+  // independientes — la fecha de infraruts la carga el INFRARUT y la entrada de
+  // libreta la carga el campo, así que un viaje puede tener libreta y seguir sin
+  // fecha, y ahí este aviso es lo único que explica por qué no aparece en Tendencia.
+  const sinLibretaSet = new Set(sinLibreta);
+  const sinFechaConLibreta = infraruts.filter(
+    (r) => r.fecha == null && !sinLibretaSet.has(r),
+  );
+  if (sinFechaConLibreta.length > 0) {
+    const n = sinFechaConLibreta.length;
     alerts.push({
       severity: "info",
       icon: "calendar-question",
-      message: `${sinFecha} viaje${sinFecha !== 1 ? "s" : ""} confirmado${sinFecha !== 1 ? "s" : ""} por el ingenio sin fecha de salida transcripta de la libreta. Suman en los totales y en el rendimiento por lote, pero no aparecen en Tendencia ni en las comparaciones por día hasta que se les cargue la fecha.`,
+      message: `${n} viaje${n !== 1 ? "s" : ""} con entrada en la libreta pero sin fecha de salida cargada. Suman en los totales y en el rendimiento por lote, pero no aparecen en Tendencia ni en las comparaciones por día hasta que se les cargue la fecha.`,
     });
   }
 
