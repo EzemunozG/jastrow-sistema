@@ -210,8 +210,8 @@ export type Gap = {
   desde: number; // remito
   hasta: number; // remito
   faltantes: number;
-  fechaAnt: string;
-  fechaSig: string;
+  fechaAnt: string | null; // null = INFRARUT sin fecha transcripta todavía
+  fechaSig: string | null;
   probable: boolean; // heurística: faltantes >= 3 y cambia de fecha (legacy corregido, main:2003)
 };
 
@@ -237,7 +237,14 @@ export function detectarBrechas(infraruts: InfrarutRow[]): Gap[] {
         faltantes: diff - 1,
         fechaAnt,
         fechaSig,
-        probable: diff - 1 >= 3 && fechaSig !== fechaAnt,
+        // El "cambia de fecha" solo se puede afirmar con las dos fechas presentes:
+        // si alguna todavía no se transcribió, la brecha se reporta igual pero sin
+        // marcarla como probable (no inventar un cambio de día que no se sabe).
+        probable:
+          diff - 1 >= 3 &&
+          fechaAnt != null &&
+          fechaSig != null &&
+          fechaSig !== fechaAnt,
       });
     }
   }

@@ -6,6 +6,7 @@ import {
   META,
   fechasUnicas,
   statsFor,
+  sum,
   type InfrarutRow,
   type Stats,
 } from "@/lib/business-rules";
@@ -48,7 +49,13 @@ export default async function TendenciaPage() {
     );
   }
 
+  // Esta pantalla es enteramente "por día": un viaje sin fecha transcripta no tiene
+  // dónde ubicarse en el eje X, así que queda fuera del gráfico y de la tabla. No se
+  // silencia — se avisa abajo con cuántos son y cuántas toneladas representan, para
+  // que la diferencia contra el total de Resumen quede explicada.
   const fechas = fechasUnicas(infraruts);
+  const sinFechaRows = infraruts.filter((r) => r.fecha == null);
+  const tnSinFecha = sum(sinFechaRows, (r) => r.kg_neto) / 1000;
 
   // Agrupado por ingenio_id, no por finca_id — ver rdto-viaje-chart.tsx (misma razón:
   // finca_id no distingue Trinidad de Concepción de forma unívoca).
@@ -98,8 +105,27 @@ export default async function TendenciaPage() {
     trinidad: "#1D9E75",
   };
 
+  if (fechas.length === 0) {
+    return (
+      <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">
+        Los {infraruts.length} viajes cargados todavía no tienen fecha de salida
+        transcripta de la libreta, así que no hay nada que graficar por día. Sus kg y
+        su azúcar sí están contados en Resumen, Viajes y Rendimiento.
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {sinFechaRows.length > 0 && (
+        <p className="rounded-lg border-l-4 border-l-blue-600 bg-blue-50 px-3.5 py-2.5 text-sm text-blue-900 dark:bg-blue-500/10 dark:text-blue-200">
+          {sinFechaRows.length} viaje{sinFechaRows.length !== 1 ? "s" : ""} sin fecha
+          de salida transcripta ({formatTn(tnSinFecha)}) no {sinFechaRows.length !== 1 ? "están" : "está"} incluido
+          {sinFechaRows.length !== 1 ? "s" : ""} en este gráfico ni en la tabla de
+          abajo — sí suman en los totales de Resumen y en el rendimiento por lote.
+        </p>
+      )}
+
       <TendenciaCharts
         rdtoData={rdtoData}
         polData={polData}

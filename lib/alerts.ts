@@ -4,7 +4,15 @@
 // ambos ingenios, y cada regla se evalúa por lote — computeAlerts() se llama una vez
 // por ingenio (mismo patrón que rendimientoPorLote en las páginas de Rendimiento y
 // Reconciliación), no agrupa por ingenio acá adentro; eso lo hace la página.
-import { META, UMBRALES, avg, statsFor, type InfrarutRow } from "./business-rules";
+import {
+  META,
+  UMBRALES,
+  avg,
+  contarSinFecha,
+  fechasUnicas,
+  statsFor,
+  type InfrarutRow,
+} from "./business-rules";
 import { formatNumber, formatPercent } from "./format";
 import {
   reconciliar,
@@ -83,7 +91,13 @@ export function computeAlerts(
   let lotesQueCaen = 0;
 
   for (const { lote_key, nombre, rows } of lotes) {
-    const fechasLote = [...new Set(rows.map((r) => r.fecha))].sort();
+    // Todas las reglas de acá abajo son "por día": comparan el último día con datos
+    // contra el anterior. Los viajes sin fecha transcripta no pertenecen a ningún
+    // día, así que no participan (fechasUnicas los descarta). Si un lote SOLO tiene
+    // viajes sin fecha no hay nada que comparar todavía — se saltea sin alertas y
+    // sin romper (statsFor de un array vacío devuelve null).
+    const fechasLote = fechasUnicas(rows);
+    if (fechasLote.length === 0) continue;
     const lastF = fechasLote[fechasLote.length - 1];
     // "Día anterior" = día anterior CON DATOS para este lote, no día calendario.
     const prevF = fechasLote.length > 1 ? fechasLote[fechasLote.length - 2] : null;
@@ -209,7 +223,18 @@ export function computeAlerts(
     });
   }
 
-  const fechasIngenio = [...new Set(infraruts.map((r) => r.fecha))].sort();
+  const sinFecha = contarSinFecha(infraruts);
+  if (sinFecha > 0) {
+    alerts.push({
+      severity: "info",
+      icon: "calendar-question",
+      message: `${sinFecha} viaje${sinFecha !== 1 ? "s" : ""} confirmado${sinFecha !== 1 ? "s" : ""} por el ingenio sin fecha de salida transcripta de la libreta. Suman en los totales y en el rendimiento por lote, pero no aparecen en Tendencia ni en las comparaciones por día hasta que se les cargue la fecha.`,
+    });
+  }
+
+  // "Antigüedad de datos" mira el último día CON fecha: los viajes sin fecha no
+  // dicen nada sobre cuándo se cargó el último INFRARUT.
+  const fechasIngenio = fechasUnicas(infraruts);
   if (fechasIngenio.length > 0) {
     const lastF = fechasIngenio[fechasIngenio.length - 1];
     const diasDesde = Math.floor(

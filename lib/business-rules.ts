@@ -49,7 +49,12 @@ export type InfrarutRow = {
   cp: number;
   ingenio_id: string; // 'concepcion' | 'trinidad' — el cp es correlativo POR ingenio
   remito: number | null;
-  fecha: string; // YYYY-MM-DD
+  // YYYY-MM-DD, o null = el ingenio confirmó el viaje pero la fecha de salida
+  // todavía no se transcribió de la libreta física (ver la migración
+  // 20260806000000_infraruts_fecha_nullable.sql). REGLA: un viaje sin fecha suma
+  // igual en kg/kg de azúcar/rendimiento por lote — solo queda fuera de los cortes
+  // por día (Tendencia, "último día" de Alertas), que no tienen dónde ubicarlo.
+  fecha: string | null;
   finca_id: string | null; // 'LOTE4' | 'VIRGINIA'
   veh: number | null;
   maq: number | null;
@@ -84,8 +89,17 @@ export function sum<T>(arr: T[], fn: (x: T) => number): number {
   return arr.reduce((s, x) => s + fn(x), 0);
 }
 
+// Días con datos, ordenados. Los viajes sin fecha quedan afuera a propósito: no
+// pertenecen a ningún día. Usar junto con contarSinFecha() para avisarlo en pantalla
+// en vez de que desaparezcan en silencio.
 export function fechasUnicas(infraruts: InfrarutRow[]): string[] {
-  return [...new Set(infraruts.map((r) => r.fecha))].sort();
+  return [
+    ...new Set(infraruts.filter((r) => r.fecha != null).map((r) => r.fecha as string)),
+  ].sort();
+}
+
+export function contarSinFecha(infraruts: InfrarutRow[]): number {
+  return infraruts.filter((r) => r.fecha == null).length;
 }
 
 export function porFincaFecha(

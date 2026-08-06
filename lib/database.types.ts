@@ -320,7 +320,10 @@ export type Database = {
           id: string;
           cp: number;
           remito: number | null;
-          fecha: string;
+          // NULL = viaje confirmado por el INFRARUT pero con la fecha de salida
+          // todavía sin transcribir de la libreta física
+          // (supabase/migrations/20260806000000_infraruts_fecha_nullable.sql).
+          fecha: string | null;
           finca_raw: string;
           finca_id: string | null;
           veh: number | null;
@@ -341,7 +344,7 @@ export type Database = {
           cp: number;
           ingenio_id?: string;
           remito?: number | null;
-          fecha: string;
+          fecha?: string | null;
           finca_raw: string;
           finca_id?: string | null;
           veh?: number | null;

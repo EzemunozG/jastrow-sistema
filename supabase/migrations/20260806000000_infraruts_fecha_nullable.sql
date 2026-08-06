@@ -1,0 +1,18 @@
+-- infraruts.fecha pasa a ser NULLABLE.
+--
+-- Ya aplicado a mano sobre el proyecto remoto el 2026-08-06; esta migración existe
+-- para que el historial de supabase/migrations/ describa el esquema real (es
+-- idempotente: `drop not null` sobre una columna que ya lo es no falla).
+--
+-- Por qué: el INFRARUT definitivo del ingenio confirma el viaje y trae la calidad
+-- completa (brix/pol/pureza/rdto) pero NO siempre trae la fecha de salida — esa
+-- fecha vive en la libreta física del campo y se transcribe después. El caso que
+-- forzó el cambio: 36 viajes de Trinidad (remitos 7200, 7226–7256, 7301–7304, batch
+-- 20260806-0000-4000-8000-000000000003) cargados con fecha NULL, pendientes de que
+-- se transcriba la libreta y se les haga el UPDATE de fecha.
+--
+-- Consecuencia para el código (ver lib/business-rules.ts:InfrarutRow): `fecha` es
+-- `string | null` en todo el sistema. Un viaje sin fecha SIGUE contando en kg, kg de
+-- azúcar y en el desglose por lote — solo queda fuera de los cortes por día
+-- (Tendencia, "último día" de Alertas), que no tienen dónde ubicarlo.
+alter table infraruts alter column fecha drop not null;

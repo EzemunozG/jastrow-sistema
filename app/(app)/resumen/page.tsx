@@ -9,6 +9,8 @@ import {
   INGENIOS,
   META,
   avg,
+  contarSinFecha,
+  fechasUnicas,
   statsFor,
   sum,
   type InfrarutRow,
@@ -113,8 +115,12 @@ export default async function ResumenPage() {
     rdto: r.rdto ?? 0,
   }));
 
-  const fechas = [...new Set(infraruts.map((r) => r.fecha))].sort();
+  // Los KPIs de abajo se calculan sobre TODOS los viajes, con o sin fecha — un viaje
+  // sin fecha transcripta ya está confirmado por el ingenio y sus kg cuentan igual.
+  // El rango de días, en cambio, solo puede armarse con los que tienen fecha.
+  const fechas = fechasUnicas(infraruts);
   const lastFecha = fechas[fechas.length - 1];
+  const sinFecha = contarSinFecha(infraruts);
 
   // Combinado por ingenio: en INFRARUT, finca_id ('LOTE4'/'VIRGINIA') solo distingue
   // fincas dentro de Concepción — Trinidad usa 'VIRGINIA' como placeholder genérico
@@ -188,6 +194,16 @@ export default async function ResumenPage() {
           <>
             {" "}
             &nbsp;·&nbsp; {fechas[0]} → {lastFecha}
+          </>
+        )}
+        {sinFecha > 0 && (
+          <>
+            {" "}
+            &nbsp;·&nbsp;{" "}
+            <span title="Confirmados por el ingenio; falta transcribir la fecha de salida de la libreta">
+              {sinFecha} viaje{sinFecha !== 1 ? "s" : ""} sin fecha (cuentan en los
+              totales)
+            </span>
           </>
         )}
       </p>
