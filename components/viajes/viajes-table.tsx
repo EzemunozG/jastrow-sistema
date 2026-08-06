@@ -2,8 +2,14 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { SearchX } from "lucide-react";
-import { META, fincaNombre, type InfrarutRow } from "@/lib/business-rules";
-import { formatKg, formatPercent, formatTn } from "@/lib/format";
+import {
+  META,
+  contarSinFecha,
+  fechasUnicas,
+  fincaNombre,
+  type InfrarutRow,
+} from "@/lib/business-rules";
+import { formatFechaCorta, formatKg, formatPercent, formatTn } from "@/lib/format";
 import { detectarBrechas, libretaStatus } from "@/lib/reconciliation";
 import { useSort } from "@/hooks/use-sort";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +65,9 @@ export function ViajesTable({
   // calcula sobre los viajes ya filtrados (por fecha/ingenio/lote/búsqueda), así que
   // refleja lo que se está mirando, no el total del sistema.
   const bigGaps = useMemo(() => detectarBrechas(infraruts), [infraruts]);
+  // Viajes confirmados por el ingenio cuya fecha de salida todavía no se transcribió
+  // de la libreta: se listan igual (y suman en todo), solo que sin día asignable.
+  const sinFecha = contarSinFecha(infraruts);
 
   const rem = (r: InfrarutRow) => r.remito ?? Number.MAX_SAFE_INTEGER;
   const remitos = useMemo(
@@ -78,6 +87,7 @@ export function ViajesTable({
     {
       remito: rem,
       cp: (r) => r.cp,
+      // null (fecha sin transcribir) va al final en los dos sentidos — ver useSort.
       fecha: (r) => r.fecha,
       finca: (r) => fincaNombre(r.finca_id),
       veh: (r) => r.veh ?? -1,
@@ -116,7 +126,8 @@ export function ViajesTable({
           <div className="text-xs text-muted-foreground">Remitos cargados</div>
           <div className="text-lg font-semibold">{infraruts.length}</div>
           <div className="text-xs text-muted-foreground">
-            {new Set(infraruts.map((r) => r.fecha)).size} días
+            {fechasUnicas(infraruts).length} días
+            {sinFecha > 0 && ` · ${sinFecha} sin fecha`}
           </div>
         </div>
         <div className="min-w-[130px] flex-1 rounded-xl border bg-card p-3">
@@ -195,14 +206,16 @@ export function ViajesTable({
                         {g.faltantes} remito{g.faltantes > 1 ? "s" : ""}
                       </Badge>
                     </td>
-                    <td className="py-1.5 pr-3">{g.fechaAnt.slice(5)}</td>
-                    <td className="py-1.5 pr-3">{g.fechaSig.slice(5)}</td>
+                    <td className="py-1.5 pr-3">{formatFechaCorta(g.fechaAnt)}</td>
+                    <td className="py-1.5 pr-3">{formatFechaCorta(g.fechaSig)}</td>
                     <td className="py-1.5 pr-3">
                       {g.probable
-                        ? `⚠ Revisar — puede faltar el INFRARUT del ${g.fechaAnt.slice(5)} o ${g.fechaSig.slice(5)}`
-                        : g.fechaAnt === g.fechaSig
-                          ? "Mismo día — cotejar con la libreta (¿anulado o baja ARCA?)"
-                          : "Días diferentes — cotejar con la libreta"}
+                        ? `⚠ Revisar — puede faltar el INFRARUT del ${formatFechaCorta(g.fechaAnt)} o ${formatFechaCorta(g.fechaSig)}`
+                        : g.fechaAnt == null || g.fechaSig == null
+                          ? "Sin fecha en alguno de los dos extremos — cotejar con la libreta"
+                          : g.fechaAnt === g.fechaSig
+                            ? "Mismo día — cotejar con la libreta (¿anulado o baja ARCA?)"
+                            : "Días diferentes — cotejar con la libreta"}
                     </td>
                   </tr>
                 ))}
@@ -277,8 +290,10 @@ export function ViajesTable({
                             {saltoRemitos} remito{saltoRemitos > 1 ? "s" : ""}
                           </strong>{" "}
                           entre remito {prev.remito} y remito {r.remito}
-                          {r.fecha !== prev.fecha &&
-                            ` · Cambio de fecha: ${prev.fecha.slice(5)} → ${r.fecha.slice(5)}`}
+                          {r.fecha != null &&
+                            prev.fecha != null &&
+                            r.fecha !== prev.fecha &&
+                            ` · Cambio de fecha: ${formatFechaCorta(prev.fecha)} → ${formatFechaCorta(r.fecha)}`}
                         </TableCell>
                       </TableRow>
                     )}
@@ -291,7 +306,19 @@ export function ViajesTable({
                       <TableCell className="text-xs text-muted-foreground">
                         {r.cp}
                       </TableCell>
-                      <TableCell>{r.fecha.slice(5)}</TableCell>
+                      <TableCell>
+                        {r.fecha != null ? (
+                          formatFechaCorta(r.fecha)
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="border-slate-200 dark:border-slate-500/25 bg-slate-50 dark:bg-slate-500/10 font-normal text-muted-foreground"
+                            title="El ingenio confirmó el viaje; falta transcribir la fecha de salida de la libreta"
+                          >
+                            Pendiente libreta
+                          </Badge>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={r.finca_id === "LOTE4" ? "default" : "secondary"}

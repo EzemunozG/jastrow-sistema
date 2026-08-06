@@ -165,6 +165,16 @@ export function FilterBar({
           Limpiar filtros
         </Button>
       </div>
+
+      {/* El rango de fechas no puede excluir lo que no tiene fecha — ver
+          enRangoFecha() en lib/filters.ts. Se avisa acá para que no parezca que el
+          filtro no funciona cuando aparecen viajes fuera del rango elegido. */}
+      {(filtros.desde || filtros.hasta) && (
+        <p className="w-full text-xs text-muted-foreground">
+          Los viajes sin fecha de salida transcripta se muestran siempre, con
+          cualquier rango: excluirlos sacaría sus kg de los totales sin avisar.
+        </p>
+      )}
     </div>
   );
 }

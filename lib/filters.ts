@@ -38,7 +38,16 @@ export function countFiltrosActivos(f: Filtros): number {
   ).length;
 }
 
-export function enRangoFecha(fecha: string, desde: string, hasta: string): boolean {
+// Un INFRARUT sin fecha (todavía sin transcribir de la libreta) NO se filtra: se
+// muestra siempre, con cualquier rango elegido. Excluirlo sería peor — sus kg y su
+// azúcar desaparecerían de los totales sin ninguna señal en pantalla, y quien mira
+// no tendría cómo saber que faltan. Las tablas lo marcan "Pendiente libreta".
+export function enRangoFecha(
+  fecha: string | null,
+  desde: string,
+  hasta: string,
+): boolean {
+  if (fecha == null) return true;
   if (desde && fecha < desde) return false;
   if (hasta && fecha > hasta) return false;
   return true;

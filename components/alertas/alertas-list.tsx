@@ -1,6 +1,7 @@
 import {
   IconAlertCircle,
   IconCalendar,
+  IconCalendarQuestion,
   IconChartLine,
   IconCircleCheck,
   IconDroplet,
@@ -25,6 +26,7 @@ const ICONS: Record<string, typeof IconAlertCircle> = {
   notebook: IconNotebook,
   "chart-line": IconChartLine,
   "file-upload": IconFileUpload,
+  "calendar-question": IconCalendarQuestion,
   "circle-check": IconCircleCheck,
 };
 

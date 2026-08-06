@@ -25,3 +25,10 @@ export function formatPercent(n: number, decimals = 2): string {
 export function formatMoney(n: number): string {
   return `$${formatNumber(n, 0)}`;
 }
+
+// "2026-08-06" → "08-06". Las tablas de viajes muestran solo mes-día (el año es
+// siempre la zafra en curso). `null` = fecha todavía sin transcribir de la libreta
+// (infraruts.fecha es nullable) — nunca romper el render por eso.
+export function formatFechaCorta(fecha: string | null | undefined): string {
+  return fecha ? fecha.slice(5) : "—";
+}

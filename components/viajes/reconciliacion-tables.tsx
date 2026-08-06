@@ -8,7 +8,13 @@ import {
   type RendimientoLote,
 } from "@/lib/reconciliation";
 import { META, fincaNombre, type InfrarutRow } from "@/lib/business-rules";
-import { formatKg, formatNumber, formatPercent, formatTn } from "@/lib/format";
+import {
+  formatFechaCorta,
+  formatKg,
+  formatNumber,
+  formatPercent,
+  formatTn,
+} from "@/lib/format";
 import { EmptyState } from "@/components/ui/empty-state";
 
 function RemitoList({
@@ -307,7 +313,18 @@ export function ReconciliacionTables({
                       {r.remito ?? "—"}
                     </td>
                     <td className="py-1.5 pr-3 text-muted-foreground">{r.cp}</td>
-                    <td className="py-1.5 pr-3">{r.fecha.slice(5)}</td>
+                    <td className="py-1.5 pr-3">
+                      {r.fecha != null ? (
+                        formatFechaCorta(r.fecha)
+                      ) : (
+                        <span
+                          className="text-muted-foreground"
+                          title="El ingenio confirmó el viaje; falta transcribir la fecha de salida de la libreta"
+                        >
+                          Pendiente libreta
+                        </span>
+                      )}
+                    </td>
                     <td className="py-1.5 pr-3">{fincaNombre(r.finca_id)}</td>
                     <td className="py-1.5 pr-3">{formatTn(r.kg_neto / 1000)}</td>
                     <td className="py-1.5 pr-3">{formatPercent(r.rdto)}</td>
@@ -350,7 +367,7 @@ export function ReconciliacionTables({
                       </td>
                       <td className="py-1.5 pr-3">{x.fecha || "—"}</td>
                       <td className="py-1.5 pr-3">
-                        {inf?.fecha?.slice(5) || "—"}
+                        {formatFechaCorta(inf?.fecha)}
                       </td>
                       <td className="py-1.5 pr-3">
                         {inf ? fincaNombre(inf.finca_id) : "—"}
