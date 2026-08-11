@@ -8,6 +8,7 @@
 
 import { META } from "./business-rules";
 import type { Alert } from "./alerts";
+import { contornoAproximado } from "./lote-geo";
 
 // ── Umbrales de COLOR de la tarjeta: por rdto% promedio vs meta (10%). El rdto es
 // comparable aunque el lote esté a medio cosechar, a diferencia del tn/surco (que
@@ -45,6 +46,7 @@ export const LOTE_FISICO_POR_KEY: Record<string, string[]> = {
   PACO: ["VA-09"], // "JASTROW - LOTE 3" en el INFRARUT
   PAQUITO: ["VA-10"],
   "TALA POSO 1": [], // no existe físico todavía → tarjeta con empty state
+  GELY: ["GELY"], // arrendado, 16 ha; contorno aproximado en lib/lote-geo.ts
 };
 
 // Detecta un lote FÍSICO asignado a más de un lote_key. Eso sería un bug: el costo de
@@ -116,10 +118,15 @@ export type LoteMapCard = {
   nombre: string;
   ha: number;
   surcos_por_ha: number;
-  viajes: number;
+  viajes: number; // despachos de la libreta YA pesados por el ingenio
+  // Despachos anotados en la libreta que el ingenio todavía no pesó (no hay INFRARUT
+  // con ese remito). Sus toneladas no están en kg_neto_total todavía: el tn/ha de la
+  // tarjeta es "lo confirmado hasta ahora", no el total que va a terminar dando.
+  viajes_sin_pesaje: number;
   kg_neto_total: number;
   cosechado_tn: number;
   tn_surco: number;
+  tn_ha: number;
   avance_pct: number | null; // % de cosecha vs. tn esperadas; null si no cosechó
   rdto_promedio: number | null;
   ingenio_id: string | null; // derivado de los viajes, NO hardcodeado
@@ -130,6 +137,12 @@ export type LoteMapCard = {
   usd_por_ha: number;
   alertas: Alert[]; // alertas de ESTE lote (severidad bad/warn/info)
   alerta_severidad: "bad" | "warn" | null; // para el punto de la tarjeta
+  // El lote no está declarado en `lotes_ingenio`: apareció solo porque la libreta
+  // tiene despachos con ese lote. Metadata (nombre/ha) sacada de la tabla `lotes`.
+  solo_libreta: boolean;
+  // Nota de contorno aproximado (lib/lote-geo.ts), o null si tiene perímetro real /
+  // no tenemos coordenadas.
+  contorno_nota: string | null;
 };
 
 function avgPresente(vals: (number | null)[]): number | null {
@@ -160,7 +173,10 @@ export function computeMapaLotes(params: {
   trabajos: TrabajoLink[];
   trabajoInsumos: TrabajoInsumo[];
   productos: ProductoLite[];
-  lotesFisicos: { id: string; ha: number }[]; // ha del lote físico, para prorratear
+  // Tabla `lotes` (los lotes físicos del campo): `ha` para prorratear el gasto de las
+  // recetas compartidas, `nombre` para poder mostrar el nombre real de un lote que
+  // todavía no está declarado en `lotes_ingenio`.
+  lotesFisicos: { id: string; ha: number; nombre: string | null }[];
   tcBlue: number;
   rindeEsperadoDefault: number; // tn/ha esperadas (global, de app_settings)
   alertasPorLote: Record<string, Alert[]>; // alertas ya computadas, por lote_key
@@ -199,15 +215,21 @@ export function computeMapaLotes(params: {
   const tripByRemito = new Map<number, MapaTrip>();
   for (const t of trips) if (t.remito != null) tripByRemito.set(t.remito, t);
 
-  // Viajes reconciliados agrupados por lote de origen (cps_campo.lote).
-  const tripsByLote = new Map<string, MapaTrip[]>();
+  // Despachos de la libreta agrupados por lote de origen (cps_campo.lote), separando
+  // los que el ingenio ya pesó (hay INFRARUT con ese remito) de los que todavía no.
+  // Los pendientes no suman kilos — no existen todavía como número — pero se cuentan
+  // aparte para que la tarjeta pueda decir "y además hay N viajes sin pesar".
+  const despachosPorLote = new Map<string, { pesados: MapaTrip[]; sinPesaje: number }>();
   for (const c of cpsCampo) {
     if (c.lote == null || bajasSet.has(c.cp)) continue;
+    let g = despachosPorLote.get(c.lote);
+    if (!g) {
+      g = { pesados: [], sinPesaje: 0 };
+      despachosPorLote.set(c.lote, g);
+    }
     const t = tripByRemito.get(c.cp);
-    if (!t) continue;
-    const arr = tripsByLote.get(c.lote);
-    if (arr) arr.push(t);
-    else tripsByLote.set(c.lote, [t]);
+    if (t) g.pesados.push(t);
+    else g.sinPesaje++;
   }
 
   const productoNombre = new Map(productos.map((p) => [p.id, p.nombre]));
@@ -241,8 +263,38 @@ export function computeMapaLotes(params: {
       0,
     );
 
-  const cards: LoteMapCard[] = lotesIngenio.map((meta) => {
-    const loteTrips = tripsByLote.get(meta.lote_key) ?? [];
+  // Lotes a mostrar = los declarados en `lotes_ingenio` MÁS los que aparecen en la
+  // libreta y nadie declaró. Antes la grilla salía solo de `lotes_ingenio`, así que un
+  // lote nuevo (GELY: existe en `lotes`, ya despachó 28 viajes) no aparecía hasta que
+  // alguien le creara la fila de cosecha a mano. Ahora entra solo, con nombre y ha
+  // tomados de la tabla `lotes` a través de LOTE_FISICO_POR_KEY.
+  const nombreFisico = new Map(lotesFisicos.map((l) => [l.id, l.nombre]));
+  const declaradas = new Set(lotesIngenio.map((l) => l.lote_key));
+  const soloLibreta = [...despachosPorLote.keys()]
+    .filter((k) => !declaradas.has(k))
+    .sort();
+  const metas = [
+    ...lotesIngenio.map((l) => ({ ...l, solo_libreta: false })),
+    ...soloLibreta.map((lote_key) => {
+      const fisicos = LOTE_FISICO_POR_KEY[lote_key] ?? [];
+      return {
+        lote_key,
+        nombre:
+          fisicos.map((id) => nombreFisico.get(id)).find((n) => n) ?? lote_key,
+        ha: fisicos.reduce((s, id) => s + (haFisico.get(id) ?? 0), 0),
+        surcos_por_ha: null as number | null,
+        rinde_esperado_tn_ha: null as number | null,
+        solo_libreta: true,
+      };
+    }),
+  ];
+
+  const cards: LoteMapCard[] = metas.map((meta) => {
+    const despachos = despachosPorLote.get(meta.lote_key) ?? {
+      pesados: [],
+      sinPesaje: 0,
+    };
+    const loteTrips = despachos.pesados;
     const kgNeto = loteTrips.reduce((s, t) => s + (t.kg_neto || 0), 0);
     const cosechadoTn = kgNeto / 1000;
     const surcosHa = meta.surcos_por_ha || SURCOS_POR_HA_DEFAULT;
@@ -341,15 +393,24 @@ export function computeMapaLotes(params: {
 
     const gastadoUsd = aplicaciones.reduce((s, a) => s + a.usd, 0);
 
+    // Contorno aproximado: se busca por los lotes FÍSICOS de este lote_key (la clave de
+    // lote-geo.ts es `lotes.id`), no por lote_key.
+    const contornoNota =
+      (LOTE_FISICO_POR_KEY[meta.lote_key] ?? [])
+        .map((id) => contornoAproximado(id))
+        .find((c) => c != null)?.nota ?? null;
+
     return {
       lote_key: meta.lote_key,
       nombre: meta.nombre,
       ha: meta.ha,
       surcos_por_ha: surcosHa,
       viajes: loteTrips.length,
+      viajes_sin_pesaje: despachos.sinPesaje,
       kg_neto_total: kgNeto,
       cosechado_tn: cosechadoTn,
       tn_surco: surcos > 0 ? kgNeto / 1000 / surcos : 0,
+      tn_ha: meta.ha > 0 ? kgNeto / 1000 / meta.ha : 0,
       avance_pct: avancePct,
       rdto_promedio: rdto,
       ingenio_id: ingenioId,
@@ -360,6 +421,8 @@ export function computeMapaLotes(params: {
       usd_por_ha: meta.ha > 0 ? gastadoUsd / meta.ha : 0,
       alertas,
       alerta_severidad: alertaSeveridad,
+      solo_libreta: meta.solo_libreta,
+      contorno_nota: contornoNota,
     };
   });
 

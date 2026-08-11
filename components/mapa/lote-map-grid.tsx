@@ -74,11 +74,18 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
       val: lote.rdto_promedio != null ? formatPercent(lote.rdto_promedio) : "—",
     },
     { lbl: "Cosechado", val: formatTn(lote.cosechado_tn) },
+    { lbl: "Rinde", val: lote.viajes > 0 ? `${formatNumber(lote.tn_ha, 1)} tn/ha` : "—" },
     {
       lbl: "Avance",
       val: lote.avance_pct != null ? formatPercent(lote.avance_pct, 0) : "—",
     },
-    { lbl: "Viajes", val: String(lote.viajes) },
+    {
+      lbl: "Viajes",
+      val:
+        lote.viajes_sin_pesaje > 0
+          ? `${lote.viajes} (+${lote.viajes_sin_pesaje} s/pesaje)`
+          : String(lote.viajes),
+    },
     { lbl: "Gastado", val: lote.aplicaciones.length > 0 ? usd(lote.gastado_usd) : "—" },
   ];
 
@@ -90,7 +97,21 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
           {lote.ingenio_nombre
             ? `Cosechó: ${lote.ingenio_nombre}`
             : "Sin cosecha registrada esta zafra"}
+          {" · "}
+          {formatNumber(lote.ha)} ha
         </p>
+        {(lote.contorno_nota || lote.solo_libreta) && (
+          <div className="mt-1.5 space-y-1 text-xs text-muted-foreground">
+            {lote.solo_libreta && (
+              <p>
+                Lote tomado de la libreta: todavía no está declarado en la tabla de
+                lotes de cosecha, así que el nombre y las hectáreas salen de Campo →
+                Lotes.
+              </p>
+            )}
+            {lote.contorno_nota && <p>{lote.contorno_nota}</p>}
+          </div>
+        )}
       </div>
 
       {lote.alertas.length > 0 && (
@@ -226,9 +247,20 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
               {c.viajes > 0 ? (
                 <>
                   <div className={`text-2xl font-bold ${NUM_STYLE[c.color]}`}>
-                    {formatNumber(c.tn_surco, 2)}
+                    {formatNumber(c.tn_ha, 1)}
                   </div>
-                  <div className="text-xs text-muted-foreground">tn/surco</div>
+                  <div className="text-xs text-muted-foreground">
+                    tn/ha · {formatNumber(c.tn_surco, 2)} tn/surco
+                  </div>
+                  {c.viajes_sin_pesaje > 0 && (
+                    <div
+                      className="text-[11px] text-muted-foreground"
+                      title="Despachos anotados en la libreta que el ingenio todavía no pesó: sus toneladas no están sumadas acá"
+                    >
+                      ({c.viajes_sin_pesaje} viaje
+                      {c.viajes_sin_pesaje !== 1 ? "s" : ""} sin pesaje)
+                    </div>
+                  )}
                   <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-foreground/10">
                     <div
                       className={`h-full rounded-full ${BAR_FILL[c.color]}`}
@@ -245,9 +277,12 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
               ) : (
                 <>
                   <div className="text-lg font-semibold text-muted-foreground">
-                    Sin cosecha aún
+                    {c.viajes_sin_pesaje > 0 ? "Sin pesaje aún" : "Sin cosecha aún"}
                   </div>
                   <div className="text-xs text-muted-foreground">
+                    {c.viajes_sin_pesaje > 0
+                      ? `${c.viajes_sin_pesaje} viaje${c.viajes_sin_pesaje !== 1 ? "s" : ""} en libreta · `
+                      : ""}
                     {formatNumber(c.ha)} ha
                   </div>
                 </>

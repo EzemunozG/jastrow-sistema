@@ -39,8 +39,8 @@ describe("prorrateo de recetas compartidas", () => {
     trabajoInsumos: [],
     productos: [{ id: "P", nombre: "Producto" }],
     lotesFisicos: [
-      { id: "L4-TP2", ha: 40 },
-      { id: "L4-TP3", ha: 60 },
+      { id: "L4-TP2", ha: 40, nombre: "TP2" },
+      { id: "L4-TP3", ha: 60, nombre: "TP3" },
     ],
     tcBlue: 1,
     rindeEsperadoDefault: 70,

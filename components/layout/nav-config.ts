@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   BookOpen,
+  Candy,
   DollarSign,
   FileText,
   FlaskConical,
@@ -41,6 +42,7 @@ export const NAV: NavItem[] = [
     ],
   },
   { label: "Rendimiento", icon: Sprout, href: "/rendimiento" },
+  { label: "Azúcar por ingenio", icon: Candy, href: "/azucar" },
   {
     label: "Campo",
     icon: MapPin,

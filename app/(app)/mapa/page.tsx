@@ -47,7 +47,9 @@ export default async function MapaPage() {
       .from("trabajo_insumos")
       .select("trabajo_id, descripcion, cantidad, unidad, total"),
     supabase.from("productos").select("id, nombre"),
-    supabase.from("lotes").select("id, ha"), // ha del lote físico, para prorratear
+    // `nombre` además de `ha`: un lote que todavía no está en lotes_ingenio (GELY)
+    // saca de acá su nombre real para la tarjeta. Ver computeMapaLotes.
+    supabase.from("lotes").select("id, ha, nombre"),
     supabase.from("app_settings").select("*").eq("id", 1).maybeSingle(),
   ]);
 
@@ -125,7 +127,11 @@ export default async function MapaPage() {
     trabajos: trabajos ?? [],
     trabajoInsumos: trabajoInsumos ?? [],
     productos: productos ?? [],
-    lotesFisicos: (lotesFisicos ?? []).map((l) => ({ id: l.id, ha: l.ha ?? 0 })),
+    lotesFisicos: (lotesFisicos ?? []).map((l) => ({
+      id: l.id,
+      ha: l.ha ?? 0,
+      nombre: l.nombre,
+    })),
     tcBlue: appSettings?.tc_blue ?? 1495,
     rindeEsperadoDefault: appSettings?.rinde_esperado_tn_ha ?? RINDE_ESPERADO_DEFAULT,
     alertasPorLote,
@@ -138,9 +144,11 @@ export default async function MapaPage() {
       <div>
         <h1 className="text-lg font-semibold">Mapa de lotes</h1>
         <p className="text-sm text-muted-foreground">
-          Un vistazo a toda la zafra: el número grande es tn/surco, la barra el avance
-          de cosecha, y el color va por Rdto% promedio vs la meta de 10%. El punto rojo
-          o amarillo marca lotes con alertas.
+          Un vistazo a toda la zafra: el número grande es el rinde en tn/ha, la barra el
+          avance de cosecha, y el color va por Rdto% promedio vs la meta de 10%. El
+          punto rojo o amarillo marca lotes con alertas. Los viajes anotados en la
+          libreta que el ingenio todavía no pesó se cuentan aparte y no suman
+          toneladas.
         </p>
       </div>
 
