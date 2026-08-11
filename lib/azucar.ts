@@ -23,24 +23,30 @@ export const CONCEPCION_PCT_COSECHA_FLETE = 0.33;
 export const CONCEPCION_PCT_PROPIO =
   1 - CONCEPCION_PCT_INGENIO - CONCEPCION_PCT_COSECHA_FLETE; // 0.27
 
-// Trinidad: no se calcula sobre la azúcar producida sino sobre la CAÑA entregada —
-// 35 kg de azúcar por cada 1.000 kg de caña neta, castigados por un 93%.
+// Trinidad: no se calcula sobre la azúcar producida sino sobre la CAÑA, y la base es
+// la caña BRUTA (con tierra y hojas, como entró a la balanza), no la neta.
 //
-// ⚠ Acá está la ambigüedad más grande de las dos reglas: "bruto × 93% × 35 kg / 1.000
-// kg" no dice qué es "bruto". Se toma la caña neta entregada porque es la única
-// lectura que da un resultado del mismo orden que Concepción (~36% de la azúcar
-// producida, contra 27%); leyéndolo como kg de azúcar daría ~3%, once veces menos, que
-// no se parece a ningún esquema de reparto. Si el contrato dice otra cosa, cambiar
-// SOLO la base en propiaTrinidad() — el resto del cálculo no se toca.
-export const TRINIDAD_FACTOR = 0.93;
+// El contrato no usa el trash realmente pesado: le descuenta al bruto un trash FIJO
+// del 7% y sobre ese resultado paga 35 kg de azúcar por cada 1.000 kg. Es una cláusula
+// a favor del productor cuando la caña viene sucia — en lo que va de la zafra el trash
+// real de Trinidad es 14,08% del bruto, o sea el doble del 7% que reconoce el contrato.
+//
+// Reconstrucción del bruto: `infraruts` no guarda el peso bruto (el INFRARUT informa
+// neto y trash por separado), así que bruto = kg_neto + kg_trash. Ver
+// resumenAzucarIngenio().
+export const TRINIDAD_TRASH_CONTRACTUAL = 0.07;
+export const TRINIDAD_FACTOR = 1 - TRINIDAD_TRASH_CONTRACTUAL; // 0.93
 export const TRINIDAD_KG_AZUCAR_POR_TN_CANA = 35;
 
 export function propiaConcepcion(kgAzucarProducida: number): number {
   return kgAzucarProducida * CONCEPCION_PCT_PROPIO;
 }
 
-export function propiaTrinidad(kgCanaNeta: number): number {
-  return (kgCanaNeta * TRINIDAD_FACTOR * TRINIDAD_KG_AZUCAR_POR_TN_CANA) / 1000;
+// OJO: el argumento es la caña BRUTA (kg_neto + kg_trash), no la neta. Pasarle la neta
+// subestima la azúcar propia en ~14% — es el error que tuvo esta función hasta el
+// 2026-08-11.
+export function propiaTrinidad(kgCanaBruta: number): number {
+  return (kgCanaBruta * TRINIDAD_FACTOR * TRINIDAD_KG_AZUCAR_POR_TN_CANA) / 1000;
 }
 
 export type ResumenAzucar = {
@@ -48,6 +54,8 @@ export type ResumenAzucar = {
   nombre: string;
   viajes: number;
   kg_cana_neta: number;
+  kg_cana_bruta: number; // neto + trash: la base sobre la que liquida Trinidad
+  kg_trash: number;
   kg_azucar_producida: number;
   kg_azucar_propia: number;
   bolsas_propias: number; // de 50 kg (PESO_BOLSA), alimenta el arriendo
@@ -67,13 +75,17 @@ export function resumenAzucarIngenio(
   // fue pesado y molido igual.
   const delIngenio = infraruts.filter((r) => r.ingenio_id === ingenioId);
   const kgCana = delIngenio.reduce((s, r) => s + (r.kg_neto || 0), 0);
+  const kgTrash = delIngenio.reduce((s, r) => s + (r.kg_trash || 0), 0);
+  const kgBruta = kgCana + kgTrash;
   const kgAzucar = delIngenio.reduce((s, r) => s + (r.kg_azucar || 0), 0);
 
   const propia =
-    ingenioId === "trinidad" ? propiaTrinidad(kgCana) : propiaConcepcion(kgAzucar);
+    ingenioId === "trinidad" ? propiaTrinidad(kgBruta) : propiaConcepcion(kgAzucar);
   const regla =
     ingenioId === "trinidad"
-      ? `${TRINIDAD_KG_AZUCAR_POR_TN_CANA} kg por tn de caña × ${formatPct(TRINIDAD_FACTOR)}`
+      ? `sobre la caña BRUTA, con un trash fijo contractual de ${formatPct(
+          TRINIDAD_TRASH_CONTRACTUAL,
+        )} (no el real pesado), ${TRINIDAD_KG_AZUCAR_POR_TN_CANA} kg de azúcar por cada 1.000 kg`
       : `${formatPct(CONCEPCION_PCT_PROPIO)} de la azúcar producida (100% − ${formatPct(
           CONCEPCION_PCT_INGENIO,
         )} ingenio − ${formatPct(CONCEPCION_PCT_COSECHA_FLETE)} cosecha/flete)`;
@@ -83,6 +95,8 @@ export function resumenAzucarIngenio(
     nombre,
     viajes: delIngenio.length,
     kg_cana_neta: kgCana,
+    kg_cana_bruta: kgBruta,
+    kg_trash: kgTrash,
     kg_azucar_producida: kgAzucar,
     kg_azucar_propia: propia,
     bolsas_propias: propia / PESO_BOLSA,
@@ -98,6 +112,7 @@ function formatPct(fraccion: number): string {
 export type TotalAzucar = {
   viajes: number;
   kg_cana_neta: number;
+  kg_cana_bruta: number;
   kg_azucar_producida: number;
   kg_azucar_propia: number;
   bolsas_propias: number;
@@ -112,6 +127,7 @@ export function totalizarAzucar(resumenes: ResumenAzucar[]): TotalAzucar {
   return {
     viajes: suma((r) => r.viajes),
     kg_cana_neta: suma((r) => r.kg_cana_neta),
+    kg_cana_bruta: suma((r) => r.kg_cana_bruta),
     kg_azucar_producida: producida,
     kg_azucar_propia: propia,
     bolsas_propias: suma((r) => r.bolsas_propias),

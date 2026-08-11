@@ -15,10 +15,11 @@ export default async function AzucarPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("infraruts")
-    .select("ingenio_id, kg_neto, kg_azucar");
+    .select("ingenio_id, kg_neto, kg_trash, kg_azucar");
 
-  // Solo hacen falta estos tres campos; el resto de InfrarutRow no interviene en el
-  // cálculo de azúcar (ver lib/azucar.ts), así que se completa con ceros.
+  // kg_trash NO es opcional acá: Trinidad liquida sobre la caña bruta, que se
+  // reconstruye como kg_neto + kg_trash (ver lib/azucar.ts). El resto de InfrarutRow no
+  // interviene en el cálculo, así que se completa con ceros.
   const infraruts = (data ?? []).map(
     (r) =>
       ({
@@ -30,7 +31,7 @@ export default async function AzucarPage() {
         veh: null,
         maq: null,
         kg_neto: r.kg_neto ?? 0,
-        kg_trash: 0,
+        kg_trash: r.kg_trash ?? 0,
         kg_azucar: r.kg_azucar ?? 0,
         brix: 0,
         pol: 0,

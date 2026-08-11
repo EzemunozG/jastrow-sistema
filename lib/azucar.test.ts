@@ -4,6 +4,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CONCEPCION_PCT_PROPIO,
+  TRINIDAD_TRASH_CONTRACTUAL,
   propiaConcepcion,
   propiaTrinidad,
   resumenAzucarIngenio,
@@ -15,6 +16,7 @@ function viaje(
   ingenio_id: string,
   kg_neto: number,
   kg_azucar: number,
+  kg_trash = 0,
 ): InfrarutRow {
   return {
     cp: 1,
@@ -25,7 +27,7 @@ function viaje(
     veh: null,
     maq: null,
     kg_neto,
-    kg_trash: 0,
+    kg_trash,
     kg_azucar,
     brix: 0,
     pol: 0,
@@ -47,37 +49,65 @@ describe("porcentajes de Concepción", () => {
 });
 
 describe("fórmula de Trinidad", () => {
-  it("35 kg por tonelada de caña, castigado por 93%", () => {
-    // 1.000.000 kg de caña = 1.000 tn → 1.000 × 35 × 0,93 = 32.550 kg
+  it("35 kg por tonelada de caña BRUTA, con el trash fijo contractual del 7%", () => {
+    // 1.000.000 kg brutos → ×0,93 = 930.000 → ×35/1000 = 32.550 kg
+    expect(TRINIDAD_TRASH_CONTRACTUAL).toBe(0.07);
     expect(propiaTrinidad(1_000_000)).toBeCloseTo(32_550, 6);
   });
 
-  it("es lineal con la caña entregada", () => {
+  it("es lineal con la caña bruta", () => {
     expect(propiaTrinidad(2_000_000)).toBeCloseTo(propiaTrinidad(1_000_000) * 2, 6);
     expect(propiaTrinidad(0)).toBe(0);
+  });
+
+  // Número clavado contra la base real al 2026-08-11 (los 179 viajes de Trinidad).
+  // Si este test se rompe, o cambió la fórmula o cambiaron los datos: mirar cuál de
+  // las dos antes de "arreglar" el número esperado.
+  it("los 179 viajes reales de Trinidad dan 208.877 kg propios", () => {
+    const KG_NETO_REAL = 5_513_310;
+    const KG_TRASH_REAL = 903_810;
+    const bruta = KG_NETO_REAL + KG_TRASH_REAL; // 6.417.120
+    expect(propiaTrinidad(bruta)).toBeCloseTo(208_877, 0); // ±1 kg
+    expect(propiaTrinidad(bruta) / 50).toBeCloseTo(4_177.5, 1); // bolsas
+  });
+
+  it("usar la caña NETA en vez de la bruta subestima ~14% (el bug del 2026-08-11)", () => {
+    const neta = 5_513_310;
+    const bruta = neta + 903_810;
+    expect(propiaTrinidad(neta)).toBeCloseTo(179_458, 0);
+    expect(propiaTrinidad(bruta) - propiaTrinidad(neta)).toBeCloseTo(29_419, 0);
   });
 });
 
 describe("resumenAzucarIngenio", () => {
   const rows = [
-    viaje("concepcion", 30_000, 3_000),
-    viaje("concepcion", 30_000, 3_000),
-    viaje("trinidad", 30_000, 2_700),
+    viaje("concepcion", 30_000, 3_000, 4_000),
+    viaje("concepcion", 30_000, 3_000, 4_000),
+    viaje("trinidad", 30_000, 2_700, 5_000),
   ];
 
   it("suma solo los viajes del ingenio pedido", () => {
     const c = resumenAzucarIngenio("concepcion", "Ingenio Concepción", rows);
     expect(c.viajes).toBe(2);
     expect(c.kg_cana_neta).toBe(60_000);
+    expect(c.kg_cana_bruta).toBe(68_000); // neto + trash
     expect(c.kg_azucar_producida).toBe(6_000);
     expect(c.kg_azucar_propia).toBeCloseTo(1_620, 6); // 6.000 × 0,27
   });
 
-  it("Trinidad sale de la caña, no de la azúcar producida", () => {
+  it("Concepción NO usa la caña: su regla es sobre la azúcar producida", () => {
+    const conTrash = resumenAzucarIngenio("concepcion", "C", [
+      viaje("concepcion", 30_000, 3_000, 99_999),
+    ]);
+    expect(conTrash.kg_azucar_propia).toBeCloseTo(810, 6); // 3.000 × 0,27
+  });
+
+  it("Trinidad sale de la caña BRUTA (neto + trash), no de la neta", () => {
     const t = resumenAzucarIngenio("trinidad", "Ingenio Trinidad", rows);
     expect(t.kg_cana_neta).toBe(30_000);
-    // 30 tn × 35 × 0,93 = 976,5 kg
-    expect(t.kg_azucar_propia).toBeCloseTo(976.5, 6);
+    expect(t.kg_cana_bruta).toBe(35_000);
+    // 35 tn brutas × 0,93 × 35/1000 = 1.139,25 kg
+    expect(t.kg_azucar_propia).toBeCloseTo(1_139.25, 6);
   });
 
   it("convierte a bolsas de 50 kg", () => {
@@ -89,9 +119,9 @@ describe("resumenAzucarIngenio", () => {
     expect(
       resumenAzucarIngenio("concepcion", "C", rows).pct_sobre_producida,
     ).toBeCloseTo(27, 6);
-    // Trinidad depende del rdto de la caña: con 2.700 kg de azúcar sobre 30 tn da 36,2%
+    // Trinidad depende del rdto y de cuánto trash traiga la caña: 1.139,25 / 2.700
     expect(resumenAzucarIngenio("trinidad", "T", rows).pct_sobre_producida).toBeCloseTo(
-      36.17,
+      42.19,
       1,
     );
   });
@@ -115,19 +145,20 @@ describe("resumenAzucarIngenio", () => {
 describe("totalizarAzucar", () => {
   it("consolida los dos ingenios sumando kilos, no promediando porcentajes", () => {
     const rows = [
-      viaje("concepcion", 100_000, 10_000),
-      viaje("trinidad", 100_000, 9_000),
+      viaje("concepcion", 100_000, 10_000, 10_000),
+      viaje("trinidad", 100_000, 9_000, 20_000),
     ];
     const total = totalizarAzucar([
       resumenAzucarIngenio("concepcion", "C", rows),
       resumenAzucarIngenio("trinidad", "T", rows),
     ]);
     expect(total.kg_cana_neta).toBe(200_000);
+    expect(total.kg_cana_bruta).toBe(230_000);
     expect(total.kg_azucar_producida).toBe(19_000);
-    // 10.000 × 0,27 = 2.700 · 100 tn × 35 × 0,93 = 3.255 → 5.955
-    expect(total.kg_azucar_propia).toBeCloseTo(5_955, 6);
-    expect(total.bolsas_propias).toBeCloseTo(119.1, 6);
-    expect(total.pct_sobre_producida).toBeCloseTo((5_955 / 19_000) * 100, 6);
+    // Concepción 10.000 × 0,27 = 2.700 · Trinidad 120 tn brutas × 0,93 × 35/1000 = 3.906
+    expect(total.kg_azucar_propia).toBeCloseTo(6_606, 6);
+    expect(total.bolsas_propias).toBeCloseTo(132.12, 6);
+    expect(total.pct_sobre_producida).toBeCloseTo((6_606 / 19_000) * 100, 6);
   });
 
   it("total vacío no rompe", () => {

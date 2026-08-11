@@ -50,9 +50,9 @@ export function AzucarCard({ resumen }: { resumen: ResumenAzucar }) {
 
       <div className="grid grid-cols-2 gap-3">
         <Metric
-          lbl="Caña neta entregada"
+          lbl="Caña entregada"
           val={formatTn(resumen.kg_cana_neta / 1000)}
-          sub={`${formatKg(resumen.kg_cana_neta)}`}
+          sub={`neta · bruta ${formatTn(resumen.kg_cana_bruta / 1000)}`}
         />
         <Metric
           lbl="Azúcar producida"
@@ -86,9 +86,9 @@ export function AzucarTotal({ total }: { total: TotalAzucar }) {
       <h2 className="text-base font-semibold">Total consolidado — ambos ingenios</h2>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Metric
-          lbl="Caña neta entregada"
+          lbl="Caña entregada"
           val={formatTn(total.kg_cana_neta / 1000)}
-          sub={`${formatNumber(total.viajes)} viajes`}
+          sub={`neta · ${formatNumber(total.viajes)} viajes`}
         />
         <Metric
           lbl="Azúcar producida"
