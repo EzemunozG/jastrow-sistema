@@ -2,7 +2,11 @@ export const dynamic = "force-dynamic";
 
 import { AlertasList } from "@/components/alertas/alertas-list";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
-import { computeAlertaBajas, computeAlerts } from "@/lib/alerts";
+import {
+  computeAlertaBajas,
+  computeAlerts,
+  computeAlertasInfrarutFaltante,
+} from "@/lib/alerts";
 import { INGENIOS, fechasUnicas, type IngenioId, type InfrarutRow } from "@/lib/business-rules";
 import { createClient } from "@/lib/supabase/server";
 
@@ -47,6 +51,13 @@ export default async function AlertasPage() {
 
   const alertaBajas = computeAlertaBajas(bajas ?? []);
 
+  // Los remitos son un talonario único del campo repartido entre los dos ingenios, así
+  // que las brechas se buscan sobre los viajes de AMBOS juntos y recién después se
+  // reparten por ingenio — ver computeAlertasInfrarutFaltante en lib/alerts.ts.
+  const faltantes = computeAlertasInfrarutFaltante(
+    porIngenio.flatMap((p) => p.infraruts),
+  );
+
   return (
     <div className="space-y-6">
       <RealtimeRefresh tables={["infraruts", "cps_campo", "bajas_arca"]} />
@@ -62,7 +73,12 @@ export default async function AlertasPage() {
           <div key={ingenio.id} className="space-y-3">
             <h2 className="text-base font-semibold">{ingenio.nombre}</h2>
             <AlertasList
-              alerts={computeAlerts(cpsCampo, infraruts, bajas ?? [], lotesIngenio)}
+              // Un INFRARUT faltante va primero: mientras no se cargue, todo lo que
+              // sigue está calculado sobre datos incompletos.
+              alerts={[
+                ...faltantes.filter((a) => a.ingenio_id === ingenio.id),
+                ...computeAlerts(cpsCampo, infraruts, bajas ?? [], lotesIngenio),
+              ]}
               desde={fechas[0] ?? null}
               hasta={fechas[fechas.length - 1] ?? null}
             />

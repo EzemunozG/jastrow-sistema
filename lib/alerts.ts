@@ -5,6 +5,7 @@
 // por ingenio (mismo patrón que rendimientoPorLote en las páginas de Rendimiento y
 // Reconciliación), no agrupa por ingenio acá adentro; eso lo hace la página.
 import {
+  INGENIOS,
   META,
   UMBRALES,
   avg,
@@ -16,6 +17,7 @@ import {
 } from "./business-rules";
 import { compactarRangos, formatNumber, formatPercent, formatTn } from "./format";
 import {
+  detectarBrechas,
   libretaStatus,
   reconciliar,
   type BajaArcaRow,
@@ -300,6 +302,96 @@ export function computeAlerts(
   }
 
   return alerts;
+}
+
+// ============================================================================
+// POSIBLE INFRARUT FALTANTE
+// ============================================================================
+
+// El talonario de remitos es UNO SOLO para todo el campo: el mismo librito se usa
+// despachando a Concepción o a Trinidad (ver lib/reconciliation.ts). Por eso un hueco
+// en la secuencia de UN ingenio casi nunca significa que falte algo — normalmente son
+// los viajes que ese día salieron al otro ingenio. El agujero real es el hueco en la
+// secuencia GLOBAL: números que no reportó ninguno de los dos. Detectarlo es
+// exactamente correr detectarBrechas() sobre la unión de los dos ingenios.
+export const BRECHA_MIN_ALERTABLE = 3;
+
+// Los remitos de otro punto de venta (talonario 0014-: 10129, 10190, 10191) son una
+// serie aparte de la principal (0004-). Mezclarlas inventaría una brecha de ~2.700
+// números entre 7389 y 10129, que taparía todo lo demás. La detección corre solo
+// sobre la serie principal; la 0014- tiene 3 remitos sueltos y demasiados huecos
+// propios como para que alertar sobre ella diga algo útil.
+export const REMITO_SERIE_PRINCIPAL_MAX = 10000;
+
+export type AlertaIngenio = Alert & {
+  // A qué ingenio se le atribuye la brecha (el de los remitos vecinos). Una brecha
+  // entre remitos de ingenios distintos no se puede atribuir a uno solo, y se emite
+  // para los dos: los números faltantes pudieron salir a cualquiera de ellos.
+  ingenio_id: string;
+};
+
+// "2026-08-05" + "2026-08-07" → "2026-08-06". Solo cuando falta exactamente un día
+// entre medio: ahí el hueco tiene una explicación concreta y accionable ("no se
+// descargó el archivo de ese día"). Con más días de diferencia no se adivina cuál.
+function diaFaltanteEntre(fechaAnt: string | null, fechaSig: string | null): string | null {
+  if (!fechaAnt || !fechaSig) return null;
+  const ant = new Date(`${fechaAnt}T00:00:00Z`).getTime();
+  const sig = new Date(`${fechaSig}T00:00:00Z`).getTime();
+  if (sig - ant !== 2 * 86400000) return null;
+  return new Date(ant + 86400000).toISOString().slice(0, 10);
+}
+
+function nombreIngenio(id: string | undefined): string {
+  return INGENIOS.find((i) => i.id === id)?.nombre ?? id ?? "—";
+}
+
+// Brechas en la secuencia global de remitos = INFRARUTs que probablemente no se
+// descargaron del portal del ingenio. Recibe los viajes de TODOS los ingenios (no los
+// de uno solo, que es justo el error que haría saltar falsos positivos) y devuelve
+// cada alerta etiquetada con el ingenio al que corresponde, para que /alertas la
+// muestre en la sección que va.
+export function computeAlertasInfrarutFaltante(
+  infraruts: InfrarutRow[],
+  minFaltantes: number = BRECHA_MIN_ALERTABLE,
+): AlertaIngenio[] {
+  const seriePrincipal = infraruts.filter(
+    (r) => r.remito != null && r.remito < REMITO_SERIE_PRINCIPAL_MAX,
+  );
+  const porRemito = new Map(seriePrincipal.map((r) => [r.remito as number, r]));
+
+  const alertas: AlertaIngenio[] = [];
+  for (const gap of detectarBrechas(seriePrincipal)) {
+    // Huecos de 1–2 números son el ruido normal del talonario (un remito anulado, uno
+    // mal escrito). Un INFRARUT diario que no se descargó se lleva una jornada entera.
+    if (gap.faltantes < minFaltantes) continue;
+
+    const antes = porRemito.get(gap.desde);
+    const despues = porRemito.get(gap.hasta);
+    const rango =
+      gap.faltantes === 1 ? `${gap.desde + 1}` : `${gap.desde + 1}–${gap.hasta - 1}`;
+    const dia = diaFaltanteEntre(gap.fechaAnt, gap.fechaSig);
+    const mismoIngenio = antes?.ingenio_id === despues?.ingenio_id;
+
+    const ubicacion = mismoIngenio
+      ? `entre el ${fmt(gap.fechaAnt)} (remito ${gap.desde}) y el ${fmt(gap.fechaSig)} (remito ${gap.hasta})`
+      : `entre el remito ${gap.desde} (${nombreIngenio(antes?.ingenio_id)}, ${fmt(gap.fechaAnt)}) y el remito ${gap.hasta} (${nombreIngenio(despues?.ingenio_id)}, ${fmt(gap.fechaSig)})`;
+
+    const message =
+      `Posible INFRARUT faltante: ${gap.faltantes} remito${gap.faltantes !== 1 ? "s" : ""} (${rango}) ${ubicacion}. ` +
+      `No los reportó ninguno de los dos ingenios, así que no es que hayan salido al otro: falta el archivo.` +
+      (dia ? ` Probablemente falte descargar el INFRARUT del ${fmt(dia)}.` : "") +
+      ` Revisá el portal del ingenio y subilo desde Resumen.`;
+
+    // Sin vecinos identificables no hay a quién atribuirle la brecha (no debería
+    // pasar: los dos extremos salen de porRemito), pero no se inventa un ingenio.
+    const ingenios = [...new Set([antes?.ingenio_id, despues?.ingenio_id])].filter(
+      (id): id is string => id != null,
+    );
+    for (const ingenio_id of ingenios) {
+      alertas.push({ severity: "warn", icon: "file-download", message, ingenio_id });
+    }
+  }
+  return alertas;
 }
 
 // Bajas ARCA sin gestionar — bajas_arca no tiene ingenio_id (es el talonario único
