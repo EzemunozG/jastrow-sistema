@@ -118,9 +118,9 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
             )}
             {lote.surcos_estimados && (
               <p>
-                * Surcos/ha estimado en {lote.surcos_por_ha}: el lote no tiene el dato
-                real cargado, así que el kg/surco es aproximado (el tn/ha no depende de
-                esto).
+                * El kg/surco sale de {lote.surcos_por_ha} surcos/ha estimados, no de
+                una medición de este lote. El tn/ha no depende de eso y no está
+                afectado.
               </p>
             )}
             {lote.contorno_nota && <p>{lote.contorno_nota}</p>}
@@ -268,7 +268,7 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
                     className="text-xs font-medium text-muted-foreground"
                     title={
                       c.surcos_estimados
-                        ? `Surcos/ha estimado en ${c.surcos_por_ha} (el lote no tiene el dato real cargado)`
+                        ? `Calculado con ${c.surcos_por_ha} surcos/ha estimados — todavía no hay medición de surcos de este lote`
                         : undefined
                     }
                   >
@@ -316,14 +316,23 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-        <span className="font-medium">Color por Rdto% vs meta 10%:</span>
-        {LEYENDA.map((l) => (
-          <span key={l.color} className="flex items-center gap-1.5">
-            <span className={`inline-block size-2.5 rounded-full ${DOT[l.color]}`} />
-            {l.label}
-          </span>
-        ))}
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
+          <span className="font-medium">Color por Rdto% vs meta 10%:</span>
+          {LEYENDA.map((l) => (
+            <span key={l.color} className="flex items-center gap-1.5">
+              <span className={`inline-block size-2.5 rounded-full ${DOT[l.color]}`} />
+              {l.label}
+            </span>
+          ))}
+        </div>
+        {cards.some((c) => c.surcos_estimados) && (
+          <p className="text-xs text-muted-foreground">
+            * kg/surco calculado con surcos/ha estimados: todavía no hay medición de
+            surcos por lote, se usa el mismo valor de referencia para todos. El tn/ha
+            no depende de eso.
+          </p>
+        )}
       </div>
 
       <div ref={detalleRef}>

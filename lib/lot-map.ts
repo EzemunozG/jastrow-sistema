@@ -19,6 +19,22 @@ export const RDTO_AMARILLO = 9;
 
 export const SURCOS_POR_HA_DEFAULT = 61; // fallback si lotes_ingenio.surcos_por_ha viniera null
 
+// ¿El kg/surco de este lote es una estimación? Sí en dos casos: cuando no hay dato
+// (null → se usa el default) y cuando el dato ES el default.
+//
+// Lo segundo parece raro pero es lo correcto hoy: las 12 filas de `lotes_ingenio`
+// tienen 61 cargado, todas el mismo número y justo el default del código — es un
+// placeholder que se sembró parejo, no una medición lote por lote (confirmado por el
+// usuario, 2026-08-13). Mientras siga así, ningún kg/surco es un dato duro.
+//
+// Efecto colateral asumido: un lote que de verdad mida 61 surcos/ha va a quedar
+// marcado como estimado igual. Cuando se carguen los surcos reales, esta función pasa
+// a ser `surcos == null` a secas (o se lleva la marca a una columna de la tabla, del
+// tipo `surcos_por_ha_medido`).
+export function surcosEstimados(surcosPorHa: number | null | undefined): boolean {
+  return !surcosPorHa || surcosPorHa === SURCOS_POR_HA_DEFAULT;
+}
+
 // ── Rinde esperado (tn/ha) para la barra de avance de cosecha: avance = tn cosechadas
 // ÷ (ha × rinde), cap 100%. Cada lote puede sobreescribirlo (lotes_ingenio.
 // rinde_esperado_tn_ha); el default global vive en app_settings; esto es el fallback si
@@ -131,8 +147,8 @@ export type LoteMapCard = {
   // (ha × surcos_por_ha). Es tn_surco × 1000, pero en kg se lee mejor en la tarjeta —
   // los valores reales andan por los 700–1.100 kg.
   kg_surco: number;
-  // true = surcos_por_ha salió de SURCOS_POR_HA_DEFAULT porque lotes_ingenio no lo
-  // tenía cargado. El kg/surco de ese lote es una estimación y hay que decirlo.
+  // true = los surcos/ha de este lote NO son un dato medido, así que el kg/surco es
+  // una estimación y la tarjeta lo marca con asterisco. Ver surcosEstimados().
   surcos_estimados: boolean;
   avance_pct: number | null; // % de cosecha vs. tn esperadas; null si no cosechó
   rdto_promedio: number | null;
@@ -419,7 +435,7 @@ export function computeMapaLotes(params: {
       tn_surco: surcos > 0 ? kgNeto / 1000 / surcos : 0,
       tn_ha: meta.ha > 0 ? kgNeto / 1000 / meta.ha : 0,
       kg_surco: surcos > 0 ? kgNeto / surcos : 0,
-      surcos_estimados: !meta.surcos_por_ha,
+      surcos_estimados: surcosEstimados(meta.surcos_por_ha),
       avance_pct: avancePct,
       rdto_promedio: rdto,
       ingenio_id: ingenioId,

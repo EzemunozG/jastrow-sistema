@@ -3,7 +3,7 @@
 // (no existe el número todavía), pero tampoco desaparece — se cuenta aparte para que
 // la tarjeta pueda avisar que el rinde que muestra está incompleto.
 import { describe, expect, it } from "vitest";
-import { computeMapaLotes, type MapaTrip } from "./lot-map";
+import { computeMapaLotes, surcosEstimados, type MapaTrip } from "./lot-map";
 import { contornoAproximado, cuadradoAproximado, hectareasDe } from "./lote-geo";
 
 function trip(remito: number, kg_neto: number, rdto: number | null = 10.5): MapaTrip {
@@ -53,7 +53,6 @@ describe("rinde por lote (tn/ha)", () => {
     });
     expect(paco.kg_surco).toBeCloseTo(760.88, 2);
     expect(Math.round(paco.kg_surco)).toBe(761);
-    expect(paco.surcos_estimados).toBe(false);
   });
 
   it("kg/surco es exactamente tn/surco × 1000", () => {
@@ -80,6 +79,26 @@ describe("rinde por lote (tn/ha)", () => {
     expect(x.surcos_estimados).toBe(true);
     expect(x.surcos_por_ha).toBe(61); // SURCOS_POR_HA_DEFAULT
     expect(x.kg_surco).toBeCloseTo(1000, 6); // 610.000 ÷ (10 × 61)
+  });
+
+  it("un 61 cargado también cuenta como estimado: es el placeholder sembrado parejo", () => {
+    expect(surcosEstimados(61)).toBe(true);
+    expect(surcosEstimados(null)).toBe(true);
+    expect(surcosEstimados(0)).toBe(true);
+  });
+
+  it("un surcos/ha distinto del default sí es un dato medido", () => {
+    expect(surcosEstimados(58)).toBe(false);
+    const [x] = computeMapaLotes({
+      ...VACIO,
+      lotesIngenio: [{ lote_key: "X", nombre: "X", ha: 10, surcos_por_ha: 58 }],
+      cpsCampo: [{ cp: 1, lote: "X" }],
+      trips: [trip(1, 580_000)],
+      bajas: [],
+      lotesFisicos: [],
+    });
+    expect(x.surcos_estimados).toBe(false);
+    expect(x.kg_surco).toBeCloseTo(1000, 6); // 580.000 ÷ (10 × 58)
   });
 
   it("sin viajes conciliados el kg/surco queda en 0 (la tarjeta muestra '—')", () => {
