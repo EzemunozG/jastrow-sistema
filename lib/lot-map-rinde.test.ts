@@ -3,7 +3,12 @@
 // (no existe el número todavía), pero tampoco desaparece — se cuenta aparte para que
 // la tarjeta pueda avisar que el rinde que muestra está incompleto.
 import { describe, expect, it } from "vitest";
-import { computeMapaLotes, surcosEstimados, type MapaTrip } from "./lot-map";
+import {
+  computeGeneralCampo,
+  computeMapaLotes,
+  surcosEstimados,
+  type MapaTrip,
+} from "./lot-map";
 import { contornoAproximado, cuadradoAproximado, hectareasDe } from "./lote-geo";
 
 function trip(remito: number, kg_neto: number, rdto: number | null = 10.5): MapaTrip {
@@ -245,5 +250,92 @@ describe("contorno aproximado", () => {
   it("escala con la superficie: 64 ha → 800 m de lado", () => {
     const p = cuadradoAproximado({ lat: -26.74, lon: -64.82 }, 64);
     expect(hectareasDe(p)).toBeCloseTo(64, 2);
+  });
+});
+
+describe("general del campo (agregado de toda la empresa)", () => {
+  // Tres lotes cosechados de tamaños muy distintos + uno sin cosechar. Los números
+  // están elegidos para poder verificar la suma a mano.
+  const cards = computeMapaLotes({
+    ...VACIO,
+    lotesIngenio: [
+      { lote_key: "A", nombre: "A", ha: 100, surcos_por_ha: 61 },
+      { lote_key: "B", nombre: "B", ha: 50, surcos_por_ha: 61 },
+      { lote_key: "C", nombre: "C", ha: 20, surcos_por_ha: 61 },
+      { lote_key: "SIN", nombre: "Sin cosechar", ha: 200, surcos_por_ha: 61 },
+    ],
+    cpsCampo: [
+      { cp: 1, lote: "A" },
+      { cp: 2, lote: "B" },
+      { cp: 3, lote: "C" },
+      { cp: 4, lote: "SIN" }, // despachado pero todavía sin pesaje
+    ],
+    trips: [trip(1, 5_000_000), trip(2, 2_000_000), trip(3, 500_000)],
+    bajas: [],
+    lotesFisicos: [],
+  });
+  const g = computeGeneralCampo(cards)!;
+
+  it("suma los kilos de todos los lotes computados", () => {
+    expect(g.kg_neto_total).toBe(7_500_000);
+    expect(g.cosechado_tn).toBe(7_500);
+  });
+
+  it("tn/ha general = suma de kg ÷ 1000 ÷ suma de ha", () => {
+    // 7.500.000 / 1000 / (100 + 50 + 20 = 170 ha) = 44,1176 tn/ha
+    expect(g.ha).toBe(170);
+    expect(g.tn_ha).toBeCloseTo(7_500 / 170, 6);
+    expect(g.tn_ha).toBeCloseTo(44.1176, 4);
+  });
+
+  it("kg/surco general = suma de kg ÷ suma de (ha × surcos/ha)", () => {
+    // 170 ha × 61 = 10.370 surcos → 7.500.000 / 10.370 = 723,24 kg/surco
+    expect(g.surcos).toBe(10_370);
+    expect(g.kg_surco).toBeCloseTo(7_500_000 / 10_370, 6);
+    expect(g.kg_surco).toBeCloseTo(723.24, 2);
+  });
+
+  it("NO es el promedio simple de los tn/ha de cada lote", () => {
+    // Promedio simple: (50 + 40 + 25) / 3 = 38,33 — le daría el mismo peso al lote de
+    // 20 ha que al de 100. El ponderado real da 44,12.
+    const promedioSimple =
+      cards.filter((c) => c.viajes > 0).reduce((s, c) => s + c.tn_ha, 0) / 3;
+    expect(promedioSimple).toBeCloseTo(38.33, 2);
+    expect(g.tn_ha).not.toBeCloseTo(promedioSimple, 1);
+  });
+
+  it("excluye del denominador el lote sin viajes pesados", () => {
+    expect(g.lotes_computados).toBe(3);
+    expect(g.lotes_totales).toBe(4);
+    // Las 200 ha del lote sin cosechar NO están en el denominador: con ellas el
+    // promedio caería de 44,1 a 20,3 tn/ha.
+    expect(g.ha).toBe(170);
+    expect(7_500 / 370).toBeCloseTo(20.27, 2);
+  });
+
+  it("hereda el asterisco de estimado si algún lote computado lo tiene", () => {
+    expect(g.surcos_estimados).toBe(true); // los cuatro usan el default de 61
+    const medidos = computeMapaLotes({
+      ...VACIO,
+      lotesIngenio: [{ lote_key: "A", nombre: "A", ha: 100, surcos_por_ha: 58 }],
+      cpsCampo: [{ cp: 1, lote: "A" }],
+      trips: [trip(1, 5_000_000)],
+      bajas: [],
+      lotesFisicos: [],
+    });
+    expect(computeGeneralCampo(medidos)!.surcos_estimados).toBe(false);
+  });
+
+  it("sin ningún lote cosechado devuelve null (no hay tarjeta que mostrar)", () => {
+    const sinCosecha = computeMapaLotes({
+      ...VACIO,
+      lotesIngenio: [{ lote_key: "A", nombre: "A", ha: 100, surcos_por_ha: 61 }],
+      cpsCampo: [],
+      trips: [],
+      bajas: [],
+      lotesFisicos: [],
+    });
+    expect(computeGeneralCampo(sinCosecha)).toBeNull();
+    expect(computeGeneralCampo([])).toBeNull();
   });
 });

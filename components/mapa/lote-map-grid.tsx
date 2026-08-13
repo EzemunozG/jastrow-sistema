@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { Sprout } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatNumber, formatPercent, formatTn } from "@/lib/format";
-import type { ColorLote, LoteMapCard } from "@/lib/lot-map";
+import type { ColorLote, GeneralCampo, LoteMapCard } from "@/lib/lot-map";
 
 const CARD_STYLE: Record<ColorLote, string> = {
   verde:
@@ -212,7 +212,55 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
   );
 }
 
-export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
+// Tarjeta de agregados de toda la empresa. Ocupa el ancho completo de la grilla y no
+// es clickeable: así no se lee como un lote más entre los demás.
+function GeneralCard({ general }: { general: GeneralCampo }) {
+  return (
+    <div className="col-span-full rounded-xl border-2 border-brand/40 bg-brand/5 p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-sm font-semibold tracking-wide uppercase">
+          General del campo
+        </h2>
+        <span className="text-xs text-muted-foreground">
+          {formatTn(general.cosechado_tn)} · {general.lotes_computados} lote
+          {general.lotes_computados !== 1 ? "s" : ""} · {formatNumber(general.ha)} ha
+        </span>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-end gap-x-8 gap-y-2">
+        <div>
+          <div className="text-3xl font-bold text-brand">
+            {formatNumber(general.tn_ha, 1)}
+          </div>
+          <div className="text-xs text-muted-foreground">tn/ha general</div>
+        </div>
+        <div>
+          <div className="text-3xl font-bold text-brand">
+            {formatNumber(general.kg_surco, 0)}
+            {general.surcos_estimados && (
+              <span className="align-super text-base">*</span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">kg/surco general</div>
+        </div>
+      </div>
+
+      <p className="mt-2 text-xs text-muted-foreground">
+        Sobre {general.lotes_computados} de {general.lotes_totales} lotes: solo los que
+        ya tienen viajes pesados por el ingenio. Los que todavía no cosecharon quedan
+        afuera del promedio para no diluirlo con hectáreas sin cosechar.
+      </p>
+    </div>
+  );
+}
+
+export function LoteMapGrid({
+  cards,
+  general,
+}: {
+  cards: LoteMapCard[];
+  general: GeneralCampo | null;
+}) {
   const [selected, setSelected] = useState<string | null>(null);
   const detalleRef = useRef<HTMLDivElement>(null);
   const loteSel = cards.find((c) => c.lote_key === selected) ?? null;
@@ -228,6 +276,7 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {general && <GeneralCard general={general} />}
         {cards.map((c) => {
           const activo = c.lote_key === selected;
           return (

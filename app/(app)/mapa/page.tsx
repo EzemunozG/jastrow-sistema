@@ -5,6 +5,7 @@ import { LoteMapGrid } from "@/components/mapa/lote-map-grid";
 import { computeAlerts, type Alert } from "@/lib/alerts";
 import { INGENIOS, type InfrarutRow } from "@/lib/business-rules";
 import {
+  computeGeneralCampo,
   computeMapaLotes,
   RINDE_ESPERADO_DEFAULT,
   type MapaTrip,
@@ -157,7 +158,7 @@ export default async function MapaPage() {
           Todavía no hay lotes cargados en el sistema.
         </div>
       ) : (
-        <LoteMapGrid cards={cards} />
+        <LoteMapGrid cards={cards} general={computeGeneralCampo(cards)} />
       )}
     </div>
   );

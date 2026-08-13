@@ -454,3 +454,48 @@ export function computeMapaLotes(params: {
   // Orden: mayor a menor tn/surco (los sin cosecha, tn/surco 0, quedan al final).
   return cards.sort((a, b) => b.tn_surco - a.tn_surco);
 }
+
+// ── Agregado de toda la empresa (los dos ingenios juntos: la métrica es la misma y el
+// campo es uno solo).
+export type GeneralCampo = {
+  lotes_computados: number; // lotes que entran en el cálculo
+  lotes_totales: number; // lotes del sistema, computados o no
+  ha: number;
+  surcos: number;
+  kg_neto_total: number;
+  cosechado_tn: number;
+  tn_ha: number;
+  kg_surco: number;
+  surcos_estimados: boolean; // algún lote computado usa surcos/ha de referencia
+};
+
+// Promedio ponderado real (kilos totales ÷ superficie total), NO el promedio de los
+// tn/ha de cada lote — eso le daría el mismo peso a un lote de 16 ha que a uno de 101.
+//
+// Solo entran los lotes con al menos un viaje ya conciliado y pesado. Un lote sin
+// cosechar (o con la cosecha todavía sin pesar) sumaría sus hectáreas al denominador
+// aportando cero kilos, y en plena zafra eso hunde el número: hoy los 4 lotes sin
+// cosecha son 260 ha de las 625 del sistema, así que incluirlos daría ~21 tn/ha en vez
+// de ~36. Ojo con el borde de este criterio: un lote que ARRANCÓ la cosecha entra con
+// TODAS sus hectáreas aunque lleve dos viajes, así que sigue tirando el promedio para
+// abajo mientras avanza (GELY, hoy: 16 ha por 38 tn).
+export function computeGeneralCampo(cards: LoteMapCard[]): GeneralCampo | null {
+  const computados = cards.filter((c) => c.viajes > 0);
+  if (computados.length === 0) return null;
+
+  const kg = computados.reduce((s, c) => s + c.kg_neto_total, 0);
+  const ha = computados.reduce((s, c) => s + c.ha, 0);
+  const surcos = computados.reduce((s, c) => s + c.ha * c.surcos_por_ha, 0);
+
+  return {
+    lotes_computados: computados.length,
+    lotes_totales: cards.length,
+    ha,
+    surcos,
+    kg_neto_total: kg,
+    cosechado_tn: kg / 1000,
+    tn_ha: ha > 0 ? kg / 1000 / ha : 0,
+    kg_surco: surcos > 0 ? kg / surcos : 0,
+    surcos_estimados: computados.some((c) => c.surcos_estimados),
+  };
+}
