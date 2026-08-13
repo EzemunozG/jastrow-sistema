@@ -127,6 +127,13 @@ export type LoteMapCard = {
   cosechado_tn: number;
   tn_surco: number;
   tn_ha: number;
+  // Rinde por surco: los mismos kg conciliados que el tn/ha, sobre los surcos del lote
+  // (ha × surcos_por_ha). Es tn_surco × 1000, pero en kg se lee mejor en la tarjeta —
+  // los valores reales andan por los 700–1.100 kg.
+  kg_surco: number;
+  // true = surcos_por_ha salió de SURCOS_POR_HA_DEFAULT porque lotes_ingenio no lo
+  // tenía cargado. El kg/surco de ese lote es una estimación y hay que decirlo.
+  surcos_estimados: boolean;
   avance_pct: number | null; // % de cosecha vs. tn esperadas; null si no cosechó
   rdto_promedio: number | null;
   ingenio_id: string | null; // derivado de los viajes, NO hardcodeado
@@ -411,6 +418,8 @@ export function computeMapaLotes(params: {
       cosechado_tn: cosechadoTn,
       tn_surco: surcos > 0 ? kgNeto / 1000 / surcos : 0,
       tn_ha: meta.ha > 0 ? kgNeto / 1000 / meta.ha : 0,
+      kg_surco: surcos > 0 ? kgNeto / surcos : 0,
+      surcos_estimados: !meta.surcos_por_ha,
       avance_pct: avancePct,
       rdto_promedio: rdto,
       ingenio_id: ingenioId,

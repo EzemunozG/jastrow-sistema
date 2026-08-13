@@ -76,6 +76,13 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
     { lbl: "Cosechado", val: formatTn(lote.cosechado_tn) },
     { lbl: "Rinde", val: lote.viajes > 0 ? `${formatNumber(lote.tn_ha, 1)} tn/ha` : "—" },
     {
+      lbl: "Rinde por surco",
+      val:
+        lote.viajes > 0
+          ? `${formatNumber(lote.kg_surco, 0)} kg/surco${lote.surcos_estimados ? "*" : ""}`
+          : "—",
+    },
+    {
       lbl: "Avance",
       val: lote.avance_pct != null ? formatPercent(lote.avance_pct, 0) : "—",
     },
@@ -100,13 +107,20 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
           {" · "}
           {formatNumber(lote.ha)} ha
         </p>
-        {(lote.contorno_nota || lote.solo_libreta) && (
+        {(lote.contorno_nota || lote.solo_libreta || lote.surcos_estimados) && (
           <div className="mt-1.5 space-y-1 text-xs text-muted-foreground">
             {lote.solo_libreta && (
               <p>
                 Lote tomado de la libreta: todavía no está declarado en la tabla de
                 lotes de cosecha, así que el nombre y las hectáreas salen de Campo →
                 Lotes.
+              </p>
+            )}
+            {lote.surcos_estimados && (
+              <p>
+                * Surcos/ha estimado en {lote.surcos_por_ha}: el lote no tiene el dato
+                real cargado, así que el kg/surco es aproximado (el tn/ha no depende de
+                esto).
               </p>
             )}
             {lote.contorno_nota && <p>{lote.contorno_nota}</p>}
@@ -249,8 +263,17 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
                   <div className={`text-2xl font-bold ${NUM_STYLE[c.color]}`}>
                     {formatNumber(c.tn_ha, 1)}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    tn/ha · {formatNumber(c.tn_surco, 2)} tn/surco
+                  <div className="text-xs text-muted-foreground">tn/ha</div>
+                  <div
+                    className="text-xs font-medium text-muted-foreground"
+                    title={
+                      c.surcos_estimados
+                        ? `Surcos/ha estimado en ${c.surcos_por_ha} (el lote no tiene el dato real cargado)`
+                        : undefined
+                    }
+                  >
+                    {formatNumber(c.kg_surco, 0)} kg/surco
+                    {c.surcos_estimados && "*"}
                   </div>
                   {c.viajes_sin_pesaje > 0 && (
                     <div
@@ -279,6 +302,7 @@ export function LoteMapGrid({ cards }: { cards: LoteMapCard[] }) {
                   <div className="text-lg font-semibold text-muted-foreground">
                     {c.viajes_sin_pesaje > 0 ? "Sin pesaje aún" : "Sin cosecha aún"}
                   </div>
+                  <div className="text-xs text-muted-foreground">— kg/surco</div>
                   <div className="text-xs text-muted-foreground">
                     {c.viajes_sin_pesaje > 0
                       ? `${c.viajes_sin_pesaje} viaje${c.viajes_sin_pesaje !== 1 ? "s" : ""} en libreta · `

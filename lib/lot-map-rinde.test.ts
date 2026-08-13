@@ -41,6 +41,60 @@ describe("rinde por lote (tn/ha)", () => {
     expect(paco.viajes_sin_pesaje).toBe(0);
   });
 
+  it("kg/surco = kg neto conciliado ÷ (ha × surcos_por_ha)", () => {
+    // Caso conocido: Paco con 2.088.627 kg sobre 45 ha × 61 surcos = 2.745 surcos.
+    const [paco] = computeMapaLotes({
+      ...VACIO,
+      lotesIngenio: [{ lote_key: "PACO", nombre: "Paco", ha: 45, surcos_por_ha: 61 }],
+      cpsCampo: [{ cp: 1, lote: "PACO" }],
+      trips: [trip(1, 2_088_627)],
+      bajas: [],
+      lotesFisicos: [{ id: "VA-09", ha: 30, nombre: "Paco" }],
+    });
+    expect(paco.kg_surco).toBeCloseTo(760.88, 2);
+    expect(Math.round(paco.kg_surco)).toBe(761);
+    expect(paco.surcos_estimados).toBe(false);
+  });
+
+  it("kg/surco es exactamente tn/surco × 1000", () => {
+    const [paco] = computeMapaLotes({
+      ...VACIO,
+      lotesIngenio: [{ lote_key: "PACO", nombre: "Paco", ha: 45, surcos_por_ha: 61 }],
+      cpsCampo: [{ cp: 1, lote: "PACO" }],
+      trips: [trip(1, 2_088_627)],
+      bajas: [],
+      lotesFisicos: [],
+    });
+    expect(paco.kg_surco).toBeCloseTo(paco.tn_surco * 1000, 6);
+  });
+
+  it("marca el surcos/ha como estimado cuando el lote no lo tiene cargado", () => {
+    const [x] = computeMapaLotes({
+      ...VACIO,
+      lotesIngenio: [{ lote_key: "X", nombre: "X", ha: 10, surcos_por_ha: null }],
+      cpsCampo: [{ cp: 1, lote: "X" }],
+      trips: [trip(1, 610_000)],
+      bajas: [],
+      lotesFisicos: [],
+    });
+    expect(x.surcos_estimados).toBe(true);
+    expect(x.surcos_por_ha).toBe(61); // SURCOS_POR_HA_DEFAULT
+    expect(x.kg_surco).toBeCloseTo(1000, 6); // 610.000 ÷ (10 × 61)
+  });
+
+  it("sin viajes conciliados el kg/surco queda en 0 (la tarjeta muestra '—')", () => {
+    const [x] = computeMapaLotes({
+      ...VACIO,
+      lotesIngenio: [{ lote_key: "X", nombre: "X", ha: 30, surcos_por_ha: 61 }],
+      cpsCampo: [{ cp: 1, lote: "X" }], // en libreta pero sin pesaje
+      trips: [],
+      bajas: [],
+      lotesFisicos: [],
+    });
+    expect(x.viajes).toBe(0);
+    expect(x.kg_surco).toBe(0);
+  });
+
   it("un lote sin hectáreas cargadas no divide por cero", () => {
     const [x] = computeMapaLotes({
       ...VACIO,
@@ -51,6 +105,7 @@ describe("rinde por lote (tn/ha)", () => {
       lotesFisicos: [],
     });
     expect(x.tn_ha).toBe(0);
+    expect(x.kg_surco).toBe(0);
   });
 });
 
