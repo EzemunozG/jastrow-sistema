@@ -8,11 +8,13 @@ import {
   FlaskConical,
   GitCompare,
   LandPlot,
+  Layers,
   LayoutDashboard,
   List,
   Map as MapIcon,
   MapPin,
   Package,
+  Receipt,
   Sprout,
   TrendingUp,
   Truck,
@@ -42,7 +44,15 @@ export const NAV: NavItem[] = [
     ],
   },
   { label: "Rendimiento", icon: Sprout, href: "/rendimiento" },
-  { label: "Azúcar por ingenio", icon: Candy, href: "/azucar" },
+  {
+    label: "Azúcar",
+    icon: Candy,
+    items: [
+      { href: "/azucar", label: "Por ingenio" },
+      { href: "/ventas", label: "Ventas" },
+    ],
+  },
+  { label: "Suelos", icon: Layers, href: "/suelos" },
   {
     label: "Campo",
     icon: MapPin,
@@ -81,4 +91,6 @@ export const LEAF_ICONS: Record<string, LucideIcon> = {
   "/stock/inventario": Package,
   "/stock/recetas": FlaskConical,
   "/admin/usuarios": Users,
+  "/azucar": Candy,
+  "/ventas": Receipt,
 };

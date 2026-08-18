@@ -8,14 +8,20 @@ import {
   resumenAzucarIngenio,
   totalizarAzucar,
 } from "@/lib/azucar";
+import {
+  computeVentasAzucar,
+  NOTA_DISPONIBLE,
+  type VentaAzucarRow,
+} from "@/lib/ventas-azucar";
 import { INGENIOS, type InfrarutRow } from "@/lib/business-rules";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AzucarPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("infraruts")
-    .select("ingenio_id, kg_neto, kg_trash, kg_azucar");
+  const [{ data }, { data: ventasData }] = await Promise.all([
+    supabase.from("infraruts").select("ingenio_id, kg_neto, kg_trash, kg_azucar"),
+    supabase.from("ventas_azucar").select("*").order("fecha", { ascending: false }),
+  ]);
 
   // kg_trash NO es opcional acá: Trinidad liquida sobre la caña bruta, que se
   // reconstruye como kg_neto + kg_trash (ver lib/azucar.ts). El resto de InfrarutRow no
@@ -44,6 +50,18 @@ export default async function AzucarPage() {
     resumenAzucarIngenio(i.id, i.nombre, infraruts),
   );
   const total = totalizarAzucar(resumenes);
+
+  const ventas: VentaAzucarRow[] = ventasData ?? [];
+  const ventasPorIngenio = new Map(
+    resumenes.map((r) => [
+      r.ingenio_id,
+      computeVentasAzucar(r.ingenio_id, r.kg_azucar_propia, ventas),
+    ]),
+  );
+  // Consolidado: TODAS las ventas contra la propia total. No es la suma de los
+  // disponibles por ingenio si alguna venta trae un ingenio_id que no está en INGENIOS
+  // — en ese caso los kilos se descuentan acá aunque no tengan card propia.
+  const ventasTotal = computeVentasAzucar(null, total.kg_azucar_propia, ventas);
 
   return (
     <div className="space-y-5">
@@ -76,10 +94,15 @@ export default async function AzucarPage() {
         <>
           <div className="grid gap-4 lg:grid-cols-2">
             {resumenes.map((r) => (
-              <AzucarCard key={r.ingenio_id} resumen={r} />
+              <AzucarCard
+                key={r.ingenio_id}
+                resumen={r}
+                ventas={ventasPorIngenio.get(r.ingenio_id)!}
+              />
             ))}
           </div>
-          <AzucarTotal total={total} />
+          <AzucarTotal total={total} ventas={ventasTotal} />
+          <p className="text-xs text-muted-foreground">{NOTA_DISPONIBLE}</p>
         </>
       )}
     </div>

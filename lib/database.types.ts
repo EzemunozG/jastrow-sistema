@@ -404,6 +404,114 @@ export type Database = {
         }
       >;
 
+      // supabase/migrations/20260818000000_ventas_azucar.sql — ventas de la azúcar
+      // propia; descuentan del "Disponible" de /azucar.
+      ventas_azucar: Tbl<
+        {
+          id: string;
+          fecha: string;
+          ingenio_id: string;
+          bolsas: number;
+          kg: number;
+          precio_unit_con_iva: number | null;
+          importe_neto: number | null;
+          iva: number | null;
+          importe_total: number | null;
+          comprobante: string | null;
+          comprador: string | null;
+          obs: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          fecha: string;
+          ingenio_id: string;
+          bolsas: number;
+          kg: number;
+          precio_unit_con_iva?: number | null;
+          importe_neto?: number | null;
+          iva?: number | null;
+          importe_total?: number | null;
+          comprobante?: string | null;
+          comprador?: string | null;
+          obs?: string | null;
+        }
+      >;
+
+      // supabase/migrations/20260818000001_suelos.sql — lote_key es la clave de
+      // lotes_ingenio/cps_campo.lote, no el id de la tabla `lotes`.
+      analisis_suelo: Tbl<
+        {
+          id: string;
+          fecha: string | null;
+          lote_key: string | null;
+          sector: string | null;
+          laboratorio: string | null;
+          informe_nro: string | null;
+          profundidad: string | null;
+          ph: number | null;
+          mo_pct: number | null;
+          n_total_pct: number | null;
+          p_ppm: number | null;
+          cic: number | null;
+          ca_me: number | null;
+          mg_me: number | null;
+          k_me: number | null;
+          na_me: string | null;
+          salinidad_ces: number | null;
+          textura: string | null;
+          obs: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          fecha?: string | null;
+          lote_key?: string | null;
+          sector?: string | null;
+          laboratorio?: string | null;
+          informe_nro?: string | null;
+          profundidad?: string | null;
+          ph?: number | null;
+          mo_pct?: number | null;
+          n_total_pct?: number | null;
+          p_ppm?: number | null;
+          cic?: number | null;
+          ca_me?: number | null;
+          mg_me?: number | null;
+          k_me?: number | null;
+          na_me?: string | null;
+          salinidad_ces?: number | null;
+          textura?: string | null;
+          obs?: string | null;
+        }
+      >;
+
+      plan_fertilizacion: Tbl<
+        {
+          id: string;
+          campania: string | null;
+          lote_key: string | null;
+          producto: string | null;
+          dosis_kg_surco: number | null;
+          total_kg: number | null;
+          ventana: string | null;
+          estado: string;
+          obs: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          campania?: string | null;
+          lote_key?: string | null;
+          producto?: string | null;
+          dosis_kg_surco?: number | null;
+          total_kg?: number | null;
+          ventana?: string | null;
+          estado?: string;
+          obs?: string | null;
+        }
+      >;
+
       app_settings: Tbl<
         {
           id: number;

@@ -31,6 +31,7 @@ export default async function MapaPage() {
     { data: productos },
     { data: lotesFisicos },
     { data: appSettings },
+    { data: planesFert },
   ] = await Promise.all([
     // select("*") en lotes_ingenio/app_settings a propósito: si la migración de
     // rinde_esperado_tn_ha (20260730000001) todavía no se aplicó, la columna no viene
@@ -52,6 +53,8 @@ export default async function MapaPage() {
     // saca de acá su nombre real para la tarjeta. Ver computeMapaLotes.
     supabase.from("lotes").select("id, ha, nombre"),
     supabase.from("app_settings").select("*").eq("id", 1).maybeSingle(),
+    // Solo para el chip "Fert. pendiente" de la tarjeta; el detalle vive en /suelos.
+    supabase.from("plan_fertilizacion").select("lote_key, estado"),
   ]);
 
   // rdto se preserva nullable para el promedio del mapa (registros provisionales
@@ -133,6 +136,7 @@ export default async function MapaPage() {
       ha: l.ha ?? 0,
       nombre: l.nombre,
     })),
+    planesFertilizacion: planesFert ?? [],
     tcBlue: appSettings?.tc_blue ?? 1495,
     rindeEsperadoDefault: appSettings?.rinde_esperado_tn_ha ?? RINDE_ESPERADO_DEFAULT,
     alertasPorLote,

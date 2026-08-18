@@ -1,10 +1,28 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Sprout } from "lucide-react";
+import Link from "next/link";
+import { FlaskConical, Sprout } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatNumber, formatPercent, formatTn } from "@/lib/format";
+import { anclaLote } from "@/lib/suelo";
 import type { ColorLote, GeneralCampo, LoteMapCard } from "@/lib/lot-map";
+
+// Chip "Fert. pendiente": el lote tiene plan de fertilización sin aplicar. Es un link
+// a /suelos, así que va FUERA del <button> de la tarjeta (un <a> adentro de un
+// <button> es HTML inválido y el click quedaría capturado por la tarjeta).
+function FertChip({ loteKey, className }: { loteKey: string; className?: string }) {
+  return (
+    <Link
+      href={`/suelos#${anclaLote(loteKey)}`}
+      title="Este lote tiene fertilización planificada sin aplicar — ver el plan en Suelos"
+      className={`inline-flex w-fit items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-800 transition-colors hover:bg-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:hover:bg-blue-500/25 ${className ?? ""}`}
+    >
+      <FlaskConical className="size-3 shrink-0" />
+      Fert. pendiente
+    </Link>
+  );
+}
 
 const CARD_STYLE: Record<ColorLote, string> = {
   verde:
@@ -99,7 +117,10 @@ function Detalle({ lote }: { lote: LoteMapCard }) {
   return (
     <div className="space-y-4 rounded-xl border bg-card p-4">
       <div>
-        <h2 className="text-base font-semibold">{lote.nombre}</h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-base font-semibold">{lote.nombre}</h2>
+          {lote.fert_pendiente && <FertChip loteKey={lote.lote_key} />}
+        </div>
         <p className="text-sm text-muted-foreground">
           {lote.ingenio_nombre
             ? `Cosechó: ${lote.ingenio_nombre}`
@@ -280,13 +301,16 @@ export function LoteMapGrid({
         {cards.map((c) => {
           const activo = c.lote_key === selected;
           return (
-            <button
+            <div
               key={c.lote_key}
-              type="button"
-              onClick={() => seleccionar(c.lote_key)}
-              className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition-colors ${CARD_STYLE[c.color]} ${
+              className={`flex flex-col rounded-xl border transition-colors ${CARD_STYLE[c.color]} ${
                 activo ? "ring-2 ring-brand ring-offset-1" : ""
               }`}
+            >
+            <button
+              type="button"
+              onClick={() => seleccionar(c.lote_key)}
+              className="flex flex-1 flex-col gap-1 rounded-xl p-3 text-left"
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="min-w-0 truncate text-sm font-semibold text-foreground">
@@ -361,6 +385,10 @@ export function LoteMapGrid({
                 </>
               )}
             </button>
+            {c.fert_pendiente && (
+              <FertChip loteKey={c.lote_key} className="mx-3 mb-3" />
+            )}
+            </div>
           );
         })}
       </div>

@@ -1,6 +1,7 @@
 import { PESO_BOLSA } from "@/lib/costos";
 import type { ResumenAzucar, TotalAzucar } from "@/lib/azucar";
-import { formatKg, formatNumber, formatPercent, formatTn } from "@/lib/format";
+import type { VentasIngenio } from "@/lib/ventas-azucar";
+import { formatKg, formatMoney, formatNumber, formatPercent, formatTn } from "@/lib/format";
 
 // Color por ingenio: los mismos que ya usan Resumen y Tendencia para las series.
 const COLOR_INGENIO: Record<string, string> = {
@@ -32,7 +33,53 @@ function Metric({
   );
 }
 
-export function AzucarCard({ resumen }: { resumen: ResumenAzucar }) {
+// Vendida + disponible, debajo de la azúcar propia. Sin ventas cargadas se muestra
+// solo el disponible (que es toda la propia), sin una línea "Vendida: 0" que no aporta.
+function VentasBlock({ v }: { v: VentasIngenio }) {
+  const hayVentas = v.ventas.operaciones > 0;
+  return (
+    <div className="space-y-1 rounded-lg border border-dashed p-3 text-sm">
+      {hayVentas && (
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+          <span className="text-muted-foreground">Vendida</span>
+          <span className="font-medium">
+            {formatNumber(v.ventas.bolsas, 0)} bolsas (
+            {v.ventas.importe > 0 ? formatMoney(v.ventas.importe) : "sin importe"}
+            {v.ventas.importe > 0 && v.ventas.importe_incompleto ? "+" : ""})
+          </span>
+        </div>
+      )}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <span className="text-muted-foreground">Disponible</span>
+        <span
+          className={`font-semibold ${v.disponible.sobrevendido ? "text-red-700 dark:text-red-300" : ""}`}
+        >
+          {formatTn(v.disponible.tn)} ({formatNumber(v.disponible.bolsas, 0)} bolsas)
+        </span>
+      </div>
+      {v.disponible.sobrevendido && (
+        <p className="text-[11px] text-red-700 dark:text-red-300">
+          Se vendió más azúcar de la que da la fórmula provisional — revisar los kg
+          cargados o la regla de reparto.
+        </p>
+      )}
+      {hayVentas && v.ventas.importe_incompleto && (
+        <p className="text-[11px] text-muted-foreground">
+          Hay ventas sin importe cargado: el monto que se muestra es parcial (los kilos
+          sí están descontados).
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function AzucarCard({
+  resumen,
+  ventas,
+}: {
+  resumen: ResumenAzucar;
+  ventas: VentasIngenio;
+}) {
   return (
     <div className="space-y-3 rounded-xl border bg-card p-4">
       <div className="flex items-baseline justify-between gap-2">
@@ -60,7 +107,7 @@ export function AzucarCard({ resumen }: { resumen: ResumenAzucar }) {
           sub={`${formatKg(resumen.kg_azucar_producida)}`}
         />
         <Metric
-          lbl="Azúcar propia / disponible"
+          lbl="Azúcar propia"
           val={formatKg(resumen.kg_azucar_propia)}
           sub={`${formatPercent(resumen.pct_sobre_producida, 1)} de la producida`}
           destacado
@@ -68,10 +115,12 @@ export function AzucarCard({ resumen }: { resumen: ResumenAzucar }) {
         <Metric
           lbl={`Bolsas de ${PESO_BOLSA} kg`}
           val={formatNumber(resumen.bolsas_propias, 0)}
-          sub="lo que alimenta el arriendo"
+          sub="propias, antes de ventas"
           destacado
         />
       </div>
+
+      <VentasBlock v={ventas} />
 
       <p className="text-xs text-muted-foreground">
         <span className="font-medium">Regla aplicada:</span> {resumen.regla}.
@@ -80,7 +129,13 @@ export function AzucarCard({ resumen }: { resumen: ResumenAzucar }) {
   );
 }
 
-export function AzucarTotal({ total }: { total: TotalAzucar }) {
+export function AzucarTotal({
+  total,
+  ventas,
+}: {
+  total: TotalAzucar;
+  ventas: VentasIngenio;
+}) {
   return (
     <div className="space-y-3 rounded-xl border-2 bg-card p-4">
       <h2 className="text-base font-semibold">Total consolidado — ambos ingenios</h2>
@@ -96,7 +151,7 @@ export function AzucarTotal({ total }: { total: TotalAzucar }) {
           sub={formatKg(total.kg_azucar_producida)}
         />
         <Metric
-          lbl="Azúcar propia / disponible"
+          lbl="Azúcar propia"
           val={formatKg(total.kg_azucar_propia)}
           sub={`${formatPercent(total.pct_sobre_producida, 1)} de la producida`}
           destacado
@@ -104,10 +159,12 @@ export function AzucarTotal({ total }: { total: TotalAzucar }) {
         <Metric
           lbl={`Bolsas de ${PESO_BOLSA} kg`}
           val={formatNumber(total.bolsas_propias, 0)}
-          sub="total disponible"
+          sub="propias, antes de ventas"
           destacado
         />
       </div>
+
+      <VentasBlock v={ventas} />
     </div>
   );
 }

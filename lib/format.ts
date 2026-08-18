@@ -49,3 +49,13 @@ export function compactarRangos(nums: number[], maxGrupos = 12): string {
 export function formatFechaCorta(fecha: string | null | undefined): string {
   return fecha ? fecha.slice(5) : "—";
 }
+
+// "2026-08-18" → "18/08/2026". Para listados que pueden abarcar más de una zafra
+// (ventas, análisis de suelo), donde el año sí importa. Se parte el string en vez de
+// `new Date(fecha)`: eso lo interpreta como UTC medianoche y en Argentina (UTC−3) tira
+// la fecha un día para atrás. `null` → "—", igual que formatFechaCorta.
+export function formatFecha(fecha: string | null | undefined): string {
+  if (!fecha) return "—";
+  const [y, m, d] = fecha.slice(0, 10).split("-");
+  return y && m && d ? `${d}/${m}/${y}` : fecha;
+}

@@ -9,6 +9,7 @@
 import { META } from "./business-rules";
 import type { Alert } from "./alerts";
 import { contornoAproximado } from "./lote-geo";
+import { ESTADO_PLANIFICADO } from "./suelo";
 
 // ── Umbrales de COLOR de la tarjeta: por rdto% promedio vs meta (10%). El rdto es
 // comparable aunque el lote esté a medio cosechar, a diferencia del tn/surco (que
@@ -166,6 +167,9 @@ export type LoteMapCard = {
   // Nota de contorno aproximado (lib/lote-geo.ts), o null si tiene perímetro real /
   // no tenemos coordenadas.
   contorno_nota: string | null;
+  // El lote tiene al menos una línea de plan_fertilizacion en estado 'planificado' →
+  // la tarjeta muestra el chip "Fert. pendiente" que linkea a /suelos.
+  fert_pendiente: boolean;
 };
 
 function avgPresente(vals: (number | null)[]): number | null {
@@ -200,6 +204,9 @@ export function computeMapaLotes(params: {
   // recetas compartidas, `nombre` para poder mostrar el nombre real de un lote que
   // todavía no está declarado en `lotes_ingenio`.
   lotesFisicos: { id: string; ha: number; nombre: string | null }[];
+  // Plan de fertilización (lib/suelo.ts): solo se usa para marcar qué lotes tienen algo
+  // pendiente. El detalle vive en /suelos.
+  planesFertilizacion?: { lote_key: string | null; estado: string }[];
   tcBlue: number;
   rindeEsperadoDefault: number; // tn/ha esperadas (global, de app_settings)
   alertasPorLote: Record<string, Alert[]>; // alertas ya computadas, por lote_key
@@ -216,6 +223,7 @@ export function computeMapaLotes(params: {
     trabajoInsumos,
     productos,
     lotesFisicos,
+    planesFertilizacion = [],
     tcBlue,
     rindeEsperadoDefault,
     alertasPorLote,
@@ -233,6 +241,12 @@ export function computeMapaLotes(params: {
     if (process.env.NODE_ENV !== "production") throw new Error(msg);
     console.error(msg);
   }
+
+  const fertPendientePorLote = new Set(
+    planesFertilizacion
+      .filter((p) => p.lote_key != null && p.estado === ESTADO_PLANIFICADO)
+      .map((p) => p.lote_key as string),
+  );
 
   const bajasSet = new Set(bajas.map((b) => b.cp));
   const tripByRemito = new Map<number, MapaTrip>();
@@ -448,6 +462,7 @@ export function computeMapaLotes(params: {
       alerta_severidad: alertaSeveridad,
       solo_libreta: meta.solo_libreta,
       contorno_nota: contornoNota,
+      fert_pendiente: fertPendientePorLote.has(meta.lote_key),
     };
   });
 
