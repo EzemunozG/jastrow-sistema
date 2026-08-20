@@ -148,9 +148,17 @@ function PlanTable({ lote }: { lote: LoteSuelo }) {
                       </span>
                     )}
                   </>
-                ) : (
+                ) : p.chequeo.surcos == null ? (
                   <span className="text-muted-foreground">
                     sin ha/surcos cargados para este lote
+                  </span>
+                ) : (
+                  // Los surcos del lote se conocen; lo que falta es la dosis. Pasa con
+                  // las líneas exploratorias del plan (franjas testigo, "a evaluar"),
+                  // que se cargan sin dosis todavía.
+                  <span className="text-muted-foreground">
+                    {formatNumber(Math.round(p.chequeo.surcos))} surcos en el lote —
+                    esta línea todavía no tiene dosis cargada
                   </span>
                 )}
               </td>

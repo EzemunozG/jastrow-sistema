@@ -35,23 +35,50 @@ function analisis(a: Partial<AnalisisSueloRow> & { id: string }): AnalisisSueloR
   };
 }
 
-// ── Fixture REAL: análisis del lote Paco (valores pasados por el usuario, 2026-08-18).
-// El Mg viene ya como % de la CIC (12,4%) — acá se lo reconstruye con un par mg_me/cic
-// que dé ese porcentaje, que es lo que va a haber en la base.
+// ── Los TRES análisis reales, copiados de `analisis_suelo` en la base (informes del
+// 2026-07-28): Paco entero, y Las 101 muestreado en dos sectores. El Mg no viene como
+// porcentaje sino como mg_me + cic, y el semáforo lo convierte (mg_me / cic × 100).
 const PACO = analisis({
   id: "paco",
   lote_key: "PACO",
+  fecha: "2026-07-28",
   ph: 6.29,
   mo_pct: 2.16,
   n_total_pct: 0.145,
   p_ppm: 17.0,
-  cic: 20.0,
-  mg_me: 2.48, // 2,48 / 20,0 = 12,4% de la CIC
+  cic: 17.07,
+  mg_me: 2.11, // 12,36% de la CIC
 });
 
-// Los otros dos casos NO son análisis reales (el usuario solo pasó los números de
-// Paco): son fixtures sintéticos para cubrir los tramos del semáforo que Paco no toca
-// — fósforo por debajo del rango de ligera insuficiencia, y todo en verde.
+const LAS_101_S1 = analisis({
+  id: "las101-100-1",
+  lote_key: "LAS 101",
+  sector: "100-1",
+  fecha: "2026-07-28",
+  ph: 6.02,
+  mo_pct: 2.3,
+  n_total_pct: 0.156,
+  p_ppm: 16.5,
+  cic: 18.13,
+  mg_me: 2.23, // 12,30% de la CIC
+});
+
+const LAS_101_S2 = analisis({
+  id: "las101-100-2",
+  lote_key: "LAS 101",
+  sector: "100-2",
+  fecha: "2026-07-28",
+  ph: 5.86,
+  mo_pct: 2.05,
+  n_total_pct: 0.137,
+  p_ppm: 18.4,
+  cic: 17.9,
+  mg_me: 2.24, // 12,51% de la CIC
+});
+
+// Ninguno de los tres análisis reales cae por debajo de 13 ppm de P ni por encima de
+// pH 7, así que esos dos tramos del semáforo se cubren con casos sintéticos — están
+// marcados como tales para que no se los confunda con datos del campo.
 const P_MUY_BAJO = analisis({
   id: "sintetico-p-bajo",
   lote_key: "SINTETICO A",
@@ -97,9 +124,36 @@ describe("semáforo del análisis de Paco (datos reales)", () => {
   });
 
   it("Mg 12,4% de la CIC es bajo (< 15,4%)", () => {
-    expect(evaluarAnalisis(PACO).mg_pct_cic).toBeCloseTo(12.4, 6);
+    expect(evaluarAnalisis(PACO).mg_pct_cic).toBeCloseTo(12.36, 2);
     expect(e.mg.nivel).toBe("warn");
     expect(e.mg.etiqueta).toBe("bajo");
+  });
+});
+
+describe("semáforo de Las 101 (datos reales, dos sectores)", () => {
+  const s1 = evaluarAnalisis(LAS_101_S1);
+  const s2 = evaluarAnalisis(LAS_101_S2);
+
+  it("sector 100-1: pH 6,02 justo dentro del óptimo y N 0,156% suficiente", () => {
+    expect(s1.evaluacion.ph.nivel).toBe("ok");
+    expect(s1.evaluacion.n.nivel).toBe("ok");
+  });
+
+  it("sector 100-1: MO 2,30% baja, P 16,5 ppm ligera insuf., Mg 12,3% bajo", () => {
+    expect(s1.evaluacion.mo.etiqueta).toBe("bajo");
+    expect(s1.evaluacion.p.etiqueta).toBe("ligera insuf.");
+    expect(s1.mg_pct_cic).toBeCloseTo(12.3, 1);
+    expect(s1.evaluacion.mg.etiqueta).toBe("bajo");
+  });
+
+  it("sector 100-2 es el peor de los dos: pH 5,86 ácido y N 0,137% insuficiente", () => {
+    expect(s2.evaluacion.ph.etiqueta).toBe("ácido");
+    expect(s2.evaluacion.n.etiqueta).toBe("insuficiente");
+  });
+
+  it("los dos sectores del mismo lote no dan igual — por eso se muestran separados", () => {
+    expect(s1.evaluacion.ph.etiqueta).not.toBe(s2.evaluacion.ph.etiqueta);
+    expect(s1.evaluacion.n.nivel).not.toBe(s2.evaluacion.n.nivel);
   });
 });
 
@@ -196,6 +250,43 @@ describe("chequeo del total del plan contra los surcos del sistema", () => {
     expect(c.total_calculado).toBe(2_745);
     expect(c.desvio_pct).toBeCloseTo(14.22, 1);
     expect(c.advertencia).toBe(true);
+  });
+
+  // Las dos líneas de urea reales del plan 2026 se armaron con los mismos surcos que
+  // tiene cargados el sistema, así que hoy no debe saltar ninguna advertencia: si
+  // salta, o cambió el hectareaje del lote o alguien tocó surcos_por_ha.
+  it("no avisa nada con las líneas reales del plan (Paco y Las 101)", () => {
+    const paco = chequearTotalPlan({
+      dosisKgSurco: 3.3,
+      totalKgGuardado: 9_059,
+      ha: 45,
+      surcosPorHa: 61,
+    });
+    expect(paco.total_calculado).toBeCloseTo(9_058.5, 6);
+    expect(paco.advertencia).toBe(false);
+
+    const las101 = chequearTotalPlan({
+      dosisKgSurco: 3.7,
+      totalKgGuardado: 22_796,
+      ha: 101,
+      surcosPorHa: 61,
+    });
+    expect(las101.total_calculado).toBeCloseTo(22_795.7, 6);
+    expect(las101.advertencia).toBe(false);
+  });
+
+  // Las franjas testigo de magnesio se cargan sin dosis ("a evaluar"). La pantalla no
+  // tiene que decir que faltan los surcos del lote — los surcos se conocen.
+  it("una línea sin dosis deja la cuenta en null pero conserva los surcos del lote", () => {
+    const c = chequearTotalPlan({
+      dosisKgSurco: null,
+      totalKgGuardado: null,
+      ha: 45,
+      surcosPorHa: 61,
+    });
+    expect(c.surcos).toBe(2_745);
+    expect(c.total_calculado).toBeNull();
+    expect(c.advertencia).toBe(false);
   });
 
   it("sin ha o sin surcos/ha no hay cuenta ni advertencia", () => {
