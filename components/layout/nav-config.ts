@@ -6,6 +6,7 @@ import {
   DollarSign,
   FileText,
   FlaskConical,
+  FolderOpen,
   GitCompare,
   LandPlot,
   Layers,
@@ -70,6 +71,7 @@ export const NAV: NavItem[] = [
       { href: "/stock/recetas", label: "Recetas" },
     ],
   },
+  { label: "Documentos", icon: FolderOpen, href: "/documentos" },
   { label: "Alertas", icon: AlertTriangle, href: "/alertas" },
   {
     label: "Administración",

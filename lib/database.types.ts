@@ -512,6 +512,36 @@ export type Database = {
         }
       >;
 
+      // supabase/migrations/20260820000000_documentos.sql — índice de archivos del
+      // campo; `archivo_path` es la key dentro del bucket privado `documentos`.
+      documentos: Tbl<
+        {
+          id: string;
+          fecha: string | null;
+          tipo: string;
+          titulo: string;
+          autor: string | null;
+          resumen: string | null;
+          archivo_path: string | null;
+          lote_key: string | null;
+          ingenio_id: string | null;
+          obs: string | null;
+          created_at: string;
+        },
+        {
+          id?: string;
+          fecha?: string | null;
+          tipo?: string;
+          titulo: string;
+          autor?: string | null;
+          resumen?: string | null;
+          archivo_path?: string | null;
+          lote_key?: string | null;
+          ingenio_id?: string | null;
+          obs?: string | null;
+        }
+      >;
+
       app_settings: Tbl<
         {
           id: number;
